@@ -1192,7 +1192,7 @@ function renderMonthly() {
     const pct = budget ? Math.min(actual/budget,1) : 0;
     const over = actual > budget && budget > 0;
     const color = COLORS[cat]||'#7a84a8';
-    catHtml += `<div class="row" style="cursor:pointer;" onclick="openCatDetail('${cat}')">
+    catHtml += `<div class="row" style="cursor:pointer;" onclick="openCatDetail('${cat}', '${key}')">
       <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;margin-top:2px;"></div>
       <div style="flex:1;min-width:0;">
         <div class="flex"><span style="font-size:13px;font-weight:600;">${cat}</span>
@@ -1273,17 +1273,19 @@ function openDayDetail(monthKey, day) {
 }
 
 // ── CATEGORY DETAIL ──
-function openCatDetail(cat) {
-  const txns = state.expenses.filter(e=>e.cat===cat).sort((a,b)=>b.date.localeCompare(a.date));
+function openCatDetail(cat, monthKey) {
+  // If monthKey provided, filter to that month; otherwise show all
+  const txns = state.expenses
+    .filter(e => e.cat===cat && (!monthKey || e.date.startsWith(monthKey)))
+    .sort((a,b)=>b.date.localeCompare(a.date));
   const actual = txns.reduce((a,e)=>a+e.amount,0);
   const budget = BUDGETS[cat]||0;
   const remaining = budget - actual;
   const pct = budget ? ((actual/budget)*100).toFixed(1) : '—';
   const over = actual > budget && budget > 0;
-  const color = COLORS[cat]||'#7a84a8';
 
   document.getElementById('cdm-icon').textContent = ICONS[cat]||'📂';
-  document.getElementById('cdm-name').textContent = cat;
+  document.getElementById('cdm-name').textContent = cat + (monthKey ? ' · '+monthKey : '');
   document.getElementById('cdm-actual').textContent = fmt(Math.round(actual))+' EGP';
   document.getElementById('cdm-badge').innerHTML = `<span class="badge ${over?'bover':pct>85?'bwarn':'bok'}">${over?'OVER BUDGET':pct>85?'HIGH':'ON TRACK'}</span>`;
   document.getElementById('cdm-budget').textContent = fmt(budget)+' EGP';
@@ -1301,7 +1303,7 @@ function openCatDetail(cat) {
       <div class="ramount red" style="font-size:13px">-${fmt(e.amount)}</div>
     </div>`;
   });
-  document.getElementById('cdm-txns').innerHTML = html||'<div style="color:var(--muted);text-align:center;padding:12px">No transactions</div>';
+  document.getElementById('cdm-txns').innerHTML = html||'<div style="color:var(--muted);text-align:center;padding:12px">No transactions this month</div>';
   document.getElementById('cat-modal').classList.add('open');
 }
 
