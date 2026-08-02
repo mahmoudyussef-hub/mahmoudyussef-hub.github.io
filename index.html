@@ -1366,6 +1366,145 @@ function saveEdit() {
   saveState(); renderAll(); closeEdit(); toast('✅ Expense updated!');
 }
 
+
+// ── QUICK ADD HELPERS ──
+const EXAMPLES_EN = [
+  'Starbucks 105 CIB Visa',
+  'Uber Hala 85 NEXTBANK',
+  'Groceries 500 CIB Debit',
+  'Restaurant dinner 350 CIB Visa',
+  'Pharmacy 200 cash',
+  'Electricity 1500 CIB Visa',
+  'Wife allowance 3500 CIB Debit',
+  'Cigarettes 250 CIB Visa',
+];
+const EXAMPLES_AR = [
+  'ستاربكس ١٠٥ فيزا CIB',
+  'أوبر هالة ٨٥ NEXTBANK',
+  'بقالة ٥٠٠ دبت CIB',
+  'مطعم ٣٥٠ فيزا CIB',
+  'صيدلية ٢٠٠ كاش',
+  'كهرباء ١٥٠٠ فيزا CIB',
+  'مصروف هدير ٣٥٠٠ دبت CIB',
+  'سجاير ٢٥٠ فيزا CIB',
+];
+
+function renderExamples() {
+  const chips = document.getElementById('example-chips');
+  if (!chips) return;
+  const examples = voiceLang === 'ar-EG' ? EXAMPLES_AR : EXAMPLES_EN;
+  chips.innerHTML = examples.map(ex =>
+    `<button onclick="useExample(this.getAttribute('data-ex'))" data-ex="${ex}"
+      style="padding:5px 10px;border-radius:20px;font-size:11px;font-weight:600;
+      background:var(--border);color:var(--text);border:1px solid var(--border);cursor:pointer;white-space:nowrap;">
+      ${ex}
+    </button>`
+  ).join('');
+  // show examples section
+  const sec = document.getElementById('quick-examples');
+  if (sec) sec.style.display = 'block';
+}
+
+function useExample(text) {
+  const inp = document.getElementById('quick-input');
+  if (inp) inp.value = text;
+  parseTxt(text);
+}
+
+function liveParseInput(val) {
+  const hint = document.getElementById('quick-hint');
+  if (!val.trim()) {
+    if (hint) hint.textContent = '';
+    document.getElementById('pres').classList.remove('show');
+    const sec = document.getElementById('quick-examples');
+    if (sec) sec.style.display = 'block';
+    return;
+  }
+  if (hint) hint.textContent = '⚡ Tap Add Expense or press Enter to process...';
+}
+
+function processQuickInput() {
+  const input = document.getElementById('quick-input');
+  const val = input ? input.value.trim() : '';
+  if (!val) { toast('⚠️ Type or speak your expense first'); return; }
+  parseTxt(val);
+  setTimeout(() => {
+    const pres = document.getElementById('pres');
+    if (pres) pres.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+}
+
+function tryVoice() {
+  const btn = document.getElementById('mic-inline-btn');
+  if (isRec) {
+    stopRec();
+    if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
+    return;
+  }
+  if (btn) { btn.style.background = 'var(--red)'; btn.textContent = '⏹'; }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('⚠️ Voice not supported — type instead'); if(btn){btn.style.background='var(--accent)';btn.textContent='🎤';} return; }
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        stream.getTracks().forEach(t => t.stop());
+        doVoiceRecord(btn);
+      })
+      .catch(() => {
+        if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
+        document.getElementById('mic-help').style.display = 'block';
+        toast('⚠️ Mic blocked — see instructions below');
+      });
+  } else {
+    doVoiceRecord(btn);
+  }
+}
+
+function doVoiceRecord(btn) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = voiceLang;
+  rec.interimResults = true;
+  rec.continuous = false;
+
+  isRec = true;
+  document.getElementById('wave').style.display = 'flex';
+  const hint = document.getElementById('quick-hint');
+  if (hint) hint.textContent = voiceLang==='ar-EG' ? '🎤 جاري الاستماع...' : '🎤 Listening...';
+
+  rec.onresult = (e) => {
+    const t = Array.from(e.results).map(r => r[0].transcript).join('');
+    const inp = document.getElementById('quick-input');
+    if (inp) inp.value = t;
+    if (e.results[e.results.length-1].isFinal) {
+      parseTxt(t);
+    }
+  };
+  rec.onend = () => {
+    isRec = false;
+    document.getElementById('wave').style.display = 'none';
+    if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
+  };
+  rec.onerror = (e) => {
+    isRec = false;
+    document.getElementById('wave').style.display = 'none';
+    if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
+    if (e.error === 'not-allowed') {
+      document.getElementById('mic-help').style.display = 'block';
+      toast('⚠️ Mic blocked — see instructions below');
+    } else {
+      toast('⚠️ ' + e.error + ' — type instead');
+    }
+  };
+  try { rec.start(); recognition = rec; } catch(err) {
+    isRec = false;
+    if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
+    toast('⚠️ Could not start recording');
+  }
+}
+
 // ── VOICE ──
 let recognition=null,isRec=false,parsedEntry=null,voiceLang='ar-EG';
 
@@ -1386,26 +1525,36 @@ function setVoiceLang(lang, el) {
   }
   // Save preference
   localStorage.setItem('voiceLang', lang);
+  renderExamples();
+  const inp=document.getElementById('quick-input');
+  if(inp) inp.placeholder=lang==='ar-EG'?'ستاربكس ١٠٥ جنيه فيزا CIB':'Starbucks 105 CIB Visa';
   toast(lang==='ar-EG' ? '🇪🇬 Arabic mode' : '🇺🇸 English mode');
 }
 
 function openVoice(){
-  // Restore saved language preference
+  // Restore saved language
   const saved = localStorage.getItem('voiceLang');
   if (saved && saved !== voiceLang) {
     voiceLang = saved;
     const el = document.getElementById(saved==='ar-EG'?'lang-ar':'lang-en');
     if (el) setVoiceLang(saved, el);
   }
-  document.getElementById('vmodal').classList.add('open');
-  document.getElementById('tbox').textContent= voiceLang==='ar-EG'
-    ? '🎤 اضغط Start للتسجيل أو اكتب يدوياً بالأسفل'
-    : '🎤 Tap Start to record, or type manually below';
+  // Reset everything
+  const inp = document.getElementById('quick-input');
+  if (inp) { inp.value=''; inp.placeholder = voiceLang==='ar-EG'?'ستاربكس ١٠٥ جنيه فيزا CIB':'Starbucks 105 CIB Visa'; }
+  const hint = document.getElementById('quick-hint');
+  if (hint) hint.textContent = voiceLang==='ar-EG' ? 'اكتب مصروفك أو اضغط 🎤' : 'Type your expense or tap 🎤';
   document.getElementById('pres').classList.remove('show');
-  document.getElementById('conf-btn').style.display='none';
-  document.getElementById('rec-btn').textContent='🎤 Start';
-  parsedEntry=null;
+  document.getElementById('conf-btn').style.display = 'block';
+  document.getElementById('conf-btn').textContent = '✓ Add Expense';
+  document.getElementById('mic-help').style.display = 'none';
+  document.getElementById('wave').style.display = 'none';
+  parsedEntry = null;
+  renderExamples();
+  document.getElementById('vmodal').classList.add('open');
+  setTimeout(() => { if (inp) inp.focus(); }, 400);
 }
+
 function closeVoice(){if(isRec&&recognition)recognition.stop();document.getElementById('vmodal').classList.remove('open');}
 
 function toggleRec(){isRec?stopRec():startRec();}
@@ -1654,6 +1803,10 @@ function parseTxt(text){
   document.getElementById('pres').classList.add('show');
   document.getElementById('conf-btn').style.display='block';
   document.getElementById('conf-btn').textContent='✓ Add Expense';
+  const h=document.getElementById('quick-hint');
+  if(h) h.textContent='✅ Review & edit below, then tap Add Expense';
+  const ex=document.getElementById('quick-examples');
+  if(ex) ex.style.display='none';
 
   // Populate editable fields
   document.getElementById('ve-desc').value   = desc;
