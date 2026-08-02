@@ -807,101 +807,97 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- VOICE MODAL -->
 <div class="overlay" id="vmodal">
   <div class="modal">
-    <div class="flex" style="margin-bottom:4px;">
-      <h2 style="font-size:16px;">⚡ Quick Add Expense</h2>
-      <button onclick="closeVoice()" style="background:var(--border);border:none;color:var(--text);border-radius:8px;padding:4px 10px;cursor:pointer;">✕</button>
+
+    <!-- Header -->
+    <div class="flex" style="margin-bottom:12px;">
+      <h2 style="font-size:16px;">⚡ Quick Add</h2>
+      <button onclick="closeVoice()" style="background:var(--border);border:none;color:var(--text);border-radius:8px;padding:4px 12px;cursor:pointer;font-size:16px;">✕</button>
     </div>
 
-    <!-- Language toggle -->
+    <!-- Language -->
     <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <button onclick="setVoiceLang('ar-EG',this)" id="lang-ar"
-        style="flex:1;padding:7px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;border:none;">🇪🇬 عربي</button>
-      <button onclick="setVoiceLang('en-US',this)" id="lang-en"
-        style="flex:1;padding:7px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--border);color:var(--muted);border:none;">🇺🇸 English</button>
+      <button id="lang-ar" onclick="setVoiceLang('ar-EG',this)"
+        style="flex:1;padding:8px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--border);color:var(--muted);border:none;">🇪🇬 عربي</button>
+      <button id="lang-en" onclick="setVoiceLang('en-US',this)"
+        style="flex:1;padding:8px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;border:none;">🇺🇸 English</button>
     </div>
 
-    <!-- Type input — always visible, primary method -->
-    <div style="position:relative;margin-bottom:10px;">
-      <input type="text" id="quick-input"
-        placeholder="Starbucks 105 CIB Visa"
-        style="width:100%;background:var(--bg);border:2px solid var(--accent);border-radius:12px;
-        color:var(--text);font-size:15px;padding:12px 48px 12px 14px;outline:none;"
-        oninput="liveParseInput(this.value)"
-        onkeydown="if(event.key==='Enter')processQuickInput()">
-      <!-- Mic button inside input -->
-      <button id="mic-inline-btn" onclick="tryVoice()"
-        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
-        width:34px;height:34px;border-radius:50%;background:var(--accent);
-        border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">🎤</button>
+    <!-- Input row -->
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <input type="text" id="quick-input" placeholder="Starbucks 105 CIB Visa"
+        style="flex:1;background:var(--bg);border:2px solid var(--accent);border-radius:12px;
+        color:var(--text);font-size:15px;padding:11px 14px;outline:none;"
+        onkeydown="if(event.key==='Enter'){document.getElementById('quick-input').blur();doAdd();}">
+      <button id="mic-btn" onclick="toggleMic()"
+        style="width:46px;height:46px;border-radius:50%;background:var(--accent);border:none;
+        cursor:pointer;font-size:20px;flex-shrink:0;">🎤</button>
     </div>
 
-    <!-- Live hint -->
-    <div id="quick-hint" style="font-size:11px;color:var(--muted);margin-bottom:10px;min-height:16px;"></div>
+    <!-- Status -->
+    <div id="vstatus" style="font-size:12px;color:var(--muted);min-height:18px;margin-bottom:8px;"></div>
 
-    <!-- Wave animation (shown when recording) -->
-    <div class="wave" id="wave" style="margin-bottom:10px;"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
+    <!-- Wave -->
+    <div class="wave" id="wave" style="margin-bottom:8px;display:none;">
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+    </div>
 
-    <!-- Editable parsed result -->
-    <div class="pres" id="pres" style="padding:0;background:transparent;border:none;">
-      <div style="background:rgba(79,124,255,.08);border:1px solid rgba(79,124,255,.25);border-radius:12px;padding:12px;margin-bottom:8px;">
-        <div style="font-size:10px;color:var(--accent);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">✏️ Review & Edit Before Saving</div>
-        <div class="fg" style="margin-bottom:8px;">
-          <label style="font-size:10px;">Description</label>
-          <input type="text" id="ve-desc" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;">
+    <!-- Editable form (hidden until parsed) -->
+    <div id="vform" style="display:none;background:rgba(79,124,255,.08);border:1px solid rgba(79,124,255,.25);border-radius:12px;padding:12px;margin-bottom:10px;">
+      <div style="font-size:10px;color:var(--accent);font-weight:700;margin-bottom:10px;text-transform:uppercase;">✏️ Review before saving</div>
+      <div class="fg" style="margin-bottom:8px;">
+        <label style="font-size:10px;color:var(--muted);">Description</label>
+        <input type="text" id="ve-desc" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label style="font-size:10px;color:var(--muted);">Amount (EGP)</label>
+          <input type="number" id="ve-amount" inputmode="decimal" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <div class="fg" style="margin-bottom:0;">
-            <label style="font-size:10px;">Amount (EGP)</label>
-            <input type="number" id="ve-amount" inputmode="decimal" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;">
-          </div>
-          <div class="fg" style="margin-bottom:0;">
-            <label style="font-size:10px;">Date</label>
-            <input type="date" id="ve-date" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;">
-          </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);">Date</label>
+          <input type="date" id="ve-date" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;">
         </div>
-        <div class="fg" style="margin-bottom:8px;">
-          <label style="font-size:10px;">Category</label>
-          <select id="ve-cat" onchange="fillVoiceSubcats()" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;appearance:none;">
-            <option>Housing</option><option>Food and Dining</option><option>Transportation</option>
-            <option>Health and Medical</option><option>Personal Care</option><option>Education</option>
-            <option>Entertainment</option><option>Technology</option><option>Insurance</option>
-            <option>Savings and Investments</option><option>Debt Payments</option>
-            <option>Travel and Vacation</option><option>Gifts and Donations</option>
-            <option>Childcare and Family</option><option>Miscellaneous</option>
-            <option>Nour</option><option>Hala</option><option>Wife</option>
-          </select>
-        </div>
-        <div class="fg" style="margin-bottom:8px;">
-          <label style="font-size:10px;">Subcategory</label>
-          <select id="ve-sub" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;appearance:none;">
-            <option value="">Select...</option>
-          </select>
-        </div>
-        <div class="fg" style="margin-bottom:0;">
-          <label style="font-size:10px;">Payment Method</label>
-          <select id="ve-method" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;appearance:none;">
-            <option>CIB Visa</option><option>CIB Debit</option><option>NEXTBANK 18K</option>
-            <option>NEXTBANK 50K</option><option>Wafa Bank Visa</option><option>QNB Debit</option><option>Cash in Hand</option>
-          </select>
-        </div>
+      </div>
+      <div class="fg" style="margin-bottom:8px;">
+        <label style="font-size:10px;color:var(--muted);">Category</label>
+        <select id="ve-cat" onchange="fillVoiceSubcats()" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;appearance:none;">
+          <option>Housing</option><option>Food and Dining</option><option>Transportation</option>
+          <option>Health and Medical</option><option>Personal Care</option><option>Education</option>
+          <option>Entertainment</option><option>Technology</option><option>Insurance</option>
+          <option>Savings and Investments</option><option>Debt Payments</option>
+          <option>Travel and Vacation</option><option>Gifts and Donations</option>
+          <option>Childcare and Family</option><option>Miscellaneous</option>
+          <option>Nour</option><option>Hala</option><option>Wife</option>
+        </select>
+      </div>
+      <div class="fg" style="margin-bottom:8px;">
+        <label style="font-size:10px;color:var(--muted);">Subcategory</label>
+        <select id="ve-sub" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;appearance:none;">
+          <option value="">Select...</option>
+        </select>
+      </div>
+      <div class="fg" style="margin-bottom:0;">
+        <label style="font-size:10px;color:var(--muted);">Payment Method</label>
+        <select id="ve-method" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;appearance:none;">
+          <option>CIB Visa</option><option>CIB Debit</option><option>NEXTBANK 18K</option>
+          <option>NEXTBANK 50K</option><option>Wafa Bank Visa</option><option>QNB Debit</option><option>Cash in Hand</option>
+        </select>
       </div>
     </div>
 
     <!-- Examples -->
-    <div id="quick-examples" style="margin-bottom:12px;">
-      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Tap an example:</div>
+    <div id="vexamples" style="margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Tap an example:</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;" id="example-chips"></div>
     </div>
 
-    <div class="mbtns">
-      <button class="btn" id="conf-btn" onclick="handleAddExpense()" style="display:block;">✓ Add Expense</button>
-    </div>
-
-    <!-- Mic blocked help -->
-    <div id="mic-help" style="display:none;margin-top:10px;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3);border-radius:10px;padding:10px;font-size:11px;color:var(--warn);line-height:1.6;">
-      🎤 <strong>To enable voice:</strong><br>
-      iPhone Settings → Safari → Microphone → Allow<br>
-      Then close and reopen Safari.
+    <!-- Action buttons -->
+    <button onclick="document.getElementById('vform').style.display==='none'?doAdd():doSave()" id="save-btn" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:8px;">
+      ✓ Add Expense
+    </button>
+    <div id="mic-help" style="display:none;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3);border-radius:10px;padding:10px;font-size:11px;color:var(--warn);line-height:1.6;">
+      🎤 <strong>Enable mic:</strong> iPhone Settings → Safari → Microphone → Allow → restart Safari
     </div>
   </div>
 </div>
@@ -1366,858 +1362,167 @@ function saveEdit() {
 }
 
 
-// ── QUICK ADD HELPERS ──
-const EXAMPLES_EN = [
-  'Starbucks 105 CIB Visa',
-  'Uber Hala 85 NEXTBANK',
-  'Groceries 500 CIB Debit',
-  'Restaurant dinner 350 CIB Visa',
-  'Pharmacy 200 cash',
-  'Electricity 1500 CIB Visa',
-  'Wife allowance 3500 CIB Debit',
-  'Cigarettes 250 CIB Visa',
-];
-const EXAMPLES_AR = [
-  'ستاربكس ١٠٥ فيزا CIB',
-  'أوبر هالة ٨٥ NEXTBANK',
-  'بقالة ٥٠٠ دبت CIB',
-  'مطعم ٣٥٠ فيزا CIB',
-  'صيدلية ٢٠٠ كاش',
-  'كهرباء ١٥٠٠ فيزا CIB',
-  'مصروف هدير ٣٥٠٠ دبت CIB',
-  'سجاير ٢٥٠ فيزا CIB',
-];
+// ── QUICK ADD & VOICE ──
+const EXAMPLES_EN = ['Starbucks 105 CIB Visa','Uber Hala 85 NEXTBANK','Groceries 500 CIB Debit','Restaurant 350 CIB Visa','Pharmacy 200 cash','Electricity 1500 CIB Visa','Wife allowance 3500 CIB Debit','Cigarettes 250 CIB Visa'];
+const EXAMPLES_AR = ['ستاربكس ١٠٥ فيزا CIB','أوبر هالة ٨٥ NEXTBANK','بقالة ٥٠٠ دبت CIB','مطعم ٣٥٠ فيزا CIB','صيدلية ٢٠٠ كاش','كهرباء ١٥٠٠ فيزا CIB','مصروف هدير ٣٥٠٠ دبت CIB','سجاير ٢٥٠ فيزا CIB'];
+let voiceRec = null, isRec = false, parsedEntry = null, voiceLang = 'en-US';
 
 function renderExamples() {
   const chips = document.getElementById('example-chips');
   if (!chips) return;
-  const examples = voiceLang === 'ar-EG' ? EXAMPLES_AR : EXAMPLES_EN;
-  chips.innerHTML = examples.map(ex =>
-    `<button onclick="useExample(this.getAttribute('data-ex'))" data-ex="${ex}"
-      style="padding:5px 10px;border-radius:20px;font-size:11px;font-weight:600;
-      background:var(--border);color:var(--text);border:1px solid var(--border);cursor:pointer;white-space:nowrap;">
-      ${ex}
-    </button>`
+  const list = voiceLang === 'ar-EG' ? EXAMPLES_AR : EXAMPLES_EN;
+  chips.innerHTML = list.map(ex =>
+    `<button onclick="tapExample(this.dataset.v)" data-v="${ex}"
+      style="padding:5px 11px;border-radius:20px;font-size:11px;font-weight:600;
+      background:var(--border);color:var(--text);border:none;cursor:pointer;white-space:nowrap;">${ex}</button>`
   ).join('');
-  // show examples section
-  const sec = document.getElementById('quick-examples');
-  if (sec) sec.style.display = 'block';
 }
 
-function useExample(text) {
-  const inp = document.getElementById('quick-input');
-  if (inp) inp.value = text;
-  parseTxt(text);
+function tapExample(text) {
+  document.getElementById('quick-input').value = text;
+  doAdd();
 }
-
-function liveParseInput(val) {
-  parsedEntry = null; // reset so button re-parses
-  const hint = document.getElementById('quick-hint');
-  if (!val.trim()) {
-    if (hint) hint.textContent = '';
-    document.getElementById('pres').classList.remove('show');
-    const sec = document.getElementById('quick-examples');
-    if (sec) sec.style.display = 'block';
-    return;
-  }
-  if (hint) hint.textContent = '⚡ Tap "Add Expense" to process...';
-}
-
-
-function handleAddExpense() {
-  // If already parsed (parsedEntry exists), save it
-  if (parsedEntry) {
-    confirmVoice();
-    return;
-  }
-  // Otherwise parse the input first then save
-  const input = document.getElementById('quick-input');
-  const val = input ? input.value.trim() : '';
-  if (!val) { toast('⚠️ Type your expense or tap an example first'); return; }
-  parseTxt(val);
-  // After parseTxt sets parsedEntry, save it
-  setTimeout(() => {
-    if (parsedEntry) confirmVoice();
-  }, 100);
-}
-
-function processQuickInput() {
-  const input = document.getElementById('quick-input');
-  const val = input ? input.value.trim() : '';
-  if (!val) { toast('⚠️ Type or speak your expense first'); return; }
-  parseTxt(val);
-  setTimeout(() => {
-    const pres = document.getElementById('pres');
-    if (pres) pres.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 150);
-}
-
-function tryVoice() {
-  const btn = document.getElementById('mic-inline-btn');
-  if (isRec) {
-    stopRec();
-    if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
-    return;
-  }
-  if (btn) { btn.style.background = 'var(--red)'; btn.textContent = '⏹'; }
-
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { toast('⚠️ Voice not supported — type instead'); if(btn){btn.style.background='var(--accent)';btn.textContent='🎤';} return; }
-
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        stream.getTracks().forEach(t => t.stop());
-        doVoiceRecord(btn);
-      })
-      .catch(() => {
-        if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
-        document.getElementById('mic-help').style.display = 'block';
-        toast('⚠️ Mic blocked — see instructions below');
-      });
-  } else {
-    doVoiceRecord(btn);
-  }
-}
-
-function doVoiceRecord(btn) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const rec = new SR();
-  rec.lang = voiceLang;
-  rec.interimResults = true;
-  rec.continuous = false;
-
-  isRec = true;
-  document.getElementById('wave').style.display = 'flex';
-  const hint = document.getElementById('quick-hint');
-  if (hint) hint.textContent = voiceLang==='ar-EG' ? '🎤 جاري الاستماع...' : '🎤 Listening...';
-
-  rec.onresult = (e) => {
-    const t = Array.from(e.results).map(r => r[0].transcript).join('');
-    const inp = document.getElementById('quick-input');
-    if (inp) inp.value = t;
-    if (e.results[e.results.length-1].isFinal) {
-      parseTxt(t);
-      // Scroll to show editable form
-      setTimeout(() => {
-        const pres = document.getElementById('pres');
-        if (pres) pres.scrollIntoView({ behavior:'smooth', block:'nearest' });
-      }, 200);
-    }
-  };
-  rec.onend = () => {
-    isRec = false;
-    document.getElementById('wave').style.display = 'none';
-    if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
-  };
-  rec.onerror = (e) => {
-    isRec = false;
-    document.getElementById('wave').style.display = 'none';
-    if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
-    if (e.error === 'not-allowed') {
-      document.getElementById('mic-help').style.display = 'block';
-      toast('⚠️ Mic blocked — see instructions below');
-    } else {
-      toast('⚠️ ' + e.error + ' — type instead');
-    }
-  };
-  try { rec.start(); recognition = rec; } catch(err) {
-    isRec = false;
-    if (btn) { btn.style.background = 'var(--accent)'; btn.textContent = '🎤'; }
-    toast('⚠️ Could not start recording');
-  }
-}
-
-// ── VOICE ──
-let recognition=null,isRec=false,parsedEntry=null,voiceLang='ar-EG';
-
 
 function setVoiceLang(lang, el) {
   voiceLang = lang;
-  // Update button styles
-  document.getElementById('lang-ar').style.background = lang==='ar-EG' ? 'var(--accent)' : 'var(--border)';
-  document.getElementById('lang-ar').style.color = lang==='ar-EG' ? '#fff' : 'var(--muted)';
-  document.getElementById('lang-en').style.background = lang==='en-US' ? 'var(--accent)' : 'var(--border)';
-  document.getElementById('lang-en').style.color = lang==='en-US' ? '#fff' : 'var(--muted)';
-  // Update hint text
-  const hint = document.getElementById('voice-hint');
-  if (hint) {
-    hint.textContent = lang==='ar-EG'
-      ? 'قل المصروف بالعربي — مثال: "ستاربكس ١٠٥ جنيه فيزا CIB"'
-      : 'Say your expense in English — e.g. "Starbucks 105 pounds CIB Visa"';
-  }
-  // Save preference
   localStorage.setItem('voiceLang', lang);
+  document.getElementById('lang-ar').style.cssText += lang==='ar-EG'?';background:var(--accent);color:#fff':';background:var(--border);color:var(--muted)';
+  document.getElementById('lang-en').style.cssText += lang==='en-US'?';background:var(--accent);color:#fff':';background:var(--border);color:var(--muted)';
+  document.getElementById('quick-input').placeholder = lang==='ar-EG'?'ستاربكس ١٠٥ فيزا CIB':'Starbucks 105 CIB Visa';
   renderExamples();
-  const inp=document.getElementById('quick-input');
-  if(inp) inp.placeholder=lang==='ar-EG'?'ستاربكس ١٠٥ جنيه فيزا CIB':'Starbucks 105 CIB Visa';
-  toast(lang==='ar-EG' ? '🇪🇬 Arabic mode' : '🇺🇸 English mode');
 }
 
-function openVoice(){
-  // Restore saved language
-  const saved = localStorage.getItem('voiceLang');
-  if (saved && saved !== voiceLang) {
-    voiceLang = saved;
-    const el = document.getElementById(saved==='ar-EG'?'lang-ar':'lang-en');
-    if (el) setVoiceLang(saved, el);
-  }
-  // Reset everything
-  const inp = document.getElementById('quick-input');
-  if (inp) { inp.value=''; inp.placeholder = voiceLang==='ar-EG'?'ستاربكس ١٠٥ جنيه فيزا CIB':'Starbucks 105 CIB Visa'; }
-  const hint = document.getElementById('quick-hint');
-  if (hint) hint.textContent = voiceLang==='ar-EG' ? 'اكتب مصروفك أو اضغط 🎤' : 'Type your expense or tap 🎤';
-  document.getElementById('pres').classList.remove('show');
-  document.getElementById('conf-btn').style.display = 'block';
-  document.getElementById('conf-btn').textContent = '✓ Add Expense';
-  document.getElementById('mic-help').style.display = 'none';
+function openVoice() {
+  const saved = localStorage.getItem('voiceLang') || 'en-US';
+  voiceLang = saved;
+  // set button states
+  document.getElementById('lang-ar').style.background = saved==='ar-EG'?'var(--accent)':'var(--border)';
+  document.getElementById('lang-ar').style.color = saved==='ar-EG'?'#fff':'var(--muted)';
+  document.getElementById('lang-en').style.background = saved==='en-US'?'var(--accent)':'var(--border)';
+  document.getElementById('lang-en').style.color = saved==='en-US'?'#fff':'var(--muted)';
+  // reset form
+  document.getElementById('quick-input').value = '';
+  document.getElementById('quick-input').placeholder = saved==='ar-EG'?'ستاربكس ١٠٥ فيزا CIB':'Starbucks 105 CIB Visa';
+  document.getElementById('vstatus').textContent = '';
+  document.getElementById('vform').style.display = 'none';
+  document.getElementById('vexamples').style.display = 'block';
   document.getElementById('wave').style.display = 'none';
+  document.getElementById('mic-help').style.display = 'none';
+  document.getElementById('mic-btn').textContent = '🎤';
+  document.getElementById('mic-btn').style.background = 'var(--accent)';
   parsedEntry = null;
   renderExamples();
   document.getElementById('vmodal').classList.add('open');
-  setTimeout(() => { if (inp) inp.focus(); }, 400);
+  setTimeout(()=>document.getElementById('quick-input').focus(), 400);
 }
 
-function closeVoice(){if(isRec&&recognition)recognition.stop();document.getElementById('vmodal').classList.remove('open');}
-
-function toggleRec(){isRec?stopRec():startRec();}
-
-function startRec(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){
-    showManualEntry();
-    return;
-  }
-  // Request microphone permission explicitly first
-  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
-    navigator.mediaDevices.getUserMedia({audio:true})
-      .then(stream=>{
-        stream.getTracks().forEach(t=>t.stop()); // release mic, SR will re-acquire
-        startSpeechRecognition();
-      })
-      .catch(err=>{
-        console.error('Mic permission denied:',err);
-        document.getElementById('tbox').textContent='⚠️ Microphone access denied. Please allow mic in iPhone Settings → Safari → Microphone, or type your expense below.';
-        showManualEntry();
-      });
-  } else {
-    startSpeechRecognition();
-  }
+function closeVoice() {
+  if (isRec && voiceRec) { try{voiceRec.stop();}catch(e){} }
+  isRec = false;
+  document.getElementById('vmodal').classList.remove('open');
 }
 
-function startSpeechRecognition(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  try {
-    recognition=new SR();
-    recognition.lang=voiceLang;
-    recognition.interimResults=true;
-    recognition.continuous=false;
-    recognition.maxAlternatives=1;
-
-    recognition.onstart=()=>{
-      isRec=true;
-      document.getElementById('fab').classList.add('rec');
-      document.getElementById('wave').style.display='flex';
-      document.getElementById('rec-btn').textContent='⏹ Stop';
-      document.getElementById('tbox').textContent= voiceLang==='ar-EG' ? '🎤 جاري الاستماع...' : '🎤 Listening...';
-    };
-
-    recognition.onresult=(e)=>{
-      const t=Array.from(e.results).map(r=>r[0].transcript).join('');
-      document.getElementById('tbox').textContent=t;
-      if(e.results[e.results.length-1].isFinal) parseTxt(t);
-    };
-
-    recognition.onerror=(e)=>{
-      console.error('Speech error:',e.error);
-      stopRec();
-      if(e.error==='not-allowed'||e.error==='permission-denied'){
-        document.getElementById('tbox').textContent='⚠️ Mic blocked. Go to iPhone Settings → Safari → Microphone → Allow';
-      } else if(e.error==='no-speech'){
-        document.getElementById('tbox').textContent='⚠️ No speech detected. Try again or type below.';
-        showManualEntry();
-      } else if(e.error==='network'){
-        document.getElementById('tbox').textContent='⚠️ No internet for voice. Type your expense below.';
-        showManualEntry();
-      } else {
-        document.getElementById('tbox').textContent='⚠️ Error: '+e.error+'. Type below instead.';
-        showManualEntry();
-      }
-    };
-
-    recognition.onend=()=>stopRec();
-    recognition.start();
-
-  } catch(err){
-    console.error('SR start error:',err);
-    document.getElementById('tbox').textContent='⚠️ Voice not supported. Type your expense below.';
-    showManualEntry();
-  }
+function toggleMic() {
+  if (isRec) { try{voiceRec.stop();}catch(e){} isRec=false; stopMicUI(); return; }
+  startMic();
 }
 
-function stopRec(){
-  isRec=false;
-  if(recognition){ try{recognition.stop();}catch(e){} }
-  document.getElementById('fab').classList.remove('rec');
-  document.getElementById('wave').style.display='none';
-  document.getElementById('rec-btn').textContent='▶ Start';
+function startMicUI() {
+  isRec = true;
+  document.getElementById('mic-btn').textContent = '⏹';
+  document.getElementById('mic-btn').style.background = 'var(--red)';
+  document.getElementById('wave').style.display = 'flex';
+  document.getElementById('vstatus').textContent = voiceLang==='ar-EG'?'🎤 جاري الاستماع...':'🎤 Listening...';
+}
+function stopMicUI() {
+  isRec = false;
+  document.getElementById('mic-btn').textContent = '🎤';
+  document.getElementById('mic-btn').style.background = 'var(--accent)';
+  document.getElementById('wave').style.display = 'none';
 }
 
-// ── Manual text entry fallback ──
-function showManualEntry(){
-  const tbox=document.getElementById('tbox');
-  tbox.innerHTML='';
-  const wrapper=document.createElement('div');
-  wrapper.innerHTML=`
-    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">✍️ Type your expense manually:</div>
-    <input type="text" id="manual-voice-input" placeholder="${voiceLang==='ar-EG'?'مثال: ستاربكس ١٠٥ جنيه فيزا CIB':'e.g. Starbucks 105 pounds CIB Visa'}"
-      style="width:100%;background:var(--surface);border:1px solid var(--accent);border-radius:10px;
-      color:var(--text);font-size:14px;padding:10px 12px;outline:none;margin-bottom:8px;">
-    <button onclick="processManualVoice()" style="width:100%;padding:10px;background:var(--accent);color:#fff;
-      border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
-      ✓ Process
-    </button>`;
-  tbox.appendChild(wrapper);
-  setTimeout(()=>{ const inp=document.getElementById('manual-voice-input'); if(inp)inp.focus(); },100);
-}
-
-function processManualVoice(){
-  const inp=document.getElementById('manual-voice-input');
-  if(!inp||!inp.value.trim()){ toast('⚠️ Please type something'); return; }
-  const text=inp.value.trim();
-  document.getElementById('tbox').textContent=text;
-  parseTxt(text);
-}
-
-function parseTxt(text){
-  const raw = text.trim();
-  const d = today();
-
-  // ── Extract amount (supports Arabic & English numerals) ──
-  const normalised = raw.replace(/[٠-٩]/g, c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c));
-  const am = normalised.match(/(\d[\d,\.]*)/);
-  const amount = am ? parseFloat(am[1].replace(/,/g,'')) : 0;
-
-  // ── Detect TRANSFER first ──
-  const isTransfer = /transfer|تحويل|from .+ to |من .+ إلى/i.test(raw);
-  if(isTransfer){
-    // Extract from/to accounts
-    const accounts = ['CIB Debit','CIB Visa','NEXTBANK 18K','NEXTBANK 50K','Wafa Bank Visa','Cash in Hand','QNB Debit'];
-    let fromAcc='CIB Debit', toAcc='CIB Visa';
-    const fromMatch = raw.match(/from ([A-Za-z\s]+?)(?:\s+to\s|$)/i);
-    const toMatch   = raw.match(/to ([A-Za-z\s]+?)(?:\s+from\s|$)/i);
-    if(fromMatch){
-      const f=fromMatch[1].toLowerCase().trim();
-      fromAcc = accounts.find(a=>a.toLowerCase().includes(f.substring(0,6)))||fromAcc;
+function startMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('⚠️ Voice not supported on this browser'); return; }
+  voiceRec = new SR();
+  voiceRec.lang = voiceLang;
+  voiceRec.interimResults = true;
+  voiceRec.continuous = false;
+  voiceRec.onstart = () => startMicUI();
+  voiceRec.onresult = (e) => {
+    const t = Array.from(e.results).map(r=>r[0].transcript).join('');
+    document.getElementById('quick-input').value = t;
+    document.getElementById('vstatus').textContent = t;
+    if (e.results[e.results.length-1].isFinal) {
+      stopMicUI();
+      doAdd();
     }
-    if(toMatch){
-      const t=toMatch[1].toLowerCase().trim();
-      toAcc = accounts.find(a=>a.toLowerCase().includes(t.substring(0,6)))||toAcc;
+  };
+  voiceRec.onerror = (e) => {
+    stopMicUI();
+    if (e.error==='not-allowed'||e.error==='permission-denied') {
+      document.getElementById('mic-help').style.display='block';
+    } else {
+      document.getElementById('vstatus').textContent = '⚠️ '+e.error+' — type instead';
     }
-    // Auto-detect common names
-    if(/cib debit|debit/i.test(raw.split(/to /i)[0]||''))  fromAcc='CIB Debit';
-    if(/cib visa/i.test(raw.split(/to /i)[0]||''))          fromAcc='CIB Visa';
-    if(/cib debit|debit/i.test(raw.split(/to /i)[1]||''))  toAcc='CIB Debit';
-    if(/cib visa/i.test(raw.split(/to /i)[1]||''))           toAcc='CIB Visa';
-    if(/nextbank 18/i.test(raw.split(/to /i)[1]||''))        toAcc='NEXTBANK 18K';
-    if(/nextbank 50/i.test(raw.split(/to /i)[1]||''))        toAcc='NEXTBANK 50K';
-    if(/wafa/i.test(raw.split(/to /i)[1]||''))               toAcc='Wafa Bank Visa';
-
-    parsedEntry = {
-      _type:'transfer',
-      id: state.nextTrId++,
-      date:d, from:fromAcc, to:toAcc, amount,
-      desc: 'Transfer '+fmt(amount)+' EGP'
-    };
-    document.getElementById('pr-cat').textContent  = '🔄 TRANSFER';
-    document.getElementById('pr-desc').textContent = fromAcc+' → '+toAcc;
-    document.getElementById('pr-amt').textContent  = fmt(amount)+' EGP';
-    document.getElementById('pr-pay').textContent  = fromAcc;
-    document.getElementById('pr-date').textContent = d;
-    document.getElementById('pres').classList.add('show');
-    document.getElementById('conf-btn').style.display='block';
-    document.getElementById('conf-btn').textContent='✓ Add Transfer';
-    return;
-  }
-
-  // ── Payment method ──
-  let method='CIB Visa';
-  if(/cib debit|debit card|كارت الدبت|دبت/i.test(raw))      method='CIB Debit';
-  else if(/nextbank 18|next\s*18/i.test(raw))                 method='NEXTBANK 18K';
-  else if(/nextbank 50|next\s*50/i.test(raw))                 method='NEXTBANK 50K';
-  else if(/wafa/i.test(raw))                                  method='Wafa Bank Visa';
-  else if(/qnb/i.test(raw))                                   method='QNB Debit';
-  else if(/cash|كاش|نقدي/i.test(raw))                        method='Cash in Hand';
-  else if(/cib visa|فيزا cib/i.test(raw))                    method='CIB Visa';
-
-  // ── Category ──
-  let cat='Miscellaneous', sub='';
-  if(/starbucks|star bucks|coffee|قهوة|كافيه|cafe|cappuccino|latte|espresso/i.test(raw)){
-    cat='Food and Dining'; sub='Coffee Shops & Snacks';
-  } else if(/uber|careem|كريم|taxi|تاكسي|ride/i.test(raw)){
-    if(/wife|hadeer|هدير/i.test(raw)){cat='Wife';sub='Transport and Commute';}
-    else if(/hala|هالة/i.test(raw)){cat='Hala';sub='Transport and Commute';}
-    else if(/nour|نور/i.test(raw)){cat='Nour';sub='Transport and Commute';}
-    else{cat='Transportation';sub='Ride Share (Uber / Lyft)';}
-  } else if(/grocery|supermarket|hyperone|هايبر|بقالة|carrefour|spinneys|talabat|instashop/i.test(raw)){
-    cat='Food and Dining'; sub='Groceries / Supermarket';
-  } else if(/restaurant|مطعم|dining|lunch|dinner|breakfast|فطار|غدا|عشا/i.test(raw)){
-    cat='Food and Dining'; sub='Restaurants & Dining Out';
-  } else if(/electricity|كهرباء|electric/i.test(raw)){
-    cat='Housing'; sub='Electricity — Home 1';
-  } else if(/water|مياه|water bill/i.test(raw)){
-    cat='Housing'; sub='Water & Sewage — Home 1';
-  } else if(/internet|نت|wifi/i.test(raw)){
-    cat='Housing'; sub='Internet';
-  } else if(/rent|إيجار|ايجار/i.test(raw)){
-    cat='Housing'; sub='Rent / Mortgage';
-  } else if(/gas|غاز/i.test(raw)){
-    cat='Housing'; sub='Natural Gas / Heating';
-  } else if(/housekeeper|cleaner|حمادة|شغالة|هاندي/i.test(raw)){
-    cat='Housing'; sub='House Keeper';
-  } else if(/hala|هالة/i.test(raw)){
-    cat='Hala'; sub='Allowance / Pocket Money';
-  } else if(/nour|نور/i.test(raw)){
-    cat='Nour'; sub='Allowance / Pocket Money';
-  } else if(/wife|hadeer|هدير/i.test(raw)){
-    cat='Wife'; sub='Allowance / Pocket Money';
-  } else if(/cigarette|سيجارة|سجاير|دخان/i.test(raw)){
-    cat='Miscellaneous'; sub='Cigarettes / Tobacco';
-  } else if(/gym|fitness|sport|رياضة/i.test(raw)){
-    cat='Health and Medical'; sub='Gym / Fitness Membership';
-  } else if(/doctor|دكتور|clinic|عيادة|hospital|مستشفى/i.test(raw)){
-    cat='Health and Medical'; sub='Doctor / Specialist Visits';
-  } else if(/pharmacy|صيدلية|medicine|دواء/i.test(raw)){
-    cat='Health and Medical'; sub='Pharmacy / Medications';
-  } else if(/netflix|spotify|apple|subscription|اشتراك/i.test(raw)){
-    cat='Technology'; sub='Subscriptions';
-  } else if(/phone|موبايل|mobile|etisalat|vodafone|orange/i.test(raw)){
-    cat='Technology'; sub='Mobile Phone Bill';
-  } else if(/salon|barber|haircut|حلاقة|كوافير/i.test(raw)){
-    cat='Personal Care'; sub='Haircut / Salon / Barber';
-  } else if(/clothes|clothing|shoes|ملابس|أحذية/i.test(raw)){
-    cat='Personal Care'; sub='Clothing & Shoes';
-  } else if(/donation|charity|تبرع|صدقة/i.test(raw)){
-    cat='Gifts and Donations'; sub='Charitable Donations';
-  } else if(/gift|هدية/i.test(raw)){
-    cat='Gifts and Donations'; sub='Birthday & Holiday Gifts';
-  } else if(/visa payment|visa pay|سداد فيزا/i.test(raw)){
-    cat='Debt Payments'; sub='Visa Payment — CIB Visa';
-  } else if(/loan|قرض|instalment|قسط/i.test(raw)){
-    cat='Debt Payments'; sub='Other Debt Payments';
-  } else if(/garage|parking|جراج/i.test(raw)){
-    cat='Transportation'; sub='Car Garage / Parking Rental';
-  } else if(/fuel|gas station|بنزين|وقود/i.test(raw)){
-    cat='Transportation'; sub='Fuel / Gasoline';
-  }
-
-  // ── Clean description — keep meaningful words ──
-  let desc = raw
-    .replace(/[٠-٩]/g, c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c))  // normalise arabic nums
-    .replace(/\d[\d,\.]*/g, '')                           // remove numbers
-    .replace(/(pound|pounds|egp|جنيه|visa|cib|nextbank|wafa|debit|cash|كاش|نقدي|دبت)/gi,'')
-    .replace(/\s{2,}/g,' ').trim();
-  if(!desc || desc.length<2) desc = raw.substring(0,40);
-  desc = desc.substring(0,45);
-
-  parsedEntry = {_type:'expense', id:state.nextExpId++, date:d, cat, sub, desc, method, amount, notes:''};
-
-  // Show EDITABLE result
-  document.getElementById('pres').classList.add('show');
-  document.getElementById('conf-btn').style.display='block';
-  document.getElementById('conf-btn').textContent='✓ Add Expense';
-  const h=document.getElementById('quick-hint');
-  if(h) h.textContent='✅ Review & edit below, then tap Add Expense';
-  const ex=document.getElementById('quick-examples');
-  if(ex) ex.style.display='none';
-
-  // Populate editable fields
-  document.getElementById('ve-desc').value   = desc;
-  document.getElementById('ve-amount').value = amount;
-  document.getElementById('ve-method').value = method;
-  document.getElementById('ve-date').value   = d;
-
-  // Set category dropdown
-  const catSel = document.getElementById('ve-cat');
-  catSel.value = cat;
-  fillVoiceSubcats();
-  setTimeout(()=>{ document.getElementById('ve-sub').value = sub; }, 50);
+  };
+  voiceRec.onend = () => stopMicUI();
+  try { voiceRec.start(); } catch(e) { stopMicUI(); toast('⚠️ Could not start mic'); }
 }
 
-function confirmVoice(){
-  if(!parsedEntry) return;
-  if(parsedEntry._type==='transfer'){
-    state.transfers.push({id:parsedEntry.id,date:parsedEntry.date,from:parsedEntry.from,to:parsedEntry.to,amount:parsedEntry.amount,desc:parsedEntry.desc});
+function doAdd() {
+  const raw = document.getElementById('quick-input').value.trim();
+  if (!raw) { toast('⚠️ Type your expense first'); return; }
+
+  // Parse
+  parseTxt(raw);
+
+  // Show form with parsed values
+  document.getElementById('vform').style.display = 'block';
+  document.getElementById('vexamples').style.display = 'none';
+  document.getElementById('vstatus').textContent = '✅ Review & tap Save below';
+
+  // Scroll down
+  setTimeout(()=>{
+    document.getElementById('vform').scrollIntoView({behavior:'smooth',block:'nearest'});
+  }, 100);
+}
+
+function doSave() {
+  if (!parsedEntry) { toast('⚠️ Parse an expense first'); return; }
+
+  const desc   = document.getElementById('ve-desc').value.trim();
+  const amount = parseFloat(document.getElementById('ve-amount').value);
+  const cat    = document.getElementById('ve-cat').value;
+  const sub    = document.getElementById('ve-sub').value;
+  const method = document.getElementById('ve-method').value;
+  const date   = document.getElementById('ve-date').value;
+
+  if (!desc)           { toast('⚠️ Enter a description'); return; }
+  if (!amount||amount<=0) { toast('⚠️ Enter a valid amount'); return; }
+
+  if (parsedEntry._type === 'transfer') {
+    state.transfers.push({id:state.nextTrId++,date,from:parsedEntry.from,to:parsedEntry.to,amount,desc});
     toast('✅ Transfer saved!');
   } else {
-    // Read from editable fields — user may have corrected them
-    const desc   = document.getElementById('ve-desc').value.trim() || parsedEntry.desc;
-    const amount = parseFloat(document.getElementById('ve-amount').value) || parsedEntry.amount;
-    const cat    = document.getElementById('ve-cat').value || parsedEntry.cat;
-    const sub    = document.getElementById('ve-sub').value || parsedEntry.sub;
-    const method = document.getElementById('ve-method').value || parsedEntry.method;
-    const date   = document.getElementById('ve-date').value || parsedEntry.date;
-    if(!amount || amount<=0){ toast('⚠️ Enter a valid amount'); return; }
-    state.expenses.push({id:parsedEntry.id, date, cat, sub, desc, method, amount, notes:''});
+    state.expenses.push({id:state.nextExpId++,date,cat,sub,desc,method,amount,notes:''});
     toast('✅ Expense saved!');
   }
   saveState(); renderAll(); closeVoice();
 }
 
-function fillVoiceSubcats(){
+function liveParseInput(val) { parsedEntry=null; }
+function processQuickInput() { doAdd(); }
+function tryVoice() { toggleMic(); }
+function confirmVoice() { doSave(); }
+function handleAddExpense() { doAdd(); }
+function fillVoiceSubcats() {
   const cat = document.getElementById('ve-cat').value;
   const sel = document.getElementById('ve-sub');
   sel.innerHTML = '<option value="">Select...</option>';
-  (SUBS[cat]||[]).forEach(s => sel.innerHTML += `<option>${s}</option>`);
+  (SUBS[cat]||[]).forEach(s=>sel.innerHTML+=`<option>${s}</option>`);
 }
 
-// ── INIT ──
-window.addEventListener('DOMContentLoaded',()=>{
-  const loaded=loadState();
-  if(!loaded){
-    state.expenses=[...SEED_EXPENSES];
-    state.incomes=[...SEED_INCOMES];
-    state.transfers=[...SEED_TRANSFERS];
-    state.nextExpId=200;
-    state.nextIncId=20;
-    state.nextTrId=30;
-    saveState();
-  }
-  currentMonthOffset=0;
-  restoreTheme();
-  refreshCatSelects();
-  document.getElementById('f-date').value=today();
-  document.getElementById('fi-date').value=today();
-  renderAll();
-  setSyncDot('ok');
-});
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script>
-// ── EXPORT TO EXCEL ──
-function exportExcel() {
-  try {
-    const wb = XLSX.utils.book_new();
-
-    // ── EXPENSES SHEET ──
-    const expRows = [
-      ['Date','Category','Subcategory','Description','Payment Method','Amount (EGP)','Notes']
-    ];
-    [...state.expenses].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-      expRows.push([e.date, e.cat, e.sub||'', e.desc, e.method, e.amount, e.notes||'']);
-    });
-    const wsExp = XLSX.utils.aoa_to_sheet(expRows);
-    wsExp['!cols'] = [{wch:12},{wch:20},{wch:25},{wch:30},{wch:18},{wch:14},{wch:20}];
-    XLSX.utils.book_append_sheet(wb, wsExp, 'Expenses');
-
-    // ── INCOME SHEET ──
-    const incRows = [
-      ['Date','Category','Description','Frequency','Expected (EGP)','Actual (EGP)','Deposited To']
-    ];
-    state.incomes.forEach(i=>{
-      incRows.push([i.date, i.cat, i.desc, i.freq||'', i.expected, i.actual, i.account]);
-    });
-    const wsInc = XLSX.utils.aoa_to_sheet(incRows);
-    wsInc['!cols'] = [{wch:12},{wch:20},{wch:30},{wch:12},{wch:16},{wch:14},{wch:16}];
-    XLSX.utils.book_append_sheet(wb, wsInc, 'Income');
-
-    // ── DASHBOARD SUMMARY SHEET ──
-    const totals = {};
-    state.expenses.forEach(e=> totals[e.cat]=(totals[e.cat]||0)+e.amount);
-    const totalExp = Object.values(totals).reduce((a,b)=>a+b,0);
-    const totalInc = state.incomes.reduce((a,i)=>a+i.actual,0);
-    const savings = totalInc - totalExp;
-
-    const dashRows = [
-      ['MY MONTHLY BUDGET SUMMARY'],
-      ['Generated:', new Date().toLocaleDateString('en-EG')],
-      [],
-      ['Metric','Amount (EGP)'],
-      ['Total Income', totalInc],
-      ['Total Expenses', Math.round(totalExp)],
-      ['Net Savings', Math.round(savings)],
-      ['Savings Rate %', totalInc ? ((savings/totalInc)*100).toFixed(1)+'%' : '0%'],
-      [],
-      ['EXPENSE BY CATEGORY','Budgeted (EGP)','Actual (EGP)','Variance (EGP)','% Used'],
-    ];
-    const BUDGETS_LOCAL={Housing:37200,'Food and Dining':19000,Transportation:3000,'Health and Medical':2000,'Personal Care':2500,Education:0,Entertainment:139.99,Technology:6440.18,Insurance:0,'Savings and Investments':0,'Debt Payments':9249.33,'Travel and Vacation':0,'Gifts and Donations':8500,'Childcare and Family':0,Miscellaneous:5500,Nour:9000,Hala:6539.99,Wife:9539.99};
-    Object.keys(BUDGETS_LOCAL).forEach(cat=>{
-      const act = totals[cat]||0;
-      const bud = BUDGETS_LOCAL[cat]||0;
-      const variance = bud - act;
-      const pct = bud ? ((act/bud)*100).toFixed(1)+'%' : '—';
-      dashRows.push([cat, bud, act, variance, pct]);
-    });
-    const wsDash = XLSX.utils.aoa_to_sheet(dashRows);
-    wsDash['!cols'] = [{wch:25},{wch:16},{wch:16},{wch:16},{wch:10}];
-    XLSX.utils.book_append_sheet(wb, wsDash, 'Dashboard');
-
-    // ── DOWNLOAD ──
-    const month = new Date().toLocaleString('en-EG',{month:'long',year:'numeric'}).replace(' ','_');
-    XLSX.writeFile(wb, `Budget_${month}.xlsx`);
-    toast('✅ Excel file downloaded!');
-  } catch(e) {
-    toast('⚠️ Export failed: '+e.message);
-  }
-}
-
-// ── EXPORT TO CSV (fallback for iPhone if xlsx doesn't trigger download) ──
-function exportCSV() {
-  const rows = [['Date','Category','Subcategory','Description','Payment Method','Amount (EGP)','Notes']];
-  [...state.expenses].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-    rows.push([e.date, e.cat, e.sub||'', e.desc, e.method, e.amount, e.notes||'']);
-  });
-  const csv = rows.map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'Budget_Expenses.csv';
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a); URL.revokeObjectURL(url);
-  toast('✅ CSV file downloaded!');
-}
-
-
-
-
-
-
-
-// ── CHARTS & ANALYTICS ──
-let chartPeriodMonths = 1;
-let chartInstances = {};
-
-function setChartPeriod(months, el) {
-  chartPeriodMonths = months;
-  document.querySelectorAll('.period-btn').forEach(b => {
-    b.style.background = 'var(--border)';
-    b.style.color = 'var(--muted)';
-  });
-  el.style.background = 'var(--accent)';
-  el.style.color = '#fff';
-  renderCharts();
-}
-
-function getMonthKeys(n) {
-  const keys = [];
-  for (let i = n-1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - i);
-    keys.push(d.toISOString().slice(0,7));
-  }
-  return keys;
-}
-
-function getMonthShort(key) {
-  const d = new Date(key+'-15');
-  return d.toLocaleString('en-EG',{month:'short'});
-}
-
-function destroyChart(id) {
-  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
-}
-
-function getCSSVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-function renderCharts() {
-  const months = getMonthKeys(chartPeriodMonths);
-
-  // ── Income vs Expense Bar Chart ──
-  destroyChart('income-expense');
-  const ieCtx = document.getElementById('chart-income-expense');
-  if (ieCtx) {
-    const incData = months.map(k => state.incomes.filter(i=>i.date.startsWith(k)).reduce((a,i)=>a+i.actual,0));
-    const expData = months.map(k => state.expenses.filter(e=>e.date.startsWith(k)).reduce((a,e)=>a+e.amount,0));
-    const savData = months.map((k,i) => Math.max(incData[i]-expData[i],0));
-    chartInstances['income-expense'] = new Chart(ieCtx, {
-      type: 'bar',
-      data: {
-        labels: months.map(getMonthShort),
-        datasets: [
-          { label:'Income', data:incData, backgroundColor:'rgba(0,201,167,0.8)', borderRadius:6 },
-          { label:'Expenses', data:expData, backgroundColor:'rgba(255,94,126,0.8)', borderRadius:6 },
-          { label:'Savings', data:savData, backgroundColor:'rgba(79,124,255,0.6)', borderRadius:6 },
-        ]
-      },
-      options: {
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ' '+fmt(Math.round(ctx.raw))+' EGP' } } },
-        scales:{
-          x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:getCSSVar('--muted'),font:{size:10}} },
-          y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:getCSSVar('--muted'),font:{size:10}, callback: v=>fmt(v/1000)+'k'} }
-        }
-      }
-    });
-  }
-
-  // ── Spending Trend Line ──
-  destroyChart('trend');
-  const tCtx = document.getElementById('chart-trend');
-  if (tCtx) {
-    // Daily totals across the period
-    const startKey = months[0]+'-01';
-    const endDate = new Date(); endDate.setDate(endDate.getDate()+1);
-    const dayMap = {};
-    state.expenses.filter(e=>e.date>=startKey).forEach(e=>{
-      dayMap[e.date]=(dayMap[e.date]||0)+e.amount;
-    });
-    const days = Object.keys(dayMap).sort();
-    const vals = days.map(d=>dayMap[d]);
-    // 7-day moving average
-    const avg = vals.map((v,i)=>{
-      const slice=vals.slice(Math.max(0,i-3),i+4);
-      return slice.reduce((a,b)=>a+b,0)/slice.length;
-    });
-    const expTrend = months.map(k=>state.expenses.filter(e=>e.date.startsWith(k)).reduce((a,e)=>a+e.amount,0));
-    const avgMonthly = expTrend.reduce((a,b)=>a+b,0)/(expTrend.filter(x=>x>0).length||1);
-    const lastMonth = expTrend[expTrend.length-1]||0;
-    const trend = lastMonth > avgMonthly ? '📈 Spending is above average' : '📉 Spending is below average';
-    const pct = avgMonthly ? Math.abs(((lastMonth-avgMonthly)/avgMonthly)*100).toFixed(1) : 0;
-    document.getElementById('chart-trend-insight').textContent = trend+' by '+pct+'%';
-    chartInstances['trend'] = new Chart(tCtx, {
-      type:'line',
-      data:{
-        labels: months.map(getMonthShort),
-        datasets:[{
-          label:'Monthly Spending',
-          data: expTrend,
-          borderColor:'rgba(255,94,126,0.9)',
-          backgroundColor:'rgba(255,94,126,0.1)',
-          fill:true, tension:0.4,
-          pointBackgroundColor:'rgba(255,94,126,1)',
-          pointRadius:4
-        }]
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:ctx=>' '+fmt(Math.round(ctx.raw))+' EGP' } } },
-        scales:{
-          x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:getCSSVar('--muted'),font:{size:10}} },
-          y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:getCSSVar('--muted'),font:{size:10}, callback:v=>fmt(v/1000)+'k'} }
-        }
-      }
-    });
-  }
-
-  // ── Pie Chart by Category ──
-  destroyChart('pie');
-  const pCtx = document.getElementById('chart-pie');
-  if (pCtx) {
-    const startKey = months[0]+'-01';
-    const catTotals = {};
-    state.expenses.filter(e=>e.date>=startKey).forEach(e=>{
-      catTotals[e.cat]=(catTotals[e.cat]||0)+e.amount;
-    });
-    const sorted = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const total = Object.values(catTotals).reduce((a,b)=>a+b,0);
-    document.getElementById('pie-total').textContent = fmt(Math.round(total/1000))+'k';
-    const labels = sorted.map(([k])=>k);
-    const data = sorted.map(([,v])=>v);
-    const colors = sorted.map(([k])=>COLORS[k]||'#94a3b8');
-    chartInstances['pie'] = new Chart(pCtx, {
-      type:'doughnut',
-      data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:0, hoverOffset:6 }] },
-      options:{
-        responsive:true, maintainAspectRatio:false, cutout:'70%',
-        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:ctx=>' '+fmt(Math.round(ctx.raw))+' EGP ('+((ctx.raw/total)*100).toFixed(1)+'%)' } } }
-      }
-    });
-    // Legend
-    let legendHtml='';
-    sorted.forEach(([cat,amt])=>{
-      const pct=((amt/total)*100).toFixed(1);
-      legendHtml+=`<div class="row" style="padding:5px 0;cursor:pointer;" onclick="openCatDetail('${cat}')">
-        <div style="width:10px;height:10px;border-radius:50%;background:${COLORS[cat]||'#94a3b8'};flex-shrink:0;margin-top:2px;"></div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cat}</div>
-          <div style="font-size:10px;color:var(--muted);">${pct}%</div>
-        </div>
-        <div style="font-size:11px;font-weight:700;color:var(--red);">${fmt(Math.round(amt))}</div>
-      </div>`;
-    });
-    document.getElementById('pie-legend').innerHTML = legendHtml;
-  }
-
-  // ── Payment Method Bars ──
-  const startKey2 = months[0]+'-01';
-  const methodTotals={};
-  state.expenses.filter(e=>e.date>=startKey2).forEach(e=>{
-    methodTotals[e.method]=(methodTotals[e.method]||0)+e.amount;
-  });
-  const methodSorted=Object.entries(methodTotals).sort((a,b)=>b[1]-a[1]);
-  const methodMax=Math.max(...methodSorted.map(([,v])=>v),1);
-  const mColors={'CIB Visa':'#4f7cff','CIB Debit':'#00c9a7','NEXTBANK 18K':'#ffb347','NEXTBANK 50K':'#ff5e7e','Wafa Bank Visa':'#a78bfa','Cash in Hand':'#34d399','QNB Debit':'#fb923c'};
-  let mHtml='';
-  methodSorted.forEach(([method,amt])=>{
-    const pct=(amt/methodMax*100).toFixed(0);
-    const col=mColors[method]||'#94a3b8';
-    mHtml+=`<div style="margin-bottom:10px;">
-      <div class="flex" style="margin-bottom:4px;">
-        <span style="font-size:12px;font-weight:600;">${method}</span>
-        <span style="font-size:12px;font-weight:700;color:${col};">${fmt(Math.round(amt))} EGP</span>
-      </div>
-      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${col};"></div></div>
-    </div>`;
-  });
-  document.getElementById('method-bars').innerHTML = mHtml || '<div style="color:var(--muted);text-align:center;padding:12px">No data</div>';
-
-  // ── Top Spending Days ──
-  const dayTotals={};
-  state.expenses.filter(e=>e.date>=months[0]+'-01').forEach(e=>{
-    dayTotals[e.date]=(dayTotals[e.date]||0)+e.amount;
-  });
-  const topDays=Object.entries(dayTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  let dHtml='';
-  topDays.forEach(([date,amt],i)=>{
-    const txns=state.expenses.filter(e=>e.date===date);
-    const d=new Date(date+'T12:00:00');
-    const label=d.toLocaleDateString('en-EG',{weekday:'short',month:'short',day:'numeric'});
-    dHtml+=`<div class="row" style="cursor:pointer;" onclick="openDayDetail('${date.slice(0,7)}',${parseInt(date.slice(8,10))})">
-      <div style="width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">${i+1}</div>
-      <div class="rinfo"><div class="rname" style="font-size:13px;">${label}</div><div class="rmeta">${txns.length} transactions</div></div>
-      <div class="ramount red">${fmt(Math.round(amt))}</div>
-    </div>`;
-  });
-  document.getElementById('top-days').innerHTML = dHtml || '<div style="color:var(--muted);text-align:center;padding:12px">No data</div>';
-
-  // ── Savings Rate Chart ──
-  destroyChart('savings');
-  const sCtx = document.getElementById('chart-savings');
-  if (sCtx) {
-    const allMonths = getMonthKeys(Math.max(chartPeriodMonths,3));
-    const savRates = allMonths.map(k=>{
-      const inc=state.incomes.filter(i=>i.date.startsWith(k)).reduce((a,i)=>a+i.actual,0);
-      const exp=state.expenses.filter(e=>e.date.startsWith(k)).reduce((a,e)=>a+e.amount,0);
-      return inc>0?parseFloat(((inc-exp)/inc*100).toFixed(1)):0;
-    });
-    const avgRate=(savRates.reduce((a,b)=>a+b,0)/savRates.length).toFixed(1);
-    document.getElementById('savings-insight').textContent=`Average savings rate: ${avgRate}%`;
-    chartInstances['savings']=new Chart(sCtx,{
-      type:'bar',
-      data:{
-        labels:allMonths.map(getMonthShort),
-        datasets:[{
-          label:'Savings Rate %',
-          data:savRates,
-          backgroundColor:savRates.map(r=>r>=10?'rgba(0,201,167,0.8)':r>=0?'rgba(255,179,71,0.8)':'rgba(255,94,126,0.8)'),
-          borderRadius:6
-        }]
-      },
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.raw+'%'}}},
-        scales:{
-          x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:getCSSVar('--muted'),font:{size:10}}},
-          y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:getCSSVar('--muted'),font:{size:10},callback:v=>v+'%'}}
-        }
-      }
-    });
-  }
-}
 
 // ── TRANSFERS ──
 let currentTransferId = null;
