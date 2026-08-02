@@ -149,6 +149,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <button class="nb" onclick="go('income',this)">Income</button>
   <button class="nb" onclick="go('accounts',this)">Accounts</button>
   <button class="nb" onclick="go('visa',this)">Visa</button>
+  <button class="nb" onclick="go('monthly',this)">📅 Monthly</button>
 </div>
 
 <!-- DASHBOARD -->
@@ -272,6 +273,52 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="card"><div class="ctitle">Visa Transactions</div><div id="vtxns"></div></div>
 </div>
 
+<!-- MONTHLY BUDGET -->
+<div class="sec" id="tab-monthly">
+  <div class="card" style="padding:12px 14px;">
+    <div class="flex" style="margin-bottom:10px;">
+      <div class="ctitle" style="margin-bottom:0;">Monthly Budget</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="changeMonth(-1)" style="background:var(--border);border:none;color:var(--text);border-radius:8px;padding:5px 10px;font-size:16px;cursor:pointer;">‹</button>
+        <span id="monthly-label" style="font-size:13px;font-weight:700;min-width:110px;text-align:center;"></span>
+        <button onclick="changeMonth(1)" style="background:var(--border);border:none;color:var(--text);border-radius:8px;padding:5px 10px;font-size:16px;cursor:pointer;">›</button>
+      </div>
+    </div>
+    <div class="kgrid" style="margin-bottom:0;">
+      <div class="kpi"><label>Income</label><div class="v green" id="m-income">—</div></div>
+      <div class="kpi"><label>Expenses</label><div class="v red" id="m-expenses">—</div></div>
+      <div class="kpi"><label>Savings</label><div class="v blue" id="m-savings">—</div></div>
+      <div class="kpi"><label>Transactions</label><div class="v" id="m-count">—</div></div>
+    </div>
+  </div>
+
+  <!-- Daily spending chart -->
+  <div class="card">
+    <div class="ctitle">Daily Spending</div>
+    <div id="daily-chart" style="display:flex;align-items:flex-end;gap:3px;height:80px;padding-top:4px;"></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px;" id="daily-labels"></div>
+  </div>
+
+  <!-- Budget by category -->
+  <div class="card">
+    <div class="ctitle">Budget vs Actual by Category</div>
+    <div id="monthly-cats"></div>
+  </div>
+
+  <!-- Top spending -->
+  <div class="card">
+    <div class="ctitle">Top Expenses This Month</div>
+    <div id="monthly-top"></div>
+  </div>
+
+  <!-- Monthly history -->
+  <div class="card">
+    <div class="ctitle">Monthly History</div>
+    <div id="monthly-history"></div>
+  </div>
+</div>
+
+
 <!-- DETAIL MODAL -->
 <div class="overlay" id="detail-modal">
   <div class="modal">
@@ -297,6 +344,112 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="btn" onclick="openEditFromDetail()" >✏️ Edit</button>
       <button class="btn danger" onclick="deleteFromDetail()" style="flex:0.8;">🗑 Delete</button>
       <button class="btn sec-btn" onclick="closeDetail()" style="flex:0.5;">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY DETAIL MODAL -->
+<div class="overlay" id="cat-modal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div>
+        <div id="cdm-icon" style="font-size:28px;margin-bottom:2px;"></div>
+        <h2 id="cdm-name" style="font-size:17px;"></h2>
+      </div>
+      <div style="text-align:right;">
+        <div id="cdm-actual" style="font-size:22px;font-weight:900;color:var(--red);"></div>
+        <div id="cdm-badge" style="margin-top:4px;"></div>
+      </div>
+    </div>
+    <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Budgeted</span><span class="pv" id="cdm-budget"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Spent</span><span class="pv" id="cdm-spent"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Remaining / Over</span><span class="pv" id="cdm-remaining"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">% Used</span><span class="pv" id="cdm-pct"></span></div>
+      <div class="pr" style="padding:6px 0;"><span class="pk">No. of Transactions</span><span class="pv" id="cdm-count"></span></div>
+    </div>
+    <div class="ctitle" style="margin-bottom:8px;">Transactions in this category</div>
+    <div id="cdm-txns" style="max-height:200px;overflow-y:auto;"></div>
+    <div class="mbtns" style="margin-top:14px;">
+      <button class="btn sec-btn" onclick="document.getElementById('cat-modal').classList.remove('open')">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNT DETAIL MODAL -->
+<div class="overlay" id="acc-modal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div>
+        <h2 id="adm-name" style="font-size:17px;"></h2>
+        <div id="adm-type" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+      </div>
+      <div id="adm-bal" style="font-size:24px;font-weight:900;"></div>
+    </div>
+    <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Institution</span><span class="pv" id="adm-inst"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Account Type</span><span class="pv" id="adm-atype"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Credit Limit</span><span class="pv" id="adm-limit"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Available</span><span class="pv" id="adm-avail"></span></div>
+      <div class="pr" style="padding:6px 0;"><span class="pk">Utilization</span><span class="pv" id="adm-util"></span></div>
+    </div>
+    <div class="ctitle" style="margin-bottom:8px;">Transactions on this account</div>
+    <div id="adm-txns" style="max-height:180px;overflow-y:auto;"></div>
+    <div class="mbtns" style="margin-top:14px;">
+      <button class="btn sec-btn" onclick="document.getElementById('acc-modal').classList.remove('open')">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- VISA DETAIL MODAL -->
+<div class="overlay" id="visa-modal">
+  <div class="modal">
+    <div style="background:linear-gradient(135deg,#1a2a6c,#4f7cff,#00c9a7);border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div id="vdm-name" style="font-size:14px;font-weight:700;opacity:.9;"></div>
+      <div id="vdm-bank" style="font-size:11px;opacity:.6;margin-top:2px;"></div>
+      <div id="vdm-bal" style="font-size:26px;font-weight:900;margin:10px 0 2px;"></div>
+      <div id="vdm-avail" style="font-size:11px;opacity:.7;"></div>
+    </div>
+    <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Credit Limit</span><span class="pv" id="vdm-limit"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Opening Balance</span><span class="pv" id="vdm-opening"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">New Charges</span><span class="pv" id="vdm-charges"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Payments Made</span><span class="pv" id="vdm-payments"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Utilization</span><span class="pv" id="vdm-util"></span></div>
+      <div class="pr" style="padding:6px 0;"><span class="pk">Status</span><span class="pv" id="vdm-status"></span></div>
+    </div>
+    <div class="ctitle" style="margin-bottom:8px;">Recent transactions</div>
+    <div id="vdm-txns" style="max-height:180px;overflow-y:auto;"></div>
+    <div class="mbtns" style="margin-top:14px;">
+      <button class="btn sec-btn" onclick="document.getElementById('visa-modal').classList.remove('open')">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- INCOME DETAIL MODAL -->
+<div class="overlay" id="income-modal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div>
+        <div style="font-size:28px;margin-bottom:2px;">💰</div>
+        <h2 id="idm-desc" style="font-size:17px;"></h2>
+        <div id="idm-cat" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+      </div>
+      <div style="text-align:right;">
+        <div id="idm-actual" style="font-size:22px;font-weight:900;color:var(--green);"></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">actual received</div>
+      </div>
+    </div>
+    <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Expected</span><span class="pv" id="idm-expected"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Actual</span><span class="pv" id="idm-act2"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Variance</span><span class="pv" id="idm-variance"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Date</span><span class="pv" id="idm-date"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Frequency</span><span class="pv" id="idm-freq"></span></div>
+      <div class="pr" style="padding:6px 0;"><span class="pk">Deposited To</span><span class="pv" id="idm-account"></span></div>
+    </div>
+    <div class="mbtns">
+      <button class="btn sec-btn" onclick="document.getElementById('income-modal').classList.remove('open')">✕ Close</button>
     </div>
   </div>
 </div>
@@ -605,11 +758,11 @@ function renderDashboard() {
     const pct=budgeted?Math.min(actual/budgeted,1):0;
     const over=actual>budgeted&&budgeted>0; const high=pct>0.85;
     const color=COLORS[cat]||'#7a84a8';
-    html+=`<div class="row">
+    html+=`<div class="row" style="cursor:pointer;" onclick="openCatDetail('${cat}')">
       <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
       <div style="flex:1;min-width:0">
         <div class="flex"><span class="rname" style="font-size:13px">${cat}</span><span class="badge ${over?'bover':high?'bwarn':'bok'}">${over?'OVER':high?'HIGH':'OK'}</span></div>
-        <div class="plabel"><span>${fmt(actual)} EGP</span><span>of ${fmt(budgeted)}</span></div>
+        <div class="plabel"><span>${fmt(actual)} EGP</span><span>of ${fmt(budgeted)} › tap</span></div>
         <div class="pbar"><div class="pfill ${over?'r':high?'w':'g'}" style="width:${Math.round(pct*100)}%"></div></div>
       </div>
     </div>`;
@@ -646,10 +799,13 @@ function renderIncome() {
   document.getElementById('inc-act').textContent=fmt(totAct);
   let html='';
   state.incomes.forEach(i=>{
-    html+=`<div class="row">
+    html+=`<div class="row" style="cursor:pointer;" onclick="openIncomeDetail(${i.id})">
       <div class="icon" style="background:rgba(0,201,167,.15)">💰</div>
       <div class="rinfo"><div class="rname">${i.desc}</div><div class="rmeta">${i.cat} → ${i.account}</div></div>
-      <div class="ramount green">+${fmt(i.actual)}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div class="ramount green">+${fmt(i.actual)}</div>
+        <div style="font-size:10px;color:var(--muted);">tap ›</div>
+      </div>
     </div>`;
   });
   document.getElementById('inc-list').innerHTML=html||'<div style="color:var(--muted);text-align:center;padding:20px">No income yet</div>';
@@ -662,9 +818,9 @@ function renderAccounts() {
     const pos=a.type!=='Credit Card';
     const bal=a.balance; const util=a.limit?Math.abs(bal)/a.limit:0;
     const avail=a.limit?Math.max(a.limit-Math.abs(bal),0):null;
-    html+=`<div class="card" style="margin-bottom:10px">
+    html+=`<div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="openAccountDetail('${a.name}')">
       <div class="flex mb">
-        <div><div style="font-size:14px;font-weight:700">${a.name}</div><div style="font-size:10px;color:var(--muted)">${a.type} · ${a.inst}</div></div>
+        <div><div style="font-size:14px;font-weight:700">${a.name}</div><div style="font-size:10px;color:var(--muted)">${a.type} · ${a.inst} · tap for details</div></div>
         <div style="font-size:20px;font-weight:800;color:${pos?'var(--green)':'var(--red)'}">${fmt(bal)}</div>
       </div>`;
     if(a.limit){
@@ -691,8 +847,8 @@ function renderVisa() {
   VISA_CARDS.forEach(c=>{
     const util=c.balance/c.limit; const avail=Math.max(c.limit-c.balance,0);
     const sc=c.status==='OVER LIMIT'?'var(--red)':c.status==='NEAR LIMIT'?'var(--warn)':'var(--green)';
-    html+=`<div class="vcard">
-      <div class="flex"><div><div class="vc-name">${c.name}</div><div style="font-size:11px;opacity:.6">${c.bank} · Limit ${fmt(c.limit)} EGP</div></div>
+    html+=`<div class="vcard" style="cursor:pointer;" onclick="openVisaDetail('${c.name}')">
+      <div class="flex"><div><div class="vc-name">${c.name}</div><div style="font-size:11px;opacity:.6">${c.bank} · Limit ${fmt(c.limit)} EGP · tap for details</div></div>
       <span style="background:rgba(0,0,0,.3);color:${sc};font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">${c.status}</span></div>
       <div class="vc-bal">${fmt(c.balance)} EGP</div>
       <div class="vc-avail">Available: ${fmt(avail)} EGP</div>
@@ -705,16 +861,19 @@ function renderVisa() {
   const vtxns=[...state.expenses].filter(e=>['CIB Visa','NEXTBANK 18K','NEXTBANK 50K','Wafa Bank Visa'].includes(e.method)).sort((a,b)=>b.date.localeCompare(a.date));
   let vhtml='';
   vtxns.forEach(e=>{
-    vhtml+=`<div class="row">
+    vhtml+=`<div class="row" style="cursor:pointer;" onclick="openDetail(${e.id})">
       <div class="icon" style="background:rgba(255,94,126,.12)">${ICONS[e.cat]||'💸'}</div>
       <div class="rinfo"><div class="rname">${e.desc}</div><div class="rmeta">${e.method} · ${e.cat} · ${e.date}</div></div>
-      <div class="ramount red">-${fmt(e.amount)}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div class="ramount red">-${fmt(e.amount)}</div>
+        <div style="font-size:10px;color:var(--muted);">tap ›</div>
+      </div>
     </div>`;
   });
   document.getElementById('vtxns').innerHTML=vhtml||'<div style="color:var(--muted);text-align:center;padding:20px">No visa transactions</div>';
 }
 
-function renderAll(){renderDashboard();renderExpenses();renderIncome();renderAccounts();renderVisa();}
+function renderAll(){renderDashboard();renderExpenses();renderIncome();renderAccounts();renderVisa();renderMonthly();}
 
 // ── DELETE EXPENSE ──
 function deleteExp(id) {
@@ -860,6 +1019,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     state.nextIncId=20;
     saveState();
   }
+  currentMonthOffset=0;
   document.getElementById('f-date').value=today();
   document.getElementById('fi-date').value=today();
   renderAll();
@@ -949,6 +1109,286 @@ function exportCSV() {
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
   toast('✅ CSV file downloaded!');
+}
+
+
+
+// ── MONTHLY BUDGET ──
+let currentMonthOffset = 0; // 0 = current month
+
+function getMonthKey(offset) {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + offset);
+  return d.toISOString().slice(0,7); // "2026-08"
+}
+
+function getMonthLabel(offset) {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + offset);
+  return d.toLocaleString('en-EG', {month:'long', year:'numeric'});
+}
+
+function changeMonth(dir) {
+  currentMonthOffset += dir;
+  renderMonthly();
+}
+
+function renderMonthly() {
+  const key = getMonthKey(currentMonthOffset);
+  const label = getMonthLabel(currentMonthOffset);
+  document.getElementById('monthly-label').textContent = label;
+
+  // Filter expenses & income for this month
+  const mExp = state.expenses.filter(e=>e.date.startsWith(key));
+  const mInc = state.incomes.filter(i=>i.date.startsWith(key));
+
+  const totalExp = mExp.reduce((a,e)=>a+e.amount, 0);
+  const totalInc = mInc.reduce((a,i)=>a+i.actual, 0);
+  const savings = totalInc - totalExp;
+
+  document.getElementById('m-income').textContent = fmt(Math.round(totalInc));
+  document.getElementById('m-expenses').textContent = fmt(Math.round(totalExp));
+  document.getElementById('m-savings').textContent = fmt(Math.round(savings));
+  document.getElementById('m-savings').style.color = savings >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('m-count').textContent = mExp.length;
+
+  // ── Daily chart ──
+  const year = parseInt(key.slice(0,4));
+  const month = parseInt(key.slice(5,7));
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const dailyTotals = {};
+  mExp.forEach(e => {
+    const day = parseInt(e.date.slice(8,10));
+    dailyTotals[day] = (dailyTotals[day]||0) + e.amount;
+  });
+  const maxDay = Math.max(...Object.values(dailyTotals), 1);
+  let chartHtml = '';
+  let labelHtml = '';
+  for (let d=1; d<=daysInMonth; d++) {
+    const amt = dailyTotals[d]||0;
+    const h = Math.round((amt/maxDay)*70);
+    const hasAmt = amt > 0;
+    chartHtml += `<div title="${d}: ${fmt(amt)} EGP" onclick="openDayDetail('${key}',${d})"
+      style="flex:1;min-width:4px;height:${h||2}px;background:${hasAmt?'var(--accent)':'var(--border)'};border-radius:3px 3px 0 0;cursor:${hasAmt?'pointer':'default'};transition:opacity .2s;"
+      onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'"></div>`;
+    if (d===1 || d===8 || d===15 || d===22 || d===daysInMonth) {
+      labelHtml += `<span>${d}</span>`;
+    }
+  }
+  document.getElementById('daily-chart').innerHTML = chartHtml;
+  document.getElementById('daily-labels').innerHTML = labelHtml;
+
+  // ── Budget vs actual by category ──
+  const catTotals = {};
+  mExp.forEach(e => catTotals[e.cat]=(catTotals[e.cat]||0)+e.amount);
+  const allCats = Object.keys(BUDGETS);
+  let catHtml = '';
+  allCats.forEach(cat => {
+    const actual = catTotals[cat]||0;
+    const budget = BUDGETS[cat]||0;
+    if (!actual && !budget) return;
+    const pct = budget ? Math.min(actual/budget,1) : 0;
+    const over = actual > budget && budget > 0;
+    const color = COLORS[cat]||'#7a84a8';
+    catHtml += `<div class="row" style="cursor:pointer;" onclick="openCatDetail('${cat}')">
+      <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;margin-top:2px;"></div>
+      <div style="flex:1;min-width:0;">
+        <div class="flex"><span style="font-size:13px;font-weight:600;">${cat}</span>
+          <span style="font-size:12px;font-weight:700;color:${over?'var(--red)':'var(--text)'};">${fmt(Math.round(actual))} EGP</span>
+        </div>
+        <div class="pbar" style="margin-top:5px;"><div class="pfill ${over?'r':pct>.85?'w':'g'}" style="width:${Math.round(pct*100)}%"></div></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;">${budget?fmt(budget)+' budgeted · '+(Math.round(pct*100))+'% used':'No budget set'}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('monthly-cats').innerHTML = catHtml || '<div style="color:var(--muted);text-align:center;padding:16px">No expenses this month</div>';
+
+  // ── Top 5 expenses ──
+  const top5 = [...mExp].sort((a,b)=>b.amount-a.amount).slice(0,5);
+  let topHtml = '';
+  top5.forEach((e,idx) => {
+    const color = COLORS[e.cat]||'#7a84a8';
+    topHtml += `<div class="row" style="cursor:pointer;" onclick="openDetail(${e.id})">
+      <div style="width:22px;height:22px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">${idx+1}</div>
+      <div class="icon" style="background:${color}22;width:32px;height:32px;font-size:14px;">${ICONS[e.cat]||'💸'}</div>
+      <div class="rinfo"><div class="rname">${e.desc}</div><div class="rmeta">${e.cat} · ${e.date}</div></div>
+      <div class="ramount red">-${fmt(e.amount)}</div>
+    </div>`;
+  });
+  document.getElementById('monthly-top').innerHTML = topHtml || '<div style="color:var(--muted);text-align:center;padding:16px">No expenses this month</div>';
+
+  // ── Monthly history (last 6 months) ──
+  let histHtml = '';
+  for (let i=-5; i<=0; i++) {
+    const hKey = getMonthKey(i);
+    const hLabel = getMonthLabel(i);
+    const hExp = state.expenses.filter(e=>e.date.startsWith(hKey));
+    const hInc = state.incomes.filter(x=>x.date.startsWith(hKey));
+    const hTotal = hExp.reduce((a,e)=>a+e.amount,0);
+    const hIncome = hInc.reduce((a,x)=>a+x.actual,0);
+    const hSavings = hIncome - hTotal;
+    const isCurrent = i === currentMonthOffset;
+    histHtml += `<div class="row" style="cursor:pointer;${isCurrent?'background:rgba(79,124,255,.08);border-radius:10px;padding:8px;':''}" onclick="currentMonthOffset=${i};renderMonthly();">
+      <div class="rinfo">
+        <div class="rname">${hLabel}${isCurrent?' <span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:10px;margin-left:4px;">current</span>':''}</div>
+        <div class="rmeta">${hExp.length} transactions</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:13px;font-weight:700;color:var(--red);">-${fmt(Math.round(hTotal))}</div>
+        <div style="font-size:11px;color:${hSavings>=0?'var(--green)':'var(--red)'};">${hSavings>=0?'saved':'deficit'} ${fmt(Math.round(Math.abs(hSavings)))}</div>
+      </div>
+    </div>`;
+  }
+  document.getElementById('monthly-history').innerHTML = histHtml;
+}
+
+// ── DAY DETAIL ──
+function openDayDetail(monthKey, day) {
+  const dayStr = monthKey+'-'+(day<10?'0':'')+day;
+  const txns = state.expenses.filter(e=>e.date===dayStr);
+  if (!txns.length) return;
+  // Reuse cat-modal as a simple day popup
+  const total = txns.reduce((a,e)=>a+e.amount,0);
+  document.getElementById('cdm-icon').textContent = '📅';
+  document.getElementById('cdm-name').textContent = new Date(dayStr+'T12:00:00').toLocaleDateString('en-EG',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('cdm-actual').textContent = fmt(Math.round(total))+' EGP';
+  document.getElementById('cdm-badge').innerHTML = '';
+  document.getElementById('cdm-budget').textContent = '—';
+  document.getElementById('cdm-spent').textContent = fmt(Math.round(total))+' EGP';
+  document.getElementById('cdm-remaining').textContent = '—';
+  document.getElementById('cdm-pct').textContent = '—';
+  document.getElementById('cdm-count').textContent = txns.length+' transactions';
+  let html='';
+  txns.sort((a,b)=>b.amount-a.amount).forEach(e=>{
+    html+=`<div class="row" style="cursor:pointer;" onclick="document.getElementById('cat-modal').classList.remove('open');setTimeout(()=>openDetail(${e.id}),200)">
+      <div class="icon" style="background:${COLORS[e.cat]||'#7a84a8'}22;width:30px;height:30px;font-size:13px;">${ICONS[e.cat]||'💸'}</div>
+      <div class="rinfo"><div class="rname" style="font-size:12px">${e.desc}</div><div class="rmeta">${e.cat} · ${e.method}</div></div>
+      <div class="ramount red" style="font-size:13px">-${fmt(e.amount)}</div>
+    </div>`;
+  });
+  document.getElementById('cdm-txns').innerHTML = html;
+  document.getElementById('cat-modal').classList.add('open');
+}
+
+// ── CATEGORY DETAIL ──
+function openCatDetail(cat) {
+  const txns = state.expenses.filter(e=>e.cat===cat).sort((a,b)=>b.date.localeCompare(a.date));
+  const actual = txns.reduce((a,e)=>a+e.amount,0);
+  const budget = BUDGETS[cat]||0;
+  const remaining = budget - actual;
+  const pct = budget ? ((actual/budget)*100).toFixed(1) : '—';
+  const over = actual > budget && budget > 0;
+  const color = COLORS[cat]||'#7a84a8';
+
+  document.getElementById('cdm-icon').textContent = ICONS[cat]||'📂';
+  document.getElementById('cdm-name').textContent = cat;
+  document.getElementById('cdm-actual').textContent = fmt(Math.round(actual))+' EGP';
+  document.getElementById('cdm-badge').innerHTML = `<span class="badge ${over?'bover':pct>85?'bwarn':'bok'}">${over?'OVER BUDGET':pct>85?'HIGH':'ON TRACK'}</span>`;
+  document.getElementById('cdm-budget').textContent = fmt(budget)+' EGP';
+  document.getElementById('cdm-spent').textContent = fmt(Math.round(actual))+' EGP';
+  document.getElementById('cdm-remaining').innerHTML = remaining>=0
+    ? `<span style="color:var(--green)">${fmt(Math.round(remaining))} EGP left</span>`
+    : `<span style="color:var(--red)">${fmt(Math.round(Math.abs(remaining)))} EGP over</span>`;
+  document.getElementById('cdm-pct').textContent = budget ? pct+'%' : '—';
+  document.getElementById('cdm-count').textContent = txns.length+' transactions';
+
+  let html='';
+  txns.forEach(e=>{
+    html+=`<div class="row" style="cursor:pointer;" onclick="document.getElementById('cat-modal').classList.remove('open');setTimeout(()=>openDetail(${e.id}),200)">
+      <div class="rinfo"><div class="rname" style="font-size:12px">${e.desc}</div><div class="rmeta">${e.method} · ${e.date}</div></div>
+      <div class="ramount red" style="font-size:13px">-${fmt(e.amount)}</div>
+    </div>`;
+  });
+  document.getElementById('cdm-txns').innerHTML = html||'<div style="color:var(--muted);text-align:center;padding:12px">No transactions</div>';
+  document.getElementById('cat-modal').classList.add('open');
+}
+
+// ── ACCOUNT DETAIL ──
+function openAccountDetail(name) {
+  const a = ACCOUNTS.find(x=>x.name===name);
+  if (!a) return;
+  const txns = state.expenses.filter(e=>e.method===name).sort((a,b)=>b.date.localeCompare(a.date));
+  const isCC = a.type==='Credit Card';
+  const bal = a.balance;
+  const avail = a.limit ? Math.max(a.limit-Math.abs(bal),0) : null;
+  const util = a.limit ? Math.abs(bal)/a.limit : null;
+
+  document.getElementById('adm-name').textContent = a.name;
+  document.getElementById('adm-type').textContent = a.type+' · '+a.inst;
+  document.getElementById('adm-bal').style.color = !isCC?'var(--green)':'var(--red)';
+  document.getElementById('adm-bal').textContent = fmt(bal)+' EGP';
+  document.getElementById('adm-inst').textContent = a.inst;
+  document.getElementById('adm-atype').textContent = a.type;
+  document.getElementById('adm-limit').textContent = a.limit ? fmt(a.limit)+' EGP' : '—';
+  document.getElementById('adm-avail').textContent = avail!==null ? fmt(avail)+' EGP' : '—';
+  document.getElementById('adm-util').innerHTML = util!==null
+    ? `<span style="color:${util>.9?'var(--red)':util>.7?'var(--warn)':'var(--green)'}">${(util*100).toFixed(1)}%</span>`
+    : '—';
+
+  let html='';
+  txns.forEach(e=>{
+    html+=`<div class="row" style="cursor:pointer;" onclick="document.getElementById('acc-modal').classList.remove('open');setTimeout(()=>openDetail(${e.id}),200)">
+      <div class="icon" style="background:${COLORS[e.cat]||'#7a84a8'}22;width:30px;height:30px;font-size:14px;">${ICONS[e.cat]||'💸'}</div>
+      <div class="rinfo"><div class="rname" style="font-size:12px">${e.desc}</div><div class="rmeta">${e.cat} · ${e.date}</div></div>
+      <div class="ramount red" style="font-size:13px">-${fmt(e.amount)}</div>
+    </div>`;
+  });
+  document.getElementById('adm-txns').innerHTML = html||'<div style="color:var(--muted);text-align:center;padding:12px">No transactions</div>';
+  document.getElementById('acc-modal').classList.add('open');
+}
+
+// ── VISA DETAIL ──
+function openVisaDetail(name) {
+  const c = VISA_CARDS.find(x=>x.name===name);
+  if (!c) return;
+  const txns = state.expenses.filter(e=>e.method===name).sort((a,b)=>b.date.localeCompare(a.date));
+  const util = c.balance/c.limit;
+  const avail = Math.max(c.limit-c.balance,0);
+  const sc = c.status==='OVER LIMIT'?'var(--red)':c.status==='NEAR LIMIT'?'var(--warn)':'var(--green)';
+
+  document.getElementById('vdm-name').textContent = c.name;
+  document.getElementById('vdm-bank').textContent = c.bank+' Credit Card';
+  document.getElementById('vdm-bal').textContent = fmt(c.balance)+' EGP';
+  document.getElementById('vdm-avail').textContent = 'Available: '+fmt(avail)+' EGP';
+  document.getElementById('vdm-limit').textContent = fmt(c.limit)+' EGP';
+  document.getElementById('vdm-opening').textContent = fmt(c.opening||0)+' EGP';
+  document.getElementById('vdm-charges').textContent = fmt(c.charges||0)+' EGP';
+  document.getElementById('vdm-payments').textContent = fmt(c.payments||0)+' EGP';
+  document.getElementById('vdm-util').innerHTML = `<span style="color:${sc}">${(util*100).toFixed(1)}%</span>`;
+  document.getElementById('vdm-status').innerHTML = `<span style="color:${sc};font-weight:700">${c.status}</span>`;
+
+  let html='';
+  txns.forEach(e=>{
+    html+=`<div class="row" style="cursor:pointer;" onclick="document.getElementById('visa-modal').classList.remove('open');setTimeout(()=>openDetail(${e.id}),200)">
+      <div class="icon" style="background:${COLORS[e.cat]||'#7a84a8'}22;width:30px;height:30px;font-size:14px;">${ICONS[e.cat]||'💸'}</div>
+      <div class="rinfo"><div class="rname" style="font-size:12px">${e.desc}</div><div class="rmeta">${e.cat} · ${e.date}</div></div>
+      <div class="ramount red" style="font-size:13px">-${fmt(e.amount)}</div>
+    </div>`;
+  });
+  document.getElementById('vdm-txns').innerHTML = html||'<div style="color:var(--muted);text-align:center;padding:12px">No transactions</div>';
+  document.getElementById('visa-modal').classList.add('open');
+}
+
+// ── INCOME DETAIL ──
+function openIncomeDetail(id) {
+  const i = state.incomes.find(x=>x.id===id);
+  if (!i) return;
+  const variance = i.actual - i.expected;
+
+  document.getElementById('idm-desc').textContent = i.desc;
+  document.getElementById('idm-cat').textContent = i.cat;
+  document.getElementById('idm-actual').textContent = '+'+fmt(i.actual)+' EGP';
+  document.getElementById('idm-expected').textContent = fmt(i.expected)+' EGP';
+  document.getElementById('idm-act2').textContent = fmt(i.actual)+' EGP';
+  document.getElementById('idm-variance').innerHTML = variance>=0
+    ? `<span style="color:var(--green)">+${fmt(variance)} EGP</span>`
+    : `<span style="color:var(--red)">${fmt(variance)} EGP</span>`;
+  document.getElementById('idm-date').textContent = i.date;
+  document.getElementById('idm-freq').textContent = i.freq||'Monthly';
+  document.getElementById('idm-account').textContent = i.account;
+  document.getElementById('income-modal').classList.add('open');
 }
 
 // ── TRANSACTION DETAIL ──
