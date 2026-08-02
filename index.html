@@ -807,35 +807,65 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- VOICE MODAL -->
 <div class="overlay" id="vmodal">
   <div class="modal">
-    <h2>🎤 Voice Entry</h2>
+    <div class="flex" style="margin-bottom:4px;">
+      <h2 style="font-size:16px;">⚡ Quick Add Expense</h2>
+      <button onclick="closeVoice()" style="background:var(--border);border:none;color:var(--text);border-radius:8px;padding:4px 10px;cursor:pointer;">✕</button>
+    </div>
 
-    <!-- Language selector -->
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <!-- Language toggle -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
       <button onclick="setVoiceLang('ar-EG',this)" id="lang-ar"
-        style="flex:1;padding:8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;
-        background:var(--accent);color:#fff;border:none;">🇪🇬 Arabic</button>
+        style="flex:1;padding:7px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;border:none;">🇪🇬 عربي</button>
       <button onclick="setVoiceLang('en-US',this)" id="lang-en"
-        style="flex:1;padding:8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;
-        background:var(--border);color:var(--muted);border:none;">🇺🇸 English</button>
+        style="flex:1;padding:7px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--border);color:var(--muted);border:none;">🇺🇸 English</button>
     </div>
 
-    <p class="msub" id="voice-hint" style="margin-bottom:10px;">
-      قل المصروف بالعربي — مثال: "ستاربكس ١٠٥ جنيه فيزا CIB"
-    </p>
+    <!-- Type input — always visible, primary method -->
+    <div style="position:relative;margin-bottom:10px;">
+      <input type="text" id="quick-input"
+        placeholder="Starbucks 105 CIB Visa"
+        style="width:100%;background:var(--bg);border:2px solid var(--accent);border-radius:12px;
+        color:var(--text);font-size:15px;padding:12px 48px 12px 14px;outline:none;"
+        oninput="liveParseInput(this.value)"
+        onkeydown="if(event.key==='Enter')processQuickInput()">
+      <!-- Mic button inside input -->
+      <button id="mic-inline-btn" onclick="tryVoice()"
+        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
+        width:34px;height:34px;border-radius:50%;background:var(--accent);
+        border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">🎤</button>
+    </div>
 
-    <div class="wave" id="wave"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
-    <div class="tbox" id="tbox">Tap Start to begin...</div>
+    <!-- Live hint -->
+    <div id="quick-hint" style="font-size:11px;color:var(--muted);margin-bottom:10px;min-height:16px;"></div>
+
+    <!-- Wave animation (shown when recording) -->
+    <div class="wave" id="wave" style="margin-bottom:10px;"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
+
+    <!-- Parsed result -->
     <div class="pres" id="pres">
-      <div class="pr"><span class="pk">Category</span><span class="pv" id="pr-cat">—</span></div>
-      <div class="pr"><span class="pk">Description</span><span class="pv" id="pr-desc">—</span></div>
-      <div class="pr"><span class="pk">Amount</span><span class="pv" id="pr-amt">—</span></div>
-      <div class="pr"><span class="pk">Payment</span><span class="pv" id="pr-pay">—</span></div>
-      <div class="pr"><span class="pk">Date</span><span class="pv" id="pr-date">—</span></div>
+      <div class="pr"><span class="pk">📂 Category</span><span class="pv" id="pr-cat">—</span></div>
+      <div class="pr"><span class="pk">📝 Description</span><span class="pv" id="pr-desc">—</span></div>
+      <div class="pr"><span class="pk">💰 Amount</span><span class="pv" id="pr-amt">—</span></div>
+      <div class="pr"><span class="pk">💳 Payment</span><span class="pv" id="pr-pay">—</span></div>
+      <div class="pr"><span class="pk">📅 Date</span><span class="pv" id="pr-date">—</span></div>
     </div>
+
+    <!-- Examples -->
+    <div id="quick-examples" style="margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Tap an example:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;" id="example-chips"></div>
+    </div>
+
     <div class="mbtns">
-      <button class="btn sec-btn" id="rec-btn" onclick="toggleRec()">▶ Start</button>
-      <button class="btn" id="conf-btn" onclick="confirmVoice()" style="display:none">✓ Confirm</button>
-      <button class="btn sec-btn" onclick="closeVoice()" style="flex:0.5">✕</button>
+      <button class="btn" id="conf-btn" onclick="processQuickInput()" style="display:block;">✓ Add Expense</button>
+      <button class="btn" id="voice-conf-btn" onclick="confirmVoice()" style="display:none;">✓ Confirm Voice</button>
+    </div>
+
+    <!-- Mic blocked help -->
+    <div id="mic-help" style="display:none;margin-top:10px;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3);border-radius:10px;padding:10px;font-size:11px;color:var(--warn);line-height:1.6;">
+      🎤 <strong>To enable voice:</strong><br>
+      iPhone Settings → Safari → Microphone → Allow<br>
+      Then close and reopen Safari.
     </div>
   </div>
 </div>
@@ -1331,10 +1361,12 @@ function openVoice(){
     if (el) setVoiceLang(saved, el);
   }
   document.getElementById('vmodal').classList.add('open');
-  document.getElementById('tbox').textContent='Tap Start to begin...';
+  document.getElementById('tbox').textContent= voiceLang==='ar-EG'
+    ? '🎤 اضغط Start للتسجيل أو اكتب يدوياً بالأسفل'
+    : '🎤 Tap Start to record, or type manually below';
   document.getElementById('pres').classList.remove('show');
   document.getElementById('conf-btn').style.display='none';
-  document.getElementById('rec-btn').textContent='▶ Start';
+  document.getElementById('rec-btn').textContent='🎤 Start';
   parsedEntry=null;
 }
 function closeVoice(){if(isRec&&recognition)recognition.stop();document.getElementById('vmodal').classList.remove('open');}
@@ -1343,69 +1375,264 @@ function toggleRec(){isRec?stopRec():startRec();}
 
 function startRec(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){simulateVoice();return;}
-  recognition=new SR();
-  recognition.lang=voiceLang;
-  recognition.interimResults=true;
-  recognition.onstart=()=>{isRec=true;document.getElementById('fab').classList.add('rec');document.getElementById('wave').style.display='flex';document.getElementById('rec-btn').textContent='⏹ Stop';document.getElementById('tbox').textContent='Listening...';};
-  recognition.onresult=(e)=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');document.getElementById('tbox').textContent=t;if(e.results[0].isFinal)parseTxt(t);};
-  recognition.onerror=()=>stopRec();
-  recognition.onend=()=>stopRec();
-  recognition.start();
+  if(!SR){
+    showManualEntry();
+    return;
+  }
+  // Request microphone permission explicitly first
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true})
+      .then(stream=>{
+        stream.getTracks().forEach(t=>t.stop()); // release mic, SR will re-acquire
+        startSpeechRecognition();
+      })
+      .catch(err=>{
+        console.error('Mic permission denied:',err);
+        document.getElementById('tbox').textContent='⚠️ Microphone access denied. Please allow mic in iPhone Settings → Safari → Microphone, or type your expense below.';
+        showManualEntry();
+      });
+  } else {
+    startSpeechRecognition();
+  }
 }
-function stopRec(){isRec=false;if(recognition)recognition.stop();document.getElementById('fab').classList.remove('rec');document.getElementById('wave').style.display='none';document.getElementById('rec-btn').textContent='▶ Start';}
 
-function simulateVoice(){
-  document.getElementById('fab').classList.add('rec');document.getElementById('wave').style.display='flex';document.getElementById('rec-btn').textContent='⏹ Stop';document.getElementById('tbox').textContent='Listening (demo)...';
-  const demosEn=['Starbucks 150 pounds CIB Visa Food','Uber 85 pounds NEXTBANK wife','Groceries 500 CIB Debit','Cigarettes 250 CIB Visa'];
-  const demosAr=['ستاربكس ١٥٠ جنيه فيزا CIB','أوبر ٨٥ جنيه NEXTBANK زوجة','بقالة ٥٠٠ جنيه كاش','سجاير ٢٥٠ جنيه'];
-  const demos=voiceLang==='ar-EG'?demosAr:demosEn;
-  setTimeout(()=>{
-    const s=demos[Math.floor(Math.random()*demos.length)];
-    document.getElementById('tbox').textContent=s;
-    document.getElementById('fab').classList.remove('rec');document.getElementById('wave').style.display='none';document.getElementById('rec-btn').textContent='▶ Start';
-    parseTxt(s);
-  },2000);
+function startSpeechRecognition(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  try {
+    recognition=new SR();
+    recognition.lang=voiceLang;
+    recognition.interimResults=true;
+    recognition.continuous=false;
+    recognition.maxAlternatives=1;
+
+    recognition.onstart=()=>{
+      isRec=true;
+      document.getElementById('fab').classList.add('rec');
+      document.getElementById('wave').style.display='flex';
+      document.getElementById('rec-btn').textContent='⏹ Stop';
+      document.getElementById('tbox').textContent= voiceLang==='ar-EG' ? '🎤 جاري الاستماع...' : '🎤 Listening...';
+    };
+
+    recognition.onresult=(e)=>{
+      const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+      document.getElementById('tbox').textContent=t;
+      if(e.results[e.results.length-1].isFinal) parseTxt(t);
+    };
+
+    recognition.onerror=(e)=>{
+      console.error('Speech error:',e.error);
+      stopRec();
+      if(e.error==='not-allowed'||e.error==='permission-denied'){
+        document.getElementById('tbox').textContent='⚠️ Mic blocked. Go to iPhone Settings → Safari → Microphone → Allow';
+      } else if(e.error==='no-speech'){
+        document.getElementById('tbox').textContent='⚠️ No speech detected. Try again or type below.';
+        showManualEntry();
+      } else if(e.error==='network'){
+        document.getElementById('tbox').textContent='⚠️ No internet for voice. Type your expense below.';
+        showManualEntry();
+      } else {
+        document.getElementById('tbox').textContent='⚠️ Error: '+e.error+'. Type below instead.';
+        showManualEntry();
+      }
+    };
+
+    recognition.onend=()=>stopRec();
+    recognition.start();
+
+  } catch(err){
+    console.error('SR start error:',err);
+    document.getElementById('tbox').textContent='⚠️ Voice not supported. Type your expense below.';
+    showManualEntry();
+  }
+}
+
+function stopRec(){
+  isRec=false;
+  if(recognition){ try{recognition.stop();}catch(e){} }
+  document.getElementById('fab').classList.remove('rec');
+  document.getElementById('wave').style.display='none';
+  document.getElementById('rec-btn').textContent='▶ Start';
+}
+
+// ── Manual text entry fallback ──
+function showManualEntry(){
+  const tbox=document.getElementById('tbox');
+  tbox.innerHTML='';
+  const wrapper=document.createElement('div');
+  wrapper.innerHTML=`
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">✍️ Type your expense manually:</div>
+    <input type="text" id="manual-voice-input" placeholder="${voiceLang==='ar-EG'?'مثال: ستاربكس ١٠٥ جنيه فيزا CIB':'e.g. Starbucks 105 pounds CIB Visa'}"
+      style="width:100%;background:var(--surface);border:1px solid var(--accent);border-radius:10px;
+      color:var(--text);font-size:14px;padding:10px 12px;outline:none;margin-bottom:8px;">
+    <button onclick="processManualVoice()" style="width:100%;padding:10px;background:var(--accent);color:#fff;
+      border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
+      ✓ Process
+    </button>`;
+  tbox.appendChild(wrapper);
+  setTimeout(()=>{ const inp=document.getElementById('manual-voice-input'); if(inp)inp.focus(); },100);
+}
+
+function processManualVoice(){
+  const inp=document.getElementById('manual-voice-input');
+  if(!inp||!inp.value.trim()){ toast('⚠️ Please type something'); return; }
+  const text=inp.value.trim();
+  document.getElementById('tbox').textContent=text;
+  parseTxt(text);
 }
 
 function parseTxt(text){
-  const am=text.match(/(\d+[\.,]?\d*)/);
-  const amount=am?parseFloat(am[1].replace(',','.')):0;
+  const raw = text.trim();
+  const d = today();
+
+  // ── Extract amount (supports Arabic & English numerals) ──
+  const normalised = raw.replace(/[٠-٩]/g, c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c));
+  const am = normalised.match(/(\d[\d,\.]*)/);
+  const amount = am ? parseFloat(am[1].replace(/,/g,'')) : 0;
+
+  // ── Detect TRANSFER first ──
+  const isTransfer = /transfer|تحويل|from .+ to |من .+ إلى/i.test(raw);
+  if(isTransfer){
+    // Extract from/to accounts
+    const accounts = ['CIB Debit','CIB Visa','NEXTBANK 18K','NEXTBANK 50K','Wafa Bank Visa','Cash in Hand','QNB Debit'];
+    let fromAcc='CIB Debit', toAcc='CIB Visa';
+    const fromMatch = raw.match(/from ([A-Za-z\s]+?)(?:\s+to\s|$)/i);
+    const toMatch   = raw.match(/to ([A-Za-z\s]+?)(?:\s+from\s|$)/i);
+    if(fromMatch){
+      const f=fromMatch[1].toLowerCase().trim();
+      fromAcc = accounts.find(a=>a.toLowerCase().includes(f.substring(0,6)))||fromAcc;
+    }
+    if(toMatch){
+      const t=toMatch[1].toLowerCase().trim();
+      toAcc = accounts.find(a=>a.toLowerCase().includes(t.substring(0,6)))||toAcc;
+    }
+    // Auto-detect common names
+    if(/cib debit|debit/i.test(raw.split(/to /i)[0]||''))  fromAcc='CIB Debit';
+    if(/cib visa/i.test(raw.split(/to /i)[0]||''))          fromAcc='CIB Visa';
+    if(/cib debit|debit/i.test(raw.split(/to /i)[1]||''))  toAcc='CIB Debit';
+    if(/cib visa/i.test(raw.split(/to /i)[1]||''))           toAcc='CIB Visa';
+    if(/nextbank 18/i.test(raw.split(/to /i)[1]||''))        toAcc='NEXTBANK 18K';
+    if(/nextbank 50/i.test(raw.split(/to /i)[1]||''))        toAcc='NEXTBANK 50K';
+    if(/wafa/i.test(raw.split(/to /i)[1]||''))               toAcc='Wafa Bank Visa';
+
+    parsedEntry = {
+      _type:'transfer',
+      id: state.nextTrId++,
+      date:d, from:fromAcc, to:toAcc, amount,
+      desc: 'Transfer '+fmt(amount)+' EGP'
+    };
+    document.getElementById('pr-cat').textContent  = '🔄 TRANSFER';
+    document.getElementById('pr-desc').textContent = fromAcc+' → '+toAcc;
+    document.getElementById('pr-amt').textContent  = fmt(amount)+' EGP';
+    document.getElementById('pr-pay').textContent  = fromAcc;
+    document.getElementById('pr-date').textContent = d;
+    document.getElementById('pres').classList.add('show');
+    document.getElementById('conf-btn').style.display='block';
+    document.getElementById('conf-btn').textContent='✓ Add Transfer';
+    return;
+  }
+
+  // ── Payment method ──
   let method='CIB Visa';
-  if(/cib debit|debit|دبت/i.test(text))method='CIB Debit';
-  else if(/nextbank 18|next18/i.test(text))method='NEXTBANK 18K';
-  else if(/nextbank 50|next50/i.test(text))method='NEXTBANK 50K';
-  else if(/wafa/i.test(text))method='Wafa Bank Visa';
-  else if(/cash|نقدي/i.test(text))method='Cash in Hand';
-  let cat='Miscellaneous';
-  if(/star ?bucks|coffee|قهوة|كافيه|cafe/i.test(text))cat='Food and Dining';
-  else if(/uber|taxi|تاكسي|كريم/i.test(text))cat='Wife';
-  else if(/grocery|supermarket|hyperone|هايبر|بقالة/i.test(text))cat='Food and Dining';
-  else if(/restaurant|مطعم/i.test(text))cat='Food and Dining';
-  else if(/electricity|كهرباء/i.test(text))cat='Housing';
-  else if(/hala|هالة/i.test(text))cat='Hala';
-  else if(/nour|نور/i.test(text))cat='Nour';
-  else if(/wife|hadeer|هدير/i.test(text))cat='Wife';
-  else if(/cigarette|سيجارة|سجاير/i.test(text))cat='Miscellaneous';
-  else if(/internet|rent|إيجار/i.test(text))cat='Housing';
-  const desc=text.replace(/\d+[\.,]?\d*/g,'').replace(/(cib|nextbank|wafa|cash|debit|visa|pound|جنيه|egp)/gi,'').trim().substring(0,40)||'Expense';
-  const d=today();
-  parsedEntry={id:state.nextExpId++,date:d,cat,sub:'',desc,method,amount,notes:''};
-  document.getElementById('pr-cat').textContent=cat;
-  document.getElementById('pr-desc').textContent=desc;
-  document.getElementById('pr-amt').textContent=fmt(amount)+' EGP';
-  document.getElementById('pr-pay').textContent=method;
-  document.getElementById('pr-date').textContent=d;
+  if(/cib debit|debit card|كارت الدبت|دبت/i.test(raw))      method='CIB Debit';
+  else if(/nextbank 18|next\s*18/i.test(raw))                 method='NEXTBANK 18K';
+  else if(/nextbank 50|next\s*50/i.test(raw))                 method='NEXTBANK 50K';
+  else if(/wafa/i.test(raw))                                  method='Wafa Bank Visa';
+  else if(/qnb/i.test(raw))                                   method='QNB Debit';
+  else if(/cash|كاش|نقدي/i.test(raw))                        method='Cash in Hand';
+  else if(/cib visa|فيزا cib/i.test(raw))                    method='CIB Visa';
+
+  // ── Category ──
+  let cat='Miscellaneous', sub='';
+  if(/starbucks|star bucks|coffee|قهوة|كافيه|cafe|cappuccino|latte|espresso/i.test(raw)){
+    cat='Food and Dining'; sub='Coffee Shops & Snacks';
+  } else if(/uber|careem|كريم|taxi|تاكسي|ride/i.test(raw)){
+    if(/wife|hadeer|هدير/i.test(raw)){cat='Wife';sub='Transport and Commute';}
+    else if(/hala|هالة/i.test(raw)){cat='Hala';sub='Transport and Commute';}
+    else if(/nour|نور/i.test(raw)){cat='Nour';sub='Transport and Commute';}
+    else{cat='Transportation';sub='Ride Share (Uber / Lyft)';}
+  } else if(/grocery|supermarket|hyperone|هايبر|بقالة|carrefour|spinneys|talabat|instashop/i.test(raw)){
+    cat='Food and Dining'; sub='Groceries / Supermarket';
+  } else if(/restaurant|مطعم|dining|lunch|dinner|breakfast|فطار|غدا|عشا/i.test(raw)){
+    cat='Food and Dining'; sub='Restaurants & Dining Out';
+  } else if(/electricity|كهرباء|electric/i.test(raw)){
+    cat='Housing'; sub='Electricity — Home 1';
+  } else if(/water|مياه|water bill/i.test(raw)){
+    cat='Housing'; sub='Water & Sewage — Home 1';
+  } else if(/internet|نت|wifi/i.test(raw)){
+    cat='Housing'; sub='Internet';
+  } else if(/rent|إيجار|ايجار/i.test(raw)){
+    cat='Housing'; sub='Rent / Mortgage';
+  } else if(/gas|غاز/i.test(raw)){
+    cat='Housing'; sub='Natural Gas / Heating';
+  } else if(/housekeeper|cleaner|حمادة|شغالة|هاندي/i.test(raw)){
+    cat='Housing'; sub='House Keeper';
+  } else if(/hala|هالة/i.test(raw)){
+    cat='Hala'; sub='Allowance / Pocket Money';
+  } else if(/nour|نور/i.test(raw)){
+    cat='Nour'; sub='Allowance / Pocket Money';
+  } else if(/wife|hadeer|هدير/i.test(raw)){
+    cat='Wife'; sub='Allowance / Pocket Money';
+  } else if(/cigarette|سيجارة|سجاير|دخان/i.test(raw)){
+    cat='Miscellaneous'; sub='Cigarettes / Tobacco';
+  } else if(/gym|fitness|sport|رياضة/i.test(raw)){
+    cat='Health and Medical'; sub='Gym / Fitness Membership';
+  } else if(/doctor|دكتور|clinic|عيادة|hospital|مستشفى/i.test(raw)){
+    cat='Health and Medical'; sub='Doctor / Specialist Visits';
+  } else if(/pharmacy|صيدلية|medicine|دواء/i.test(raw)){
+    cat='Health and Medical'; sub='Pharmacy / Medications';
+  } else if(/netflix|spotify|apple|subscription|اشتراك/i.test(raw)){
+    cat='Technology'; sub='Subscriptions';
+  } else if(/phone|موبايل|mobile|etisalat|vodafone|orange/i.test(raw)){
+    cat='Technology'; sub='Mobile Phone Bill';
+  } else if(/salon|barber|haircut|حلاقة|كوافير/i.test(raw)){
+    cat='Personal Care'; sub='Haircut / Salon / Barber';
+  } else if(/clothes|clothing|shoes|ملابس|أحذية/i.test(raw)){
+    cat='Personal Care'; sub='Clothing & Shoes';
+  } else if(/donation|charity|تبرع|صدقة/i.test(raw)){
+    cat='Gifts and Donations'; sub='Charitable Donations';
+  } else if(/gift|هدية/i.test(raw)){
+    cat='Gifts and Donations'; sub='Birthday & Holiday Gifts';
+  } else if(/visa payment|visa pay|سداد فيزا/i.test(raw)){
+    cat='Debt Payments'; sub='Visa Payment — CIB Visa';
+  } else if(/loan|قرض|instalment|قسط/i.test(raw)){
+    cat='Debt Payments'; sub='Other Debt Payments';
+  } else if(/garage|parking|جراج/i.test(raw)){
+    cat='Transportation'; sub='Car Garage / Parking Rental';
+  } else if(/fuel|gas station|بنزين|وقود/i.test(raw)){
+    cat='Transportation'; sub='Fuel / Gasoline';
+  }
+
+  // ── Clean description — keep meaningful words ──
+  let desc = raw
+    .replace(/[٠-٩]/g, c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c))  // normalise arabic nums
+    .replace(/\d[\d,\.]*/g, '')                           // remove numbers
+    .replace(/(pound|pounds|egp|جنيه|visa|cib|nextbank|wafa|debit|cash|كاش|نقدي|دبت)/gi,'')
+    .replace(/\s{2,}/g,' ').trim();
+  if(!desc || desc.length<2) desc = raw.substring(0,40);
+  desc = desc.substring(0,45);
+
+  parsedEntry = {_type:'expense', id:state.nextExpId++, date:d, cat, sub, desc, method, amount, notes:''};
+
+  document.getElementById('pr-cat').textContent  = cat + (sub?' › '+sub:'');
+  document.getElementById('pr-desc').textContent = desc;
+  document.getElementById('pr-amt').textContent  = fmt(amount)+' EGP';
+  document.getElementById('pr-pay').textContent  = method;
+  document.getElementById('pr-date').textContent = d;
   document.getElementById('pres').classList.add('show');
   document.getElementById('conf-btn').style.display='block';
+  document.getElementById('conf-btn').textContent='✓ Add Expense';
 }
 
 function confirmVoice(){
-  if(!parsedEntry)return;
-  state.expenses.push(parsedEntry);
-  saveState();renderAll();
-  toast('✅ Voice expense saved!');
-  closeVoice();
+  if(!parsedEntry) return;
+  if(parsedEntry._type==='transfer'){
+    state.transfers.push({id:parsedEntry.id,date:parsedEntry.date,from:parsedEntry.from,to:parsedEntry.to,amount:parsedEntry.amount,desc:parsedEntry.desc});
+    toast('✅ Transfer saved!');
+  } else {
+    state.expenses.push({id:parsedEntry.id,date:parsedEntry.date,cat:parsedEntry.cat,sub:parsedEntry.sub,desc:parsedEntry.desc,method:parsedEntry.method,amount:parsedEntry.amount,notes:parsedEntry.notes});
+    toast('✅ Expense saved!');
+  }
+  saveState(); renderAll(); closeVoice();
 }
 
 // ── INIT ──
