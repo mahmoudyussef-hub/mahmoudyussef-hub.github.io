@@ -808,7 +808,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div class="overlay" id="vmodal">
   <div class="modal">
     <h2>🎤 Voice Entry</h2>
-    <p class="msub">Say your expense in Arabic or English<br>e.g. "Starbucks 105 pounds CIB Visa"</p>
+
+    <!-- Language selector -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button onclick="setVoiceLang('ar-EG',this)" id="lang-ar"
+        style="flex:1;padding:8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;
+        background:var(--accent);color:#fff;border:none;">🇪🇬 Arabic</button>
+      <button onclick="setVoiceLang('en-US',this)" id="lang-en"
+        style="flex:1;padding:8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;
+        background:var(--border);color:var(--muted);border:none;">🇺🇸 English</button>
+    </div>
+
+    <p class="msub" id="voice-hint" style="margin-bottom:10px;">
+      قل المصروف بالعربي — مثال: "ستاربكس ١٠٥ جنيه فيزا CIB"
+    </p>
+
     <div class="wave" id="wave"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
     <div class="tbox" id="tbox">Tap Start to begin...</div>
     <div class="pres" id="pres">
@@ -1286,9 +1300,36 @@ function saveEdit() {
 }
 
 // ── VOICE ──
-let recognition=null,isRec=false,parsedEntry=null;
+let recognition=null,isRec=false,parsedEntry=null,voiceLang='ar-EG';
+
+
+function setVoiceLang(lang, el) {
+  voiceLang = lang;
+  // Update button styles
+  document.getElementById('lang-ar').style.background = lang==='ar-EG' ? 'var(--accent)' : 'var(--border)';
+  document.getElementById('lang-ar').style.color = lang==='ar-EG' ? '#fff' : 'var(--muted)';
+  document.getElementById('lang-en').style.background = lang==='en-US' ? 'var(--accent)' : 'var(--border)';
+  document.getElementById('lang-en').style.color = lang==='en-US' ? '#fff' : 'var(--muted)';
+  // Update hint text
+  const hint = document.getElementById('voice-hint');
+  if (hint) {
+    hint.textContent = lang==='ar-EG'
+      ? 'قل المصروف بالعربي — مثال: "ستاربكس ١٠٥ جنيه فيزا CIB"'
+      : 'Say your expense in English — e.g. "Starbucks 105 pounds CIB Visa"';
+  }
+  // Save preference
+  localStorage.setItem('voiceLang', lang);
+  toast(lang==='ar-EG' ? '🇪🇬 Arabic mode' : '🇺🇸 English mode');
+}
 
 function openVoice(){
+  // Restore saved language preference
+  const saved = localStorage.getItem('voiceLang');
+  if (saved && saved !== voiceLang) {
+    voiceLang = saved;
+    const el = document.getElementById(saved==='ar-EG'?'lang-ar':'lang-en');
+    if (el) setVoiceLang(saved, el);
+  }
   document.getElementById('vmodal').classList.add('open');
   document.getElementById('tbox').textContent='Tap Start to begin...';
   document.getElementById('pres').classList.remove('show');
@@ -1304,7 +1345,7 @@ function startRec(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){simulateVoice();return;}
   recognition=new SR();
-  recognition.lang='ar-EG';
+  recognition.lang=voiceLang;
   recognition.interimResults=true;
   recognition.onstart=()=>{isRec=true;document.getElementById('fab').classList.add('rec');document.getElementById('wave').style.display='flex';document.getElementById('rec-btn').textContent='⏹ Stop';document.getElementById('tbox').textContent='Listening...';};
   recognition.onresult=(e)=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');document.getElementById('tbox').textContent=t;if(e.results[0].isFinal)parseTxt(t);};
@@ -1316,7 +1357,9 @@ function stopRec(){isRec=false;if(recognition)recognition.stop();document.getEle
 
 function simulateVoice(){
   document.getElementById('fab').classList.add('rec');document.getElementById('wave').style.display='flex';document.getElementById('rec-btn').textContent='⏹ Stop';document.getElementById('tbox').textContent='Listening (demo)...';
-  const demos=['Starbucks 150 pounds CIB Visa Food','Uber 85 pounds NEXTBANK wife','Groceries 500 CIB Debit','Cigarettes 250 CIB Visa'];
+  const demosEn=['Starbucks 150 pounds CIB Visa Food','Uber 85 pounds NEXTBANK wife','Groceries 500 CIB Debit','Cigarettes 250 CIB Visa'];
+  const demosAr=['ستاربكس ١٥٠ جنيه فيزا CIB','أوبر ٨٥ جنيه NEXTBANK زوجة','بقالة ٥٠٠ جنيه كاش','سجاير ٢٥٠ جنيه'];
+  const demos=voiceLang==='ar-EG'?demosAr:demosEn;
   setTimeout(()=>{
     const s=demos[Math.floor(Math.random()*demos.length)];
     document.getElementById('tbox').textContent=s;
