@@ -2,781 +2,420 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>My Monthly Budget Planner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Budget">
+<title>My Budget Planner</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--card:#21253a;--border:#2e3350;
+  --accent:#4f7cff;--green:#00c9a7;--warn:#ffb347;--red:#ff5e7e;
+  --text:#eaf0ff;--muted:#7a84a8;--radius:14px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:72px;-webkit-font-smoothing:antialiased;}
 
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --card: #21253a;
-    --border: #2e3350;
-    --accent: #4f7cff;
-    --accent2: #00c9a7;
-    --warn: #ffb347;
-    --danger: #ff5e7e;
-    --text: #eaf0ff;
-    --muted: #7a84a8;
-    --income-color: #00c9a7;
-    --expense-color: #ff5e7e;
-    --radius: 14px;
-    --font: 'Segoe UI', system-ui, sans-serif;
-  }
+/* TOPBAR */
+.topbar{background:var(--surface);padding:env(safe-area-inset-top,16px) 18px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.topbar-inner{display:flex;justify-content:space-between;align-items:center;}
+.topbar h1{font-size:15px;font-weight:700;}
+.month-pill{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:3px 11px;border-radius:20px;margin-top:3px;display:inline-block;}
 
-  body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding-bottom: 80px;
-  }
+/* NAV */
+.nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;position:sticky;top:62px;z-index:99;scrollbar-width:none;}
+.nav::-webkit-scrollbar{display:none;}
+.nb{flex:none;padding:10px 15px;font-size:12px;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.nb.active{color:var(--accent);border-bottom-color:var(--accent);}
 
-  /* TOP BAR */
-  .topbar {
-    background: var(--surface);
-    padding: 16px 18px 12px;
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 100;
-  }
-  .topbar h1 { font-size: 15px; font-weight: 700; letter-spacing: .4px; color: var(--text); }
-  .topbar .month-badge {
-    display: inline-block; margin-top: 4px;
-    background: var(--accent); color: #fff;
-    font-size: 11px; font-weight: 600;
-    padding: 2px 10px; border-radius: 20px;
-  }
+/* SECTIONS */
+.sec{display:none;padding:14px;}
+.sec.on{display:block;}
 
-  /* NAV TABS */
-  .nav {
-    display: flex; gap: 0;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-    position: sticky; top: 65px; z-index: 99;
-    scrollbar-width: none;
-  }
-  .nav::-webkit-scrollbar { display: none; }
-  .nav-btn {
-    flex: none; padding: 10px 16px;
-    font-size: 12px; font-weight: 600;
-    color: var(--muted);
-    background: none; border: none; cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all .2s;
-    white-space: nowrap;
-  }
-  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.ctitle{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
 
-  /* SECTIONS */
-  .section { display: none; padding: 14px; }
-  .section.active { display: block; }
+/* KPI */
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+.kpi label{display:block;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.kpi .v{font-size:20px;font-weight:800;}
+.kpi .sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.green{color:var(--green);} .red{color:var(--red);} .blue{color:var(--accent);} .warn{color:var(--warn);}
 
-  /* CARDS */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    margin-bottom: 12px;
-  }
-  .card-title {
-    font-size: 11px; font-weight: 700; letter-spacing: 1px;
-    color: var(--muted); text-transform: uppercase;
-    margin-bottom: 10px;
-  }
+/* PROGRESS */
+.pbar{height:6px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:5px;}
+.pfill{height:100%;border-radius:99px;}
+.pfill.g{background:var(--green);} .pfill.w{background:var(--warn);} .pfill.r{background:var(--red);}
+.plabel{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px;}
 
-  /* KPI GRID */
-  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .kpi {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px;
-  }
-  .kpi label { display: block; font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 4px; }
-  .kpi .val { font-size: 20px; font-weight: 800; }
-  .kpi .val.green { color: var(--income-color); }
-  .kpi .val.red { color: var(--expense-color); }
-  .kpi .val.blue { color: var(--accent); }
-  .kpi .val.warn { color: var(--warn); }
+/* ROWS */
+.row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);gap:10px;}
+.row:last-child{border-bottom:none;}
+.icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.rinfo{flex:1;min-width:0;}
+.rname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rmeta{font-size:11px;color:var(--muted);margin-top:1px;}
+.ramount{font-size:14px;font-weight:700;}
 
-  /* PROGRESS BAR */
-  .pbar-wrap { margin-top: 6px; }
-  .pbar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-  .pbar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
-  .pbar-fill { height: 100%; border-radius: 99px; transition: width .4s; }
-  .pbar-fill.green { background: var(--income-color); }
-  .pbar-fill.warn { background: var(--warn); }
-  .pbar-fill.red { background: var(--expense-color); }
+/* BADGE */
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;}
+.bok{background:rgba(0,201,167,.15);color:var(--green);}
+.bwarn{background:rgba(255,179,71,.15);color:var(--warn);}
+.bover{background:rgba(255,94,126,.15);color:var(--red);}
+.btag{background:rgba(79,124,255,.15);color:var(--accent);}
 
-  /* CATEGORY ROW */
-  .cat-row {
-    display: flex; align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    gap: 10px;
-  }
-  .cat-row:last-child { border-bottom: none; }
-  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .cat-name { flex: 1; font-size: 13px; }
-  .cat-budgeted { font-size: 11px; color: var(--muted); }
-  .cat-actual { font-size: 13px; font-weight: 700; }
+/* FORM */
+.fg{margin-bottom:11px;}
+.fg label{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;}
+.fg input,.fg select,.fg textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:14px;font-family:var(--font);
+  padding:10px 12px;appearance:none;outline:none;transition:border .2s;
+}
+.fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a84a8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+.fg input:focus,.fg select:focus{border-color:var(--accent);}
+.btn{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;}
+.btn:active{opacity:.8;}
+.btn.sec-btn{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.btn.danger{background:rgba(255,94,126,.15);color:var(--red);border:1px solid rgba(255,94,126,.3);}
+.flex{display:flex;justify-content:space-between;align-items:center;}
+.divider{height:1px;background:var(--border);margin:10px 0;}
+.mt{margin-top:8px;} .mb{margin-bottom:8px;}
 
-  /* STATUS BADGE */
-  .badge {
-    display: inline-block; padding: 2px 7px;
-    border-radius: 20px; font-size: 10px; font-weight: 700;
-    letter-spacing: .4px;
-  }
-  .badge.ok { background: rgba(0,201,167,.15); color: var(--income-color); }
-  .badge.warn { background: rgba(255,179,71,.15); color: var(--warn); }
-  .badge.over { background: rgba(255,94,126,.15); color: var(--danger); }
+/* VISA CARD */
+.vcard{background:linear-gradient(135deg,#1a2a6c,#4f7cff,#00c9a7);border-radius:16px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden;}
+.vcard::before{content:'';position:absolute;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.07);top:-25px;right:-25px;}
+.vcard .vc-name{font-size:13px;font-weight:700;opacity:.9;}
+.vcard .vc-bal{font-size:24px;font-weight:900;margin:8px 0 2px;}
+.vcard .vc-avail{font-size:11px;opacity:.7;}
 
-  /* FORM */
-  .form-group { margin-bottom: 12px; }
-  .form-group label { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 5px; }
-  .form-group input, .form-group select, .form-group textarea {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-size: 14px;
-    font-family: var(--font);
-    padding: 10px 12px;
-    appearance: none;
-    outline: none;
-    transition: border .2s;
-  }
-  .form-group select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a84a8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
-  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+/* VOICE FAB */
+.fab{position:fixed;bottom:80px;right:16px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#ff5e7e,#ff8c42);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 18px rgba(255,94,126,.4);z-index:200;}
+.fab.rec{animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 4px 18px rgba(255,23,68,.5);}50%{box-shadow:0 4px 30px rgba(255,23,68,.8);transform:scale(1.06);}}
 
-  .btn {
-    width: 100%; padding: 13px;
-    background: var(--accent); color: #fff;
-    border: none; border-radius: 12px;
-    font-size: 14px; font-weight: 700;
-    cursor: pointer; transition: opacity .2s;
-  }
-  .btn:active { opacity: .8; }
-  .btn.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:none;align-items:flex-end;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:24px 24px 0 0;padding:24px 18px calc(24px + env(safe-area-inset-bottom,0px));width:100%;border:1px solid var(--border);}
+.modal h2{font-size:16px;font-weight:800;margin-bottom:3px;}
+.modal .msub{font-size:12px;color:var(--muted);margin-bottom:18px;}
+.wave{display:none;align-items:center;justify-content:center;gap:5px;height:44px;margin-bottom:16px;}
+.wb{width:4px;border-radius:99px;background:var(--accent);animation:wv 1s ease-in-out infinite;}
+.wb:nth-child(1){height:10px;animation-delay:0s;}.wb:nth-child(2){height:26px;animation-delay:.1s;}.wb:nth-child(3){height:38px;animation-delay:.2s;}.wb:nth-child(4){height:26px;animation-delay:.3s;}.wb:nth-child(5){height:14px;animation-delay:.4s;}.wb:nth-child(6){height:34px;animation-delay:.5s;}.wb:nth-child(7){height:18px;animation-delay:.6s;}
+@keyframes wv{0%,100%{transform:scaleY(1);opacity:.6;}50%{transform:scaleY(1.8);opacity:1;}}
+.tbox{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;min-height:50px;margin-bottom:12px;line-height:1.5;}
+.pres{background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.3);border-radius:12px;padding:12px;margin-bottom:14px;display:none;}
+.pres.show{display:block;}
+.pr{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+.pr .pk{color:var(--muted);} .pr .pv{font-weight:600;}
+.mbtns{display:flex;gap:10px;}
+.mbtns .btn{flex:1;}
 
-  /* TRANSACTION LIST */
-  .tx-row {
-    display: flex; align-items: center;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-    gap: 10px;
-  }
-  .tx-row:last-child { border-bottom: none; }
-  .tx-icon {
-    width: 36px; height: 36px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
-  }
-  .tx-info { flex: 1; min-width: 0; }
-  .tx-info .name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tx-info .meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
-  .tx-amount { font-size: 14px; font-weight: 700; }
-  .tx-amount.neg { color: var(--expense-color); }
-  .tx-amount.pos { color: var(--income-color); }
+/* TOAST */
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 20px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:500;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-  /* ACCOUNT CARD */
-  .acc-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px;
-    margin-bottom: 10px;
-  }
-  .acc-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; }
-  .acc-name { font-size: 14px; font-weight: 700; }
-  .acc-type { font-size: 10px; color: var(--muted); margin-top: 2px; }
-  .acc-balance { font-size: 20px; font-weight: 800; text-align: right; }
-  .acc-balance.positive { color: var(--income-color); }
-  .acc-balance.negative { color: var(--expense-color); }
-  .acc-footer { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:100;}
+.bn{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);font-weight:600;background:none;border:none;cursor:pointer;}
+.bn .bi{font-size:19px;}
+.bn.active{color:var(--accent);}
 
-  /* VISA CARD VISUAL */
-  .visa-visual {
-    background: linear-gradient(135deg, #1a2a6c, #4f7cff, #00c9a7);
-    border-radius: 16px; padding: 20px 18px;
-    margin-bottom: 14px; position: relative; overflow: hidden;
-  }
-  .visa-visual::before {
-    content: ''; position: absolute;
-    width: 120px; height: 120px; border-radius: 50%;
-    background: rgba(255,255,255,.07);
-    top: -30px; right: -30px;
-  }
-  .visa-visual .card-name { font-size: 13px; font-weight: 700; opacity: .9; }
-  .visa-visual .card-limit { font-size: 11px; opacity: .6; margin-top: 2px; }
-  .visa-visual .card-balance { font-size: 26px; font-weight: 900; margin: 10px 0 4px; }
-  .visa-visual .card-avail { font-size: 11px; opacity: .7; }
-  .visa-visual .util-bar { margin-top: 12px; }
-
-  /* VOICE BUTTON */
-  .voice-fab {
-    position: fixed; bottom: 90px; right: 18px;
-    width: 58px; height: 58px; border-radius: 50%;
-    background: linear-gradient(135deg, #ff5e7e, #ff8c42);
-    border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    box-shadow: 0 4px 20px rgba(255,94,126,.4);
-    z-index: 200; transition: transform .2s;
-  }
-  .voice-fab:active { transform: scale(.93); }
-  .voice-fab.recording {
-    animation: pulse 1s infinite;
-    background: linear-gradient(135deg, #ff1744, #ff5e7e);
-  }
-  @keyframes pulse {
-    0%,100% { box-shadow: 0 4px 20px rgba(255,23,68,.5); transform: scale(1); }
-    50% { box-shadow: 0 4px 32px rgba(255,23,68,.8); transform: scale(1.07); }
-  }
-
-  /* VOICE MODAL */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.75);
-    z-index: 300; display: none;
-    align-items: flex-end;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border-radius: 24px 24px 0 0;
-    padding: 24px 18px 36px;
-    width: 100%;
-    border: 1px solid var(--border);
-  }
-  .modal h2 { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
-  .modal .sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
-  .voice-wave {
-    display: flex; align-items: center; justify-content: center;
-    gap: 5px; height: 48px; margin-bottom: 20px;
-  }
-  .wave-bar {
-    width: 4px; border-radius: 99px;
-    background: var(--accent);
-    animation: wave 1s ease-in-out infinite;
-  }
-  .wave-bar:nth-child(1){ height: 12px; animation-delay: 0s; }
-  .wave-bar:nth-child(2){ height: 28px; animation-delay: .1s; }
-  .wave-bar:nth-child(3){ height: 40px; animation-delay: .2s; }
-  .wave-bar:nth-child(4){ height: 28px; animation-delay: .3s; }
-  .wave-bar:nth-child(5){ height: 16px; animation-delay: .4s; }
-  .wave-bar:nth-child(6){ height: 36px; animation-delay: .5s; }
-  .wave-bar:nth-child(7){ height: 20px; animation-delay: .6s; }
-  @keyframes wave {
-    0%,100%{ transform: scaleY(1); opacity:.6; }
-    50%{ transform: scaleY(1.8); opacity:1; }
-  }
-  .transcript-box {
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px;
-    font-size: 14px; min-height: 54px;
-    color: var(--text); margin-bottom: 14px;
-    line-height: 1.5;
-  }
-  .parsed-result {
-    background: rgba(79,124,255,.1); border: 1px solid rgba(79,124,255,.3);
-    border-radius: 12px; padding: 12px;
-    margin-bottom: 16px; display: none;
-  }
-  .parsed-result.show { display: block; }
-  .parsed-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
-  .parsed-row .pk { color: var(--muted); }
-  .parsed-row .pv { font-weight: 600; }
-  .modal-actions { display: flex; gap: 10px; }
-  .modal-actions .btn { flex: 1; }
-
-  /* TOAST */
-  .toast {
-    position: fixed; bottom: 95px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 10px 20px;
-    font-size: 13px; font-weight: 600;
-    opacity: 0; transition: all .3s;
-    pointer-events: none; white-space: nowrap; z-index: 400;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-  /* BOTTOM NAV */
-  .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex; z-index: 100;
-  }
-  .bnav-btn {
-    flex: 1; padding: 10px 4px 8px;
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    font-size: 10px; color: var(--muted); font-weight: 600;
-    background: none; border: none; cursor: pointer;
-    transition: color .2s;
-  }
-  .bnav-btn .icon { font-size: 20px; }
-  .bnav-btn.active { color: var(--accent); }
-
-  /* UTIL */
-  .divider { height: 1px; background: var(--border); margin: 12px 0; }
-  .flex-between { display: flex; justify-content: space-between; align-items: center; }
-  .text-muted { color: var(--muted); font-size: 12px; }
-  .text-lg { font-size: 22px; font-weight: 800; }
-  .mt-2 { margin-top: 8px; }
-  .mb-2 { margin-bottom: 8px; }
-  .tag { display: inline-block; background: rgba(79,124,255,.15); color: var(--accent); border-radius: 6px; padding: 2px 7px; font-size: 10px; font-weight: 700; }
+/* STORAGE STATUS */
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-left:6px;}
+.sync-dot.saving{background:var(--warn);}
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
-  <div class="flex-between">
+  <div class="topbar-inner">
     <div>
-      <h1>📊 My Budget Planner</h1>
-      <span class="month-badge" id="currentMonth">August 2026</span>
+      <h1>📊 My Budget Planner <span class="sync-dot" id="sync-dot" title="Storage status"></span></h1>
+      <span class="month-pill" id="cur-month">August 2026</span>
     </div>
-    <div style="text-align:right;font-size:11px;color:var(--muted);">
-      EGP<br><span style="font-size:13px;font-weight:700;color:var(--text);">120,000</span>
-    </div>
+    <div style="text-align:right;font-size:11px;color:var(--muted);">Income<br><span style="font-size:14px;font-weight:700;color:var(--text);" id="hdr-income">120,000</span></div>
   </div>
 </div>
 
-<!-- MAIN NAV -->
 <div class="nav">
-  <button class="nav-btn active" onclick="showTab('dashboard',this)">Dashboard</button>
-  <button class="nav-btn" onclick="showTab('add',this)">+ Add</button>
-  <button class="nav-btn" onclick="showTab('expenses',this)">Expenses</button>
-  <button class="nav-btn" onclick="showTab('income',this)">Income</button>
-  <button class="nav-btn" onclick="showTab('accounts',this)">Accounts</button>
-  <button class="nav-btn" onclick="showTab('visa',this)">Visa</button>
+  <button class="nb active" onclick="go('dashboard',this)">Dashboard</button>
+  <button class="nb" onclick="go('add',this)">+ Add</button>
+  <button class="nb" onclick="go('expenses',this)">Expenses</button>
+  <button class="nb" onclick="go('income',this)">Income</button>
+  <button class="nb" onclick="go('accounts',this)">Accounts</button>
+  <button class="nb" onclick="go('visa',this)">Visa</button>
 </div>
 
-<!-- ============ DASHBOARD ============ -->
-<div class="section active" id="tab-dashboard">
-
-  <!-- KPI Row -->
-  <div class="kpi-grid">
-    <div class="kpi">
-      <label>Total Income</label>
-      <div class="val green">120,000</div>
-      <div class="text-muted" style="font-size:10px;margin-top:2px;">EGP / month</div>
-    </div>
-    <div class="kpi">
-      <label>Total Expenses</label>
-      <div class="val red" id="kpi-expenses">111,464</div>
-      <div class="text-muted" style="font-size:10px;margin-top:2px;">EGP actual</div>
-    </div>
-    <div class="kpi">
-      <label>Net Savings</label>
-      <div class="val blue">8,536</div>
-      <div class="text-muted" style="font-size:10px;margin-top:2px;">7.1% rate</div>
-    </div>
-    <div class="kpi">
-      <label>Budget Used</label>
-      <div class="val warn">94.6%</div>
-      <div class="text-muted" style="font-size:10px;margin-top:2px;">of 117,809 EGP</div>
-    </div>
+<!-- DASHBOARD -->
+<div class="sec on" id="tab-dashboard">
+  <div class="kgrid">
+    <div class="kpi"><label>Total Income</label><div class="v green" id="k-income">120,000</div><div class="sub">EGP / month</div></div>
+    <div class="kpi"><label>Total Expenses</label><div class="v red" id="k-expenses">—</div><div class="sub">EGP actual</div></div>
+    <div class="kpi"><label>Net Savings</label><div class="v blue" id="k-savings">—</div><div class="sub" id="k-rate">—</div></div>
+    <div class="kpi"><label>Budget Used</label><div class="v warn" id="k-budgetpct">—</div><div class="sub">of <span id="k-budget">117,809</span> EGP</div></div>
   </div>
-
-  <!-- Net Worth -->
   <div class="card">
-    <div class="card-title">Net Position</div>
-    <div class="flex-between mb-2">
-      <span class="text-muted">Cash & Bank</span>
-      <span style="font-weight:700;color:var(--income-color);">33,670 EGP</span>
-    </div>
-    <div class="flex-between mb-2">
-      <span class="text-muted">Credit Card Debt</span>
-      <span style="font-weight:700;color:var(--expense-color);">-143,984 EGP</span>
-    </div>
+    <div class="ctitle">Net Position</div>
+    <div class="flex mb"><span style="color:var(--muted)">Cash &amp; Bank</span><span style="font-weight:700;color:var(--green)">33,670 EGP</span></div>
+    <div class="flex mb"><span style="color:var(--muted)">Credit Debt</span><span style="font-weight:700;color:var(--red)">-143,984 EGP</span></div>
     <div class="divider"></div>
-    <div class="flex-between">
-      <span style="font-weight:700;">Net Worth</span>
-      <span class="text-lg" style="color:var(--expense-color);">-110,314</span>
-    </div>
+    <div class="flex"><span style="font-weight:700">Net Worth</span><span style="font-size:20px;font-weight:800;color:var(--red)">-110,314</span></div>
   </div>
-
-  <!-- Expense Breakdown -->
+  <div class="card"><div class="ctitle">Expense by Category</div><div id="cat-list"></div></div>
   <div class="card">
-    <div class="card-title">Expense Categories</div>
-    <div id="cat-breakdown"></div>
+    <div class="ctitle">Visa Summary</div>
+    <div class="flex mb"><span style="color:var(--muted)">Total Limit</span><span style="font-weight:600">153,200 EGP</span></div>
+    <div class="flex mb"><span style="color:var(--muted)">Outstanding</span><span style="font-weight:700;color:var(--red)">142,953 EGP</span></div>
+    <div class="flex mb"><span style="color:var(--muted)">Available</span><span style="font-weight:700;color:var(--green)">10,247 EGP</span></div>
+    <div class="plabel"><span>Utilization</span><span style="color:var(--red)">93.3%</span></div>
+    <div class="pbar"><div class="pfill r" style="width:93.3%"></div></div>
   </div>
-
-  <!-- Visa Summary -->
-  <div class="card">
-    <div class="card-title">Visa Overview</div>
-    <div class="flex-between mb-2">
-      <span class="text-muted">Total Limit</span>
-      <span style="font-weight:600;">153,200 EGP</span>
-    </div>
-    <div class="flex-between mb-2">
-      <span class="text-muted">Outstanding</span>
-      <span style="font-weight:700;color:var(--expense-color);">142,953 EGP</span>
-    </div>
-    <div class="flex-between mb-2">
-      <span class="text-muted">Available</span>
-      <span style="font-weight:700;color:var(--income-color);">10,247 EGP</span>
-    </div>
-    <div class="pbar-wrap">
-      <div class="pbar-label"><span>Utilization</span><span style="color:var(--danger);">93.3%</span></div>
-      <div class="pbar"><div class="pbar-fill red" style="width:93.3%"></div></div>
-    </div>
-  </div>
-
 </div>
 
-<!-- ============ ADD EXPENSE ============ -->
-<div class="section" id="tab-add">
+<!-- ADD -->
+<div class="sec" id="tab-add">
   <div class="card">
-    <div class="card-title">Log New Expense</div>
-
-    <div class="form-group">
-      <label>Date</label>
-      <input type="date" id="f-date">
-    </div>
-    <div class="form-group">
-      <label>Category</label>
-      <select id="f-cat" onchange="updateSubcats()">
-        <option value="">Select category...</option>
-        <option>Housing</option>
-        <option>Food and Dining</option>
-        <option>Transportation</option>
-        <option>Health and Medical</option>
-        <option>Personal Care</option>
-        <option>Education</option>
-        <option>Entertainment</option>
-        <option>Technology</option>
-        <option>Insurance</option>
-        <option>Savings and Investments</option>
-        <option>Debt Payments</option>
-        <option>Travel and Vacation</option>
-        <option>Gifts and Donations</option>
-        <option>Childcare and Family</option>
-        <option>Miscellaneous</option>
-        <option>Nour</option>
-        <option>Hala</option>
-        <option>Wife</option>
+    <div class="ctitle">Log Expense</div>
+    <div class="fg"><label>Date</label><input type="date" id="f-date"></div>
+    <div class="fg"><label>Category</label>
+      <select id="f-cat" onchange="fillSubs()">
+        <option value="">Select...</option>
+        <option>Housing</option><option>Food and Dining</option><option>Transportation</option>
+        <option>Health and Medical</option><option>Personal Care</option><option>Education</option>
+        <option>Entertainment</option><option>Technology</option><option>Insurance</option>
+        <option>Savings and Investments</option><option>Debt Payments</option>
+        <option>Travel and Vacation</option><option>Gifts and Donations</option>
+        <option>Childcare and Family</option><option>Miscellaneous</option>
+        <option>Nour</option><option>Hala</option><option>Wife</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>Subcategory</label>
-      <select id="f-subcat">
-        <option value="">Select subcategory...</option>
+    <div class="fg"><label>Subcategory</label><select id="f-sub"><option value="">Select...</option></select></div>
+    <div class="fg"><label>Description</label><input type="text" id="f-desc" placeholder="e.g. Starbucks"></div>
+    <div class="fg"><label>Amount (EGP)</label><input type="number" id="f-amt" placeholder="0.00" step="0.01" inputmode="decimal"></div>
+    <div class="fg"><label>Payment Method</label>
+      <select id="f-pay">
+        <option>CIB Visa</option><option>CIB Debit</option><option>NEXTBANK 18K</option>
+        <option>NEXTBANK 50K</option><option>Wafa Bank Visa</option><option>QNB Debit</option><option>Cash in Hand</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>Description</label>
-      <input type="text" id="f-desc" placeholder="e.g. Starbucks coffee">
-    </div>
-    <div class="form-group">
-      <label>Amount (EGP)</label>
-      <input type="number" id="f-amount" placeholder="0.00" step="0.01">
-    </div>
-    <div class="form-group">
-      <label>Payment Method</label>
-      <select id="f-method">
-        <option>CIB Visa</option>
-        <option>CIB Debit</option>
-        <option>NEXTBANK 18K</option>
-        <option>NEXTBANK 50K</option>
-        <option>Wafa Bank Visa</option>
-        <option>QNB Debit</option>
-        <option>Cash in Hand</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Notes (optional)</label>
-      <input type="text" id="f-notes" placeholder="Any extra notes...">
-    </div>
-
-    <button class="btn" onclick="saveExpense()">💾 Save Expense</button>
+    <div class="fg"><label>Notes (optional)</label><input type="text" id="f-notes" placeholder="Extra notes..."></div>
+    <button class="btn" onclick="addExpense()">💾 Save Expense</button>
   </div>
 
-  <!-- Add Income -->
   <div class="card" style="margin-top:4px;">
-    <div class="card-title">Log Income</div>
-    <div class="form-group">
-      <label>Date</label>
-      <input type="date" id="fi-date">
-    </div>
-    <div class="form-group">
-      <label>Category</label>
+    <div class="ctitle">Log Income</div>
+    <div class="fg"><label>Date</label><input type="date" id="fi-date"></div>
+    <div class="fg"><label>Category</label>
       <select id="fi-cat">
-        <option>Primary Salary</option>
-        <option>Secondary Salary</option>
-        <option>Bonus / Commission</option>
-        <option>Freelance / Consulting</option>
-        <option>Business Income</option>
-        <option>Rental Income</option>
-        <option>Other Income</option>
+        <option>Primary Salary</option><option>Secondary Salary</option><option>Bonus / Commission</option>
+        <option>Freelance / Consulting</option><option>Business Income</option><option>Rental Income</option><option>Other Income</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>Source / Description</label>
-      <input type="text" id="fi-desc" placeholder="e.g. Basic Net Salary">
+    <div class="fg"><label>Source / Description</label><input type="text" id="fi-desc" placeholder="e.g. Basic Net Salary"></div>
+    <div class="fg"><label>Expected (EGP)</label><input type="number" id="fi-exp" placeholder="0.00" inputmode="decimal"></div>
+    <div class="fg"><label>Actual (EGP)</label><input type="number" id="fi-act" placeholder="0.00" inputmode="decimal"></div>
+    <div class="fg"><label>Deposited To</label>
+      <select id="fi-acc"><option>CIB Debit</option><option>QNB Debit</option><option>Cash in Hand</option></select>
     </div>
-    <div class="form-group">
-      <label>Expected (EGP)</label>
-      <input type="number" id="fi-expected" placeholder="0.00">
-    </div>
-    <div class="form-group">
-      <label>Actual (EGP)</label>
-      <input type="number" id="fi-actual" placeholder="0.00">
-    </div>
-    <div class="form-group">
-      <label>Deposited To</label>
-      <select id="fi-account">
-        <option>CIB Debit</option>
-        <option>QNB Debit</option>
-        <option>Cash in Hand</option>
-      </select>
-    </div>
-    <button class="btn" onclick="saveIncome()">💾 Save Income</button>
+    <button class="btn" onclick="addIncome()">💾 Save Income</button>
+  </div>
+
+  <div class="card" style="margin-top:4px;">
+    <div class="ctitle">Export Data</div>
+    <button class="btn" onclick="exportExcel()" style="margin-bottom:10px">📥 Export to Excel (.xlsx)</button>
+    <button class="btn sec-btn" onclick="exportCSV()" style="margin-bottom:18px">📄 Export to CSV</button>
+    <div class="ctitle">Danger Zone</div>
+    <button class="btn danger" onclick="clearAll()">🗑 Clear All Data</button>
   </div>
 </div>
 
-<!-- ============ EXPENSES LIST ============ -->
-<div class="section" id="tab-expenses">
+<!-- EXPENSES -->
+<div class="sec" id="tab-expenses">
   <div class="card">
-    <div class="flex-between mb-2">
-      <div class="card-title" style="margin-bottom:0;">All Expenses</div>
-      <span class="tag" id="exp-count">64 entries</span>
+    <div class="flex mb"><div class="ctitle" style="margin-bottom:0">All Expenses</div><span class="badge btag" id="exp-count">0 entries</span></div>
+    <div class="flex" style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+      <span>Budgeted: 118,609</span><span style="color:var(--red);font-weight:700">Actual: <span id="exp-total">—</span> EGP</span>
     </div>
-    <div class="flex-between" style="font-size:12px;color:var(--muted);margin-bottom:10px;">
-      <span>Budgeted: 118,609 EGP</span>
-      <span style="color:var(--expense-color);font-weight:700;">Actual: 111,464 EGP</span>
-    </div>
-    <div id="expenses-list"></div>
+    <div id="exp-list"></div>
   </div>
 </div>
 
-<!-- ============ INCOME ============ -->
-<div class="section" id="tab-income">
-  <div class="kpi-grid">
-    <div class="kpi">
-      <label>Expected</label>
-      <div class="val">120,000</div>
-    </div>
-    <div class="kpi">
-      <label>Actual</label>
-      <div class="val green">120,000</div>
-    </div>
+<!-- INCOME -->
+<div class="sec" id="tab-income">
+  <div class="kgrid">
+    <div class="kpi"><label>Expected</label><div class="v" id="inc-exp">—</div></div>
+    <div class="kpi"><label>Actual</label><div class="v green" id="inc-act">—</div></div>
   </div>
-  <div class="card">
-    <div class="card-title">Income Sources</div>
-    <div id="income-list"></div>
-  </div>
+  <div class="card"><div class="ctitle">Income Sources</div><div id="inc-list"></div></div>
 </div>
 
-<!-- ============ ACCOUNTS ============ -->
-<div class="section" id="tab-accounts">
+<!-- ACCOUNTS -->
+<div class="sec" id="tab-accounts">
   <div class="card" style="padding:12px 14px;">
-    <div class="flex-between">
-      <div>
-        <div style="font-size:11px;color:var(--muted);">Cash & Bank Total</div>
-        <div style="font-size:22px;font-weight:800;color:var(--income-color);">33,670 EGP</div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:11px;color:var(--muted);">Credit Debt</div>
-        <div style="font-size:22px;font-weight:800;color:var(--expense-color);">-143,984 EGP</div>
-      </div>
+    <div class="flex">
+      <div><div style="font-size:11px;color:var(--muted)">Cash &amp; Bank</div><div style="font-size:20px;font-weight:800;color:var(--green)">33,670 EGP</div></div>
+      <div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Credit Debt</div><div style="font-size:20px;font-weight:800;color:var(--red)">-143,984 EGP</div></div>
     </div>
   </div>
-  <div id="accounts-list"></div>
-
-  <!-- Transfers -->
-  <div class="card">
-    <div class="card-title">Transfers Log</div>
-    <div id="transfers-list"></div>
-  </div>
+  <div id="acc-list"></div>
+  <div class="card"><div class="ctitle">Transfers Log</div><div id="tr-list"></div></div>
 </div>
 
-<!-- ============ VISA ============ -->
-<div class="section" id="tab-visa">
-  <div id="visa-cards"></div>
-  <div class="card">
-    <div class="card-title">Transaction Log</div>
-    <div id="visa-txns"></div>
-  </div>
+<!-- VISA -->
+<div class="sec" id="tab-visa">
+  <div id="vcards"></div>
+  <div class="card"><div class="ctitle">Visa Transactions</div><div id="vtxns"></div></div>
 </div>
 
 <!-- VOICE FAB -->
-<button class="voice-fab" id="voice-fab" onclick="openVoiceModal()" title="Add expense by voice">🎤</button>
+<button class="fab" id="fab" onclick="openVoice()">🎤</button>
 
 <!-- VOICE MODAL -->
-<div class="modal-overlay" id="voice-modal">
+<div class="overlay" id="vmodal">
   <div class="modal">
     <h2>🎤 Voice Entry</h2>
-    <p class="sub">Say your expense in Arabic or English — e.g. "Starbucks, 105 pounds, CIB Visa"</p>
-
-    <div class="voice-wave" id="voice-wave" style="display:none;">
-      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-      <div class="wave-bar"></div>
+    <p class="msub">Say your expense in Arabic or English<br>e.g. "Starbucks 105 pounds CIB Visa"</p>
+    <div class="wave" id="wave"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
+    <div class="tbox" id="tbox">Tap Start to begin...</div>
+    <div class="pres" id="pres">
+      <div class="pr"><span class="pk">Category</span><span class="pv" id="pr-cat">—</span></div>
+      <div class="pr"><span class="pk">Description</span><span class="pv" id="pr-desc">—</span></div>
+      <div class="pr"><span class="pk">Amount</span><span class="pv" id="pr-amt">—</span></div>
+      <div class="pr"><span class="pk">Payment</span><span class="pv" id="pr-pay">—</span></div>
+      <div class="pr"><span class="pk">Date</span><span class="pv" id="pr-date">—</span></div>
     </div>
-
-    <div class="transcript-box" id="transcript-box">Tap "Start Recording" to begin...</div>
-
-    <div class="parsed-result" id="parsed-result">
-      <div class="parsed-row"><span class="pk">Category</span><span class="pv" id="pr-cat">—</span></div>
-      <div class="parsed-row"><span class="pk">Description</span><span class="pv" id="pr-desc">—</span></div>
-      <div class="parsed-row"><span class="pk">Amount</span><span class="pv" id="pr-amount">—</span></div>
-      <div class="parsed-row"><span class="pk">Payment</span><span class="pv" id="pr-method">—</span></div>
-      <div class="parsed-row"><span class="pk">Date</span><span class="pv" id="pr-date">—</span></div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn secondary" id="record-btn" onclick="toggleRecording()">▶ Start Recording</button>
-      <button class="btn" id="confirm-btn" onclick="confirmVoiceEntry()" style="display:none;">✓ Confirm</button>
-      <button class="btn secondary" onclick="closeVoiceModal()" style="flex:0.5;">✕</button>
+    <div class="mbtns">
+      <button class="btn sec-btn" id="rec-btn" onclick="toggleRec()">▶ Start</button>
+      <button class="btn" id="conf-btn" onclick="confirmVoice()" style="display:none">✓ Confirm</button>
+      <button class="btn sec-btn" onclick="closeVoice()" style="flex:0.5">✕</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- BOTTOM NAV -->
-<div class="bottom-nav">
-  <button class="bnav-btn active" onclick="showTab('dashboard',null,this)">
-    <span class="icon">🏠</span>Dashboard
-  </button>
-  <button class="bnav-btn" onclick="showTab('add',null,this)">
-    <span class="icon">➕</span>Add
-  </button>
-  <button class="bnav-btn" onclick="showTab('expenses',null,this)">
-    <span class="icon">📋</span>Expenses
-  </button>
-  <button class="bnav-btn" onclick="showTab('accounts',null,this)">
-    <span class="icon">🏦</span>Accounts
-  </button>
-  <button class="bnav-btn" onclick="showTab('visa',null,this)">
-    <span class="icon">💳</span>Visa
-  </button>
+<div class="bnav">
+  <button class="bn active" onclick="go('dashboard',null,this)"><span class="bi">🏠</span>Home</button>
+  <button class="bn" onclick="go('add',null,this)"><span class="bi">➕</span>Add</button>
+  <button class="bn" onclick="go('expenses',null,this)"><span class="bi">📋</span>Expenses</button>
+  <button class="bn" onclick="go('accounts',null,this)"><span class="bi">🏦</span>Accounts</button>
+  <button class="bn" onclick="go('visa',null,this)"><span class="bi">💳</span>Visa</button>
 </div>
 
 <script>
-// ===== DATA =====
-const SUBCATS = {
-  Housing: ['Rent / Mortgage','Electricity — Home 1','Electricity — 2nd Home','Water & Sewage — Home 1','Water & Sewage — 2nd Home','Natural Gas / Heating','Internet','Mobile Phone','Cable / Satellite TV','HOA / Condo Fees','2nd Home Monthly Fees','Home Maintenance & Repairs','Home / Renters Insurance','Property Tax (Monthly)','House Keeper'],
-  'Food and Dining': ['Groceries / Supermarket','Restaurants & Dining Out','Coffee Shops & Snacks','Food Delivery Apps','Work Lunches'],
-  Transportation: ['Car Payment / Lease','Car Insurance','Fuel / Gasoline','Parking','Tolls','Public Transit / Metro','Ride Share (Uber / Lyft)','Car Maintenance & Service','Vehicle Registration (Monthly)','Car Garage / Parking Rental'],
-  'Health and Medical': ['Health Insurance Premium','Doctor / Specialist Visits','Dental Care','Vision / Eyecare','Pharmacy / Medications','Gym / Fitness Membership','Mental Health / Therapy'],
-  'Personal Care': ['Haircut / Salon / Barber','Personal Hygiene Products','Clothing & Shoes','Dry Cleaning / Laundry'],
-  Education: ['Tuition / School Fees','Books & Educational Supplies','Online Courses & Training','Professional Development'],
-  Entertainment: ['Netflix','YouTube Music','Movies / Concerts / Events','Sports / Recreation / Hobbies','Books & Magazines','Gaming'],
-  Technology: ['Mobile Phone Bill','1Password','iCloud','New Devices & Equipment','Tracelight','ChatGPT'],
-  Insurance: ['Life Insurance','Additional Health Insurance','Disability Insurance','Travel Insurance'],
-  'Savings and Investments': ['Emergency Fund Contribution','Retirement Savings (401k/IRA)','Investment Account','Education Savings','Short-Term Savings Goal'],
-  'Debt Payments': ['Visa Payment — CIB Visa','Visa Payment — NEXTBANK 18K','Visa Payment — NEXTBANK 50K','Visa Payment — Wafa Bank Visa','Student Loan Payment','Personal Loan Payment','Value Loan Instalment','Sohoula Loan Instalment','Other Debt Payments'],
-  'Travel and Vacation': ['Flights & Transportation','Hotels & Accommodation','Car Rental','Activities & Sightseeing','Travel Food & Entertainment'],
-  'Gifts and Donations': ['Birthday & Holiday Gifts','Wedding & Special Events','Charitable Donations','Family Support & Remittances'],
-  'Childcare and Family': ['Childcare / Daycare','School Fees','Children Activities & Sports'],
-  Miscellaneous: ['Unexpected Expenses','Cash Withdrawals','Other Expenses','Cigarettes / Tobacco','Bank Charges & Fees'],
-  Nour: ['University / Tuition Fees','Books and Study Materials','Transport and Commute','Mobile and Internet','Clothing and Shoes','Personal Care','Medical and Dental','Dining Out and Cafes','Entertainment and Social','Allowance / Pocket Money','Other'],
-  Hala: ['University / Tuition Fees','Books and Study Materials','Transport and Commute','Mobile and Internet','Clothing and Shoes','Personal Care','Medical and Dental','Dining Out and Cafes','Entertainment and Social','Allowance / Pocket Money','Other'],
-  Wife: ['Allowance / Pocket Money','Clothing and Shoes','Personal Care and Salon','Mobile and Internet','Medical and Dental','Dining Out and Cafes','Entertainment and Social','Transport and Commute','Gym and Fitness','Gifts for Others','Other']
+// ── STORAGE KEY ──
+const SK = 'budget_mahmoud_v2';
+
+// ── SUBCATEGORIES ──
+const SUBS = {
+  Housing:['Rent / Mortgage','Electricity — Home 1','Electricity — 2nd Home','Water & Sewage — Home 1','Water & Sewage — 2nd Home','Natural Gas / Heating','Internet','Mobile Phone','Cable / Satellite TV','HOA / Condo Fees','2nd Home Monthly Fees','Home Maintenance & Repairs','House Keeper'],
+  'Food and Dining':['Groceries / Supermarket','Restaurants & Dining Out','Coffee Shops & Snacks','Food Delivery Apps','Work Lunches'],
+  Transportation:['Car Payment / Lease','Car Insurance','Fuel / Gasoline','Parking','Tolls','Public Transit / Metro','Ride Share (Uber / Lyft)','Car Maintenance & Service','Car Garage / Parking Rental'],
+  'Health and Medical':['Health Insurance Premium','Doctor / Specialist Visits','Dental Care','Vision / Eyecare','Pharmacy / Medications','Gym / Fitness Membership','Mental Health / Therapy'],
+  'Personal Care':['Haircut / Salon / Barber','Personal Hygiene Products','Clothing & Shoes','Dry Cleaning / Laundry'],
+  Education:['Tuition / School Fees','Books & Educational Supplies','Online Courses & Training','Professional Development'],
+  Entertainment:['Netflix','YouTube Music','Movies / Concerts / Events','Sports / Recreation / Hobbies','Books & Magazines','Gaming'],
+  Technology:['Mobile Phone Bill','1Password','iCloud','New Devices & Equipment','Tracelight','ChatGPT'],
+  Insurance:['Life Insurance','Additional Health Insurance','Disability Insurance','Travel Insurance'],
+  'Savings and Investments':['Emergency Fund Contribution','Retirement Savings','Investment Account','Education Savings','Short-Term Savings Goal'],
+  'Debt Payments':['Visa Payment — CIB Visa','Visa Payment — NEXTBANK 18K','Visa Payment — NEXTBANK 50K','Visa Payment — Wafa Bank Visa','Student Loan Payment','Personal Loan Payment','Value Loan Instalment','Sohoula Loan Instalment','Other Debt Payments'],
+  'Travel and Vacation':['Flights & Transportation','Hotels & Accommodation','Car Rental','Activities & Sightseeing','Travel Food & Entertainment'],
+  'Gifts and Donations':['Birthday & Holiday Gifts','Wedding & Special Events','Charitable Donations','Family Support & Remittances'],
+  'Childcare and Family':['Childcare / Daycare','School Fees','Children Activities & Sports'],
+  Miscellaneous:['Unexpected Expenses','Cash Withdrawals','Other Expenses','Cigarettes / Tobacco','Bank Charges & Fees'],
+  Nour:['University / Tuition Fees','Books and Study Materials','Transport and Commute','Mobile and Internet','Clothing and Shoes','Personal Care','Medical and Dental','Dining Out and Cafes','Entertainment and Social','Allowance / Pocket Money','Other'],
+  Hala:['University / Tuition Fees','Books and Study Materials','Transport and Commute','Mobile and Internet','Clothing and Shoes','Personal Care','Medical and Dental','Dining Out and Cafes','Entertainment and Social','Allowance / Pocket Money','Other'],
+  Wife:['Allowance / Pocket Money','Clothing and Shoes','Personal Care and Salon','Mobile and Internet','Medical and Dental','Dining Out and Cafes','Entertainment and Social','Transport and Commute','Gym and Fitness','Gifts for Others','Other']
 };
+const COLORS={Housing:'#4f7cff','Food and Dining':'#00c9a7',Transportation:'#ffb347','Health and Medical':'#ff5e7e','Personal Care':'#a78bfa',Technology:'#38bdf8','Debt Payments':'#f87171','Gifts and Donations':'#fbbf24',Miscellaneous:'#94a3b8',Nour:'#34d399',Hala:'#f472b6',Wife:'#fb923c',Entertainment:'#818cf8',Education:'#facc15',Insurance:'#60a5fa','Savings and Investments':'#4ade80','Travel and Vacation':'#f59e0b','Childcare and Family':'#fb7185'};
+const ICONS={Housing:'🏠','Food and Dining':'🍽️',Transportation:'🚗','Health and Medical':'💊','Personal Care':'💇',Technology:'💻','Debt Payments':'💳','Gifts and Donations':'🎁',Miscellaneous:'📦',Nour:'👩‍🎓',Hala:'👧',Wife:'👩',Entertainment:'🎬',Education:'📚',Insurance:'🛡️','Savings and Investments':'💰','Travel and Vacation':'✈️','Childcare and Family':'👨‍👩‍👧'};
+const BUDGETS={Housing:37200,'Food and Dining':19000,Transportation:3000,'Health and Medical':2000,'Personal Care':2500,Education:0,Entertainment:139.99,Technology:6440.18,Insurance:0,'Savings and Investments':0,'Debt Payments':9249.33,'Travel and Vacation':0,'Gifts and Donations':8500,'Childcare and Family':0,Miscellaneous:5500,Nour:9000,Hala:6539.99,Wife:9539.99};
 
-const CAT_COLORS = {
-  Housing:'#4f7cff','Food and Dining':'#00c9a7',Transportation:'#ffb347',
-  'Health and Medical':'#ff5e7e','Personal Care':'#a78bfa',Technology:'#38bdf8',
-  'Debt Payments':'#f87171','Gifts and Donations':'#fbbf24',Miscellaneous:'#94a3b8',
-  Nour:'#34d399',Hala:'#f472b6',Wife:'#fb923c',
-};
-const CAT_ICONS = {
-  Housing:'🏠','Food and Dining':'🍽️',Transportation:'🚗','Health and Medical':'💊',
-  'Personal Care':'💇',Technology:'💻','Debt Payments':'💳','Gifts and Donations':'🎁',
-  Miscellaneous:'📦',Nour:'👩‍🎓',Hala:'👧',Wife:'👩',Entertainment:'🎬',
-  Education:'📚',Insurance:'🛡️','Savings and Investments':'💰','Travel and Vacation':'✈️',
-  'Childcare and Family':'👨‍👩‍👧'
-};
-
-// Seed expenses from the Excel file
-let expenses = [
-  {date:'2026-08-01',cat:'Housing',sub:'Electricity — 2nd Home',desc:'Home electricity - 2nd Home',method:'CIB Visa',amount:1779,notes:'2nd Home'},
-  {date:'2026-08-01',cat:'Housing',sub:'Electricity — 2nd Home',desc:'Home electricity - 2nd Home',method:'CIB Visa',amount:1725,notes:'2nd Home'},
-  {date:'2026-08-01',cat:'Housing',sub:'Water & Sewage — 2nd Home',desc:'Water bill - 2nd Home',method:'CIB Visa',amount:439.5,notes:'2nd Home'},
-  {date:'2026-08-01',cat:'Housing',sub:'Natural Gas / Heating',desc:'Gas bill',method:'CIB Visa',amount:58},
-  {date:'2026-08-01',cat:'Housing',sub:'Mobile Phone',desc:'Landline phone bill',method:'CIB Visa',amount:144.8},
-  {date:'2026-08-01',cat:'Housing',sub:'Water & Sewage — 2nd Home',desc:'Water bill - 2nd Home',method:'CIB Visa',amount:442,notes:'2nd Home'},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Starbucks',method:'CIB Visa',amount:105},
-  {date:'2026-08-01',cat:'Miscellaneous',sub:'Cigarettes / Tobacco',desc:'Cigarettes',method:'CIB Visa',amount:246},
-  {date:'2026-08-01',cat:'Hala',sub:'Dining Out and Cafes',desc:'Instashop - Hala snacks',method:'CIB Visa',amount:150},
-  {date:'2026-08-01',cat:'Technology',sub:'1Password',desc:'1Password subscription',method:'CIB Visa',amount:249.99},
-  {date:'2026-08-01',cat:'Hala',sub:'Dining Out and Cafes',desc:'Instashop - Hala snacks',method:'CIB Visa',amount:268},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Starbucks',method:'CIB Visa',amount:105},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Coffee La Poire',method:'CIB Visa',amount:250},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Groceries',method:'CIB Visa',amount:239.33},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Starbucks',method:'CIB Visa',amount:105},
-  {date:'2026-08-01',cat:'Miscellaneous',sub:'Cigarettes / Tobacco',desc:'Cigarettes',method:'CIB Visa',amount:82},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Breadfast - Coffee',method:'CIB Visa',amount:205},
-  {date:'2026-08-01',cat:'Hala',sub:'Dining Out and Cafes',desc:'Instashop - Hala snacks',method:'CIB Visa',amount:192},
-  {date:'2026-08-01',cat:'Hala',sub:'Dining Out and Cafes',desc:'Breadfast order',method:'CIB Visa',amount:252.25},
-  {date:'2026-08-01',cat:'Miscellaneous',sub:'Cigarettes / Tobacco',desc:'Cigarettes',method:'CIB Visa',amount:164},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Breadfast - Coffee',method:'CIB Visa',amount:90},
-  {date:'2026-08-01',cat:'Wife',sub:'Allowance / Pocket Money',desc:'Wife pocket money',method:'CIB Debit',amount:3500},
-  {date:'2026-08-01',cat:'Housing',sub:'2nd Home Monthly Fees',desc:'2nd home fees',method:'CIB Debit',amount:15000},
-  {date:'2026-08-01',cat:'Gifts and Donations',sub:'Charitable Donations',desc:'2nd Home',method:'CIB Debit',amount:5000},
-  {date:'2026-08-01',cat:'Gifts and Donations',sub:'Charitable Donations',desc:'Jana',method:'CIB Debit',amount:500},
-  {date:'2026-08-01',cat:'Housing',sub:'Rent / Mortgage',desc:'Home 1 Rent',method:'CIB Debit',amount:8800},
-  {date:'2026-08-01',cat:'Miscellaneous',sub:'Cigarettes / Tobacco',desc:'Cigarettes',method:'CIB Visa',amount:820},
-  {date:'2026-08-01',cat:'Nour',sub:'Allowance / Pocket Money',desc:'monthly pocket',method:'CIB Debit',amount:2000},
-  {date:'2026-08-01',cat:'Hala',sub:'Allowance / Pocket Money',desc:'monthly pocket',method:'CIB Debit',amount:2000},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Thursday Coffee',method:'CIB Debit',amount:155},
-  {date:'2026-08-01',cat:'Housing',sub:'Internet',desc:'Home1 Internet',method:'CIB Visa',amount:689.7},
-  {date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'CIB Visa',amount:85},
-  {date:'2026-08-01',cat:'Housing',sub:'Electricity — Home 1',desc:'Home 1 electricity',method:'CIB Visa',amount:516.53},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Gomla Market',method:'CIB Debit',amount:3982.3},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Breakfast',method:'Cash in Hand',amount:115},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Chess',method:'Cash in Hand',amount:80},
-  {date:'2026-08-01',cat:'Transportation',sub:'Car Garage / Parking Rental',desc:'Garage',method:'Cash in Hand',amount:600},
-  {date:'2026-08-01',cat:'Housing',sub:'House Keeper',desc:'Hamada',method:'Cash in Hand',amount:200},
-  {date:'2026-08-01',cat:'Personal Care',sub:'Haircut / Salon / Barber',desc:'Barber',method:'Cash in Hand',amount:270},
-  {date:'2026-08-01',cat:'Debt Payments',sub:'Sohoula Loan Instalment',desc:'Installment',method:'CIB Debit',amount:3673.28},
-  {date:'2026-08-01',cat:'Debt Payments',sub:'Value Loan Instalment',desc:'Installment',method:'CIB Visa',amount:5661},
-  {date:'2026-08-01',cat:'Wife',sub:'Personal Care and Salon',desc:'Lazer + cosmetic',method:'CIB Debit',amount:1700},
-  {date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'NEXTBANK 18K',amount:89.95},
-  {date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'NEXTBANK 18K',amount:179.95},
-  {date:'2026-08-01',cat:'Hala',sub:'Transport and Commute',desc:'Uber Hala',method:'NEXTBANK 18K',amount:169.95},
-  {date:'2026-08-01',cat:'Hala',sub:'Transport and Commute',desc:'Uber Hala',method:'NEXTBANK 18K',amount:87.96},
-  {date:'2026-08-01',cat:'Technology',sub:'ChatGPT',desc:'ChatGPT Plus (20 USD)',method:'NEXTBANK 18K',amount:1024.32},
-  {date:'2026-08-01',cat:'Technology',sub:'Mobile Phone Bill',desc:'Etisalat',method:'CIB Visa',amount:2958.02},
-  {date:'2026-08-01',cat:'Hala',sub:'Transport and Commute',desc:'Uber Hala',method:'CIB Visa',amount:185.3},
-  {date:'2026-08-01',cat:'Hala',sub:'Mobile and Internet',desc:'Apple subscription',method:'CIB Visa',amount:39.99},
-  {date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'Cash in Hand',amount:130},
-  {date:'2026-08-01',cat:'Gifts and Donations',sub:'Charitable Donations',desc:'Weam monthly donation',method:'CIB Debit',amount:1000},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Talabat',method:'Wafa Bank Visa',amount:106.84},
-  {date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Hyperone',method:'Wafa Bank Visa',amount:3376.6},
-  {date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'NEXTBANK 18K',amount:111.98},
-  {date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'NEXTBANK 18K',amount:128.31},
-  {date:'2026-08-02',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Daughters',method:'CIB Visa',amount:390},
-  {date:'2026-08-02',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Elabd',method:'CIB Visa',amount:45},
-  {date:'2026-08-02',cat:'Hala',sub:'Dining Out and Cafes',desc:'Balbaa',method:'CIB Debit',amount:1000},
-  {date:'2026-08-02',cat:'Nour',sub:'Dining Out and Cafes',desc:'Balbaa',method:'CIB Debit',amount:1000},
-  {date:'2026-08-02',cat:'Food and Dining',sub:'Restaurants & Dining Out',desc:'Daughters',method:'CIB Debit',amount:1000},
-  {date:'2026-08-02',cat:'Wife',sub:'Transport and Commute',desc:'Cash Uber',method:'Cash in Hand',amount:500},
-  {date:'2026-08-02',cat:'Wife',sub:'Transport and Commute',desc:'Cash Uber',method:'Cash in Hand',amount:100},
+// ── DEFAULT SEED DATA (from Excel) ──
+const SEED_EXPENSES = [
+  {id:1,date:'2026-08-01',cat:'Housing',sub:'Electricity — 2nd Home',desc:'Home electricity - 2nd Home',method:'CIB Visa',amount:1779,notes:'2nd Home'},
+  {id:2,date:'2026-08-01',cat:'Housing',sub:'Electricity — 2nd Home',desc:'Home electricity - 2nd Home',method:'CIB Visa',amount:1725,notes:'2nd Home'},
+  {id:3,date:'2026-08-01',cat:'Housing',sub:'Water & Sewage — 2nd Home',desc:'Water bill - 2nd Home',method:'CIB Visa',amount:439.5,notes:'2nd Home'},
+  {id:4,date:'2026-08-01',cat:'Housing',sub:'Natural Gas / Heating',desc:'Gas bill',method:'CIB Visa',amount:58,notes:''},
+  {id:5,date:'2026-08-01',cat:'Housing',sub:'Mobile Phone',desc:'Landline phone bill',method:'CIB Visa',amount:144.8,notes:''},
+  {id:6,date:'2026-08-01',cat:'Housing',sub:'Water & Sewage — 2nd Home',desc:'Water bill - 2nd Home',method:'CIB Visa',amount:442,notes:'2nd Home'},
+  {id:7,date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Starbucks',method:'CIB Visa',amount:105,notes:''},
+  {id:8,date:'2026-08-01',cat:'Miscellaneous',sub:'Cigarettes / Tobacco',desc:'Cigarettes',method:'CIB Visa',amount:246,notes:''},
+  {id:9,date:'2026-08-01',cat:'Hala',sub:'Dining Out and Cafes',desc:'Instashop - Hala snacks',method:'CIB Visa',amount:150,notes:''},
+  {id:10,date:'2026-08-01',cat:'Technology',sub:'1Password',desc:'1Password subscription',method:'CIB Visa',amount:249.99,notes:''},
+  {id:11,date:'2026-08-01',cat:'Hala',sub:'Dining Out and Cafes',desc:'Instashop - Hala snacks',method:'CIB Visa',amount:268,notes:''},
+  {id:12,date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Starbucks',method:'CIB Visa',amount:105,notes:''},
+  {id:13,date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Coffee La Poire',method:'CIB Visa',amount:250,notes:''},
+  {id:14,date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Groceries',method:'CIB Visa',amount:239.33,notes:''},
+  {id:15,date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Starbucks',method:'CIB Visa',amount:105,notes:''},
+  {id:16,date:'2026-08-01',cat:'Miscellaneous',sub:'Cigarettes / Tobacco',desc:'Cigarettes',method:'CIB Visa',amount:82,notes:''},
+  {id:17,date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Breadfast - Coffee',method:'CIB Visa',amount:205,notes:''},
+  {id:18,date:'2026-08-01',cat:'Hala',sub:'Dining Out and Cafes',desc:'Instashop - Hala snacks',method:'CIB Visa',amount:192,notes:''},
+  {id:19,date:'2026-08-01',cat:'Hala',sub:'Dining Out and Cafes',desc:'Breadfast order',method:'CIB Visa',amount:252.25,notes:''},
+  {id:20,date:'2026-08-01',cat:'Miscellaneous',sub:'Cigarettes / Tobacco',desc:'Cigarettes',method:'CIB Visa',amount:164,notes:''},
+  {id:21,date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Breadfast - Coffee',method:'CIB Visa',amount:90,notes:''},
+  {id:22,date:'2026-08-01',cat:'Wife',sub:'Allowance / Pocket Money',desc:'Wife pocket money',method:'CIB Debit',amount:3500,notes:''},
+  {id:23,date:'2026-08-01',cat:'Housing',sub:'2nd Home Monthly Fees',desc:'2nd home fees',method:'CIB Debit',amount:15000,notes:''},
+  {id:24,date:'2026-08-01',cat:'Gifts and Donations',sub:'Charitable Donations',desc:'2nd Home',method:'CIB Debit',amount:5000,notes:''},
+  {id:25,date:'2026-08-01',cat:'Gifts and Donations',sub:'Charitable Donations',desc:'Jana',method:'CIB Debit',amount:500,notes:''},
+  {id:26,date:'2026-08-01',cat:'Housing',sub:'Rent / Mortgage',desc:'Home 1 Rent',method:'CIB Debit',amount:8800,notes:''},
+  {id:27,date:'2026-08-01',cat:'Miscellaneous',sub:'Cigarettes / Tobacco',desc:'Cigarettes',method:'CIB Visa',amount:820,notes:''},
+  {id:28,date:'2026-08-01',cat:'Nour',sub:'Allowance / Pocket Money',desc:'Monthly pocket',method:'CIB Debit',amount:2000,notes:''},
+  {id:29,date:'2026-08-01',cat:'Hala',sub:'Allowance / Pocket Money',desc:'Monthly pocket',method:'CIB Debit',amount:2000,notes:''},
+  {id:30,date:'2026-08-01',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Thursday Coffee',method:'CIB Debit',amount:155,notes:''},
+  {id:31,date:'2026-08-01',cat:'Housing',sub:'Internet',desc:'Home1 Internet',method:'CIB Visa',amount:689.7,notes:''},
+  {id:32,date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'CIB Visa',amount:85,notes:''},
+  {id:33,date:'2026-08-01',cat:'Housing',sub:'Electricity — Home 1',desc:'Home 1 electricity',method:'CIB Visa',amount:516.53,notes:''},
+  {id:34,date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Gomla Market',method:'CIB Debit',amount:3982.3,notes:''},
+  {id:35,date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Breakfast',method:'Cash in Hand',amount:115,notes:''},
+  {id:36,date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Chess',method:'Cash in Hand',amount:80,notes:''},
+  {id:37,date:'2026-08-01',cat:'Transportation',sub:'Car Garage / Parking Rental',desc:'Garage',method:'Cash in Hand',amount:600,notes:''},
+  {id:38,date:'2026-08-01',cat:'Housing',sub:'House Keeper',desc:'Hamada',method:'Cash in Hand',amount:200,notes:''},
+  {id:39,date:'2026-08-01',cat:'Personal Care',sub:'Haircut / Salon / Barber',desc:'Barber',method:'Cash in Hand',amount:270,notes:''},
+  {id:40,date:'2026-08-01',cat:'Debt Payments',sub:'Sohoula Loan Instalment',desc:'Installment',method:'CIB Debit',amount:3673.28,notes:''},
+  {id:41,date:'2026-08-01',cat:'Debt Payments',sub:'Value Loan Instalment',desc:'Installment',method:'CIB Visa',amount:5661,notes:''},
+  {id:42,date:'2026-08-01',cat:'Wife',sub:'Personal Care and Salon',desc:'Lazer + cosmetic',method:'CIB Debit',amount:1700,notes:''},
+  {id:43,date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'NEXTBANK 18K',amount:89.95,notes:''},
+  {id:44,date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'NEXTBANK 18K',amount:179.95,notes:''},
+  {id:45,date:'2026-08-01',cat:'Hala',sub:'Transport and Commute',desc:'Uber Hala',method:'NEXTBANK 18K',amount:169.95,notes:''},
+  {id:46,date:'2026-08-01',cat:'Hala',sub:'Transport and Commute',desc:'Uber Hala',method:'NEXTBANK 18K',amount:87.96,notes:''},
+  {id:47,date:'2026-08-01',cat:'Technology',sub:'ChatGPT',desc:'ChatGPT Plus (20 USD)',method:'NEXTBANK 18K',amount:1024.32,notes:''},
+  {id:48,date:'2026-08-01',cat:'Technology',sub:'Mobile Phone Bill',desc:'Etisalat',method:'CIB Visa',amount:2958.02,notes:''},
+  {id:49,date:'2026-08-01',cat:'Hala',sub:'Transport and Commute',desc:'Uber Hala',method:'CIB Visa',amount:185.3,notes:''},
+  {id:50,date:'2026-08-01',cat:'Hala',sub:'Mobile and Internet',desc:'Apple subscription',method:'CIB Visa',amount:39.99,notes:''},
+  {id:51,date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'Cash in Hand',amount:130,notes:''},
+  {id:52,date:'2026-08-01',cat:'Gifts and Donations',sub:'Charitable Donations',desc:'Weam monthly donation',method:'CIB Debit',amount:1000,notes:''},
+  {id:53,date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Talabat',method:'Wafa Bank Visa',amount:106.84,notes:''},
+  {id:54,date:'2026-08-01',cat:'Food and Dining',sub:'Groceries / Supermarket',desc:'Hyperone',method:'Wafa Bank Visa',amount:3376.6,notes:''},
+  {id:55,date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'NEXTBANK 18K',amount:111.98,notes:''},
+  {id:56,date:'2026-08-01',cat:'Wife',sub:'Transport and Commute',desc:'Uber Hadeer',method:'NEXTBANK 18K',amount:128.31,notes:''},
+  {id:57,date:'2026-08-02',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Daughters',method:'CIB Visa',amount:390,notes:''},
+  {id:58,date:'2026-08-02',cat:'Food and Dining',sub:'Coffee Shops & Snacks',desc:'Elabd',method:'CIB Visa',amount:45,notes:''},
+  {id:59,date:'2026-08-02',cat:'Hala',sub:'Dining Out and Cafes',desc:'Balbaa',method:'CIB Debit',amount:1000,notes:''},
+  {id:60,date:'2026-08-02',cat:'Nour',sub:'Dining Out and Cafes',desc:'Balbaa',method:'CIB Debit',amount:1000,notes:''},
+  {id:61,date:'2026-08-02',cat:'Food and Dining',sub:'Restaurants & Dining Out',desc:'Daughters',method:'CIB Debit',amount:1000,notes:''},
+  {id:62,date:'2026-08-02',cat:'Wife',sub:'Transport and Commute',desc:'Cash Uber',method:'Cash in Hand',amount:500,notes:''},
+  {id:63,date:'2026-08-02',cat:'Wife',sub:'Transport and Commute',desc:'Cash Uber',method:'Cash in Hand',amount:100,notes:''},
 ];
-
-let incomes = [
-  {date:'2026-08-01',cat:'Primary Salary',desc:'Basic Net Salary',freq:'Monthly',expected:100000,actual:100000,account:'CIB Debit'},
-  {date:'2026-08-01',cat:'Primary Salary',desc:'Car Compensation',freq:'Monthly',expected:20000,actual:20000,account:'CIB Debit'},
+const SEED_INCOMES=[
+  {id:1,date:'2026-08-01',cat:'Primary Salary',desc:'Basic Net Salary',freq:'Monthly',expected:100000,actual:100000,account:'CIB Debit'},
+  {id:2,date:'2026-08-01',cat:'Primary Salary',desc:'Car Compensation',freq:'Monthly',expected:20000,actual:20000,account:'CIB Debit'},
 ];
-
-const accounts = [
-  {name:'Cash in Hand',type:'Cash',institution:'—',opening:945,balance:4980.78},
-  {name:'CIB Debit',type:'Bank',institution:'CIB',opening:0,balance:28689.42},
-  {name:'QNB Debit',type:'Bank',institution:'QNB',opening:0,balance:0},
-  {name:'CIB Visa',type:'Credit Card',institution:'CIB',opening:-55874.23,balance:-55587.42,limit:54000},
-  {name:'NEXTBANK 18K',type:'Credit Card',institution:'NEXTBANK',opening:-17988.97,balance:-14781.39,limit:18000},
-  {name:'NEXTBANK 50K',type:'Credit Card',institution:'NEXTBANK',opening:-50000,balance:-44000,limit:50000},
-  {name:'Wafa Bank Visa',type:'Credit Card',institution:'Wafa Bank',opening:-31131.56,balance:-29615,limit:31200},
+const ACCOUNTS=[
+  {name:'Cash in Hand',type:'Cash',inst:'—',balance:4980.78,limit:null},
+  {name:'CIB Debit',type:'Bank',inst:'CIB',balance:28689.42,limit:null},
+  {name:'QNB Debit',type:'Bank',inst:'QNB',balance:0,limit:null},
+  {name:'CIB Visa',type:'Credit Card',inst:'CIB',balance:-55587.42,limit:54000,status:'OVER LIMIT'},
+  {name:'NEXTBANK 18K',type:'Credit Card',inst:'NEXTBANK',balance:-14781.39,limit:18000,status:'MODERATE'},
+  {name:'NEXTBANK 50K',type:'Credit Card',inst:'NEXTBANK',balance:-44000,limit:50000,status:'MODERATE'},
+  {name:'Wafa Bank Visa',type:'Credit Card',inst:'Wafa Bank',balance:-29615,limit:31200,status:'NEAR LIMIT'},
 ];
-
-const transfers = [
+const TRANSFERS=[
   {date:'2026-08-01',from:'CIB Debit',to:'CIB Visa',amount:10000,desc:'Visa Payment'},
   {date:'2026-08-01',from:'CIB Debit',to:'NEXTBANK 50K',amount:6000,desc:'Visa Payment'},
   {date:'2026-08-01',from:'CIB Debit',to:'Cash in Hand',amount:2000,desc:'Cash'},
@@ -786,414 +425,409 @@ const transfers = [
   {date:'2026-08-01',from:'CIB Debit',to:'NEXTBANK 18K',amount:5000,desc:'Visa Payment'},
   {date:'2026-08-02',from:'CIB Visa',to:'Cash in Hand',amount:1030.78,desc:'Office elec.'},
 ];
-
-const visaCards = [
-  {name:'CIB Visa',bank:'CIB',limit:54000,opening:55874.23,charges:18682.41,payments:20000,balance:55587.42,status:'OVER LIMIT'},
-  {name:'NEXTBANK 18K',bank:'NEXTBANK',limit:18000,opening:17988.97,charges:1792.42,payments:5000,balance:14781.39,status:'MODERATE'},
-  {name:'NEXTBANK 50K',bank:'NEXTBANK',limit:50000,opening:50000,charges:0,payments:6000,balance:44000,status:'MODERATE'},
-  {name:'Wafa Bank Visa',bank:'Wafa Bank',limit:31200,opening:31131.56,charges:3483.44,payments:5000,balance:29615,status:'NEAR LIMIT'},
+const VISA_CARDS=[
+  {name:'CIB Visa',bank:'CIB',limit:54000,balance:55587.42,charges:18682.41,payments:20000,status:'OVER LIMIT'},
+  {name:'NEXTBANK 18K',bank:'NEXTBANK',limit:18000,balance:14781.39,charges:1792.42,payments:5000,status:'MODERATE'},
+  {name:'NEXTBANK 50K',bank:'NEXTBANK',limit:50000,balance:44000,charges:0,payments:6000,status:'MODERATE'},
+  {name:'Wafa Bank Visa',bank:'Wafa Bank',limit:31200,balance:29615,charges:3483.44,payments:5000,status:'NEAR LIMIT'},
 ];
 
-// ===== UI =====
-function showTab(id, navEl, bnavEl) {
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
-  if (navEl) navEl.classList.add('active');
-  if (bnavEl) bnavEl.classList.add('active');
+// ── STATE ──
+let state = { expenses:[], incomes:[], nextExpId:100, nextIncId:10 };
+
+// ── PERSISTENCE ──
+function saveState() {
+  setSyncDot('saving');
+  try { localStorage.setItem(SK, JSON.stringify(state)); setSyncDot('ok'); }
+  catch(e){ setSyncDot('error'); toast('⚠️ Storage full — export data!'); }
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SK);
+    if (raw) { state = JSON.parse(raw); return true; }
+  } catch(e){}
+  return false;
+}
+function setSyncDot(s) {
+  const d = document.getElementById('sync-dot');
+  d.className = 'sync-dot' + (s==='saving'?' saving':'');
+  d.title = s==='ok'?'Data saved':s==='saving'?'Saving...':'Storage error';
 }
 
-function updateSubcats() {
-  const cat = document.getElementById('f-cat').value;
-  const sel = document.getElementById('f-subcat');
-  sel.innerHTML = '<option value="">Select subcategory...</option>';
-  if (SUBCATS[cat]) {
-    SUBCATS[cat].forEach(s => sel.innerHTML += `<option>${s}</option>`);
-  }
+// ── FORMAT ──
+function fmt(n) { return Number(n||0).toLocaleString('en-EG',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+function today() { return new Date().toISOString().split('T')[0]; }
+function toast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-function fmt(n) { return Number(n).toLocaleString('en-EG',{minimumFractionDigits:0,maximumFractionDigits:2}); }
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
+// ── NAV ──
+function go(id, nEl, bEl) {
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.getElementById('tab-'+id).classList.add('on');
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('active'));
+  if (nEl) nEl.classList.add('active');
+  if (bEl) bEl.classList.add('active');
 }
 
-// ===== RENDER DASHBOARD =====
+// ── SUBCATS ──
+function fillSubs() {
+  const cat=document.getElementById('f-cat').value;
+  const sel=document.getElementById('f-sub');
+  sel.innerHTML='<option value="">Select...</option>';
+  (SUBS[cat]||[]).forEach(s=>sel.innerHTML+=`<option>${s}</option>`);
+}
+
+// ── ADD EXPENSE ──
+function addExpense() {
+  const d=document.getElementById('f-date').value;
+  const cat=document.getElementById('f-cat').value;
+  const sub=document.getElementById('f-sub').value;
+  const desc=document.getElementById('f-desc').value.trim();
+  const amt=parseFloat(document.getElementById('f-amt').value);
+  const method=document.getElementById('f-pay').value;
+  const notes=document.getElementById('f-notes').value.trim();
+  if (!d||!cat||!desc||isNaN(amt)||amt<=0){toast('⚠️ Fill Date, Category, Description & Amount');return;}
+  state.expenses.push({id:state.nextExpId++,date:d,cat,sub,desc,method,amount:amt,notes});
+  saveState(); renderAll(); toast('✅ Expense saved!');
+  ['f-desc','f-amt','f-notes'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ── ADD INCOME ──
+function addIncome() {
+  const d=document.getElementById('fi-date').value;
+  const cat=document.getElementById('fi-cat').value;
+  const desc=document.getElementById('fi-desc').value.trim();
+  const exp=parseFloat(document.getElementById('fi-exp').value)||0;
+  const act=parseFloat(document.getElementById('fi-act').value)||0;
+  const acc=document.getElementById('fi-acc').value;
+  if (!d||!desc){toast('⚠️ Fill Date & Description');return;}
+  state.incomes.push({id:state.nextIncId++,date:d,cat,desc,freq:'One-time',expected:exp,actual:act,account:acc});
+  saveState(); renderAll(); toast('✅ Income saved!');
+  ['fi-desc','fi-exp','fi-act'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ── CLEAR ALL ──
+function clearAll() {
+  if (!confirm('Delete ALL expenses and income? This cannot be undone.')) return;
+  state={expenses:[...SEED_EXPENSES],incomes:[...SEED_INCOMES],nextExpId:200,nextIncId:20};
+  saveState(); renderAll(); toast('🔄 Data reset to original');
+}
+
+// ── RENDER DASHBOARD ──
 function renderDashboard() {
-  const totals = {};
-  const budgets = {
-    Housing:37200,'Food and Dining':19000,Transportation:3000,'Health and Medical':2000,
-    'Personal Care':2500,Education:0,Entertainment:139.99,Technology:6440.18,
-    Insurance:0,'Savings and Investments':0,'Debt Payments':9249.33,'Travel and Vacation':0,
-    'Gifts and Donations':8500,'Childcare and Family':0,Miscellaneous:5500,
-    Nour:9000,Hala:6539.99,Wife:9539.99
-  };
-  expenses.forEach(e => totals[e.cat] = (totals[e.cat]||0) + e.amount);
+  const totals={};
+  state.expenses.forEach(e=>totals[e.cat]=(totals[e.cat]||0)+e.amount);
+  const grandTotal=Object.values(totals).reduce((a,b)=>a+b,0);
+  const totalIncome=state.incomes.reduce((a,i)=>a+i.actual,0);
+  const savings=totalIncome-grandTotal;
+  const budgetTotal=Object.values(BUDGETS).reduce((a,b)=>a+b,0);
 
-  const cats = Object.keys(budgets).filter(c => (totals[c]||0) > 0 || budgets[c] > 0);
-  let html = '';
-  cats.forEach(cat => {
-    const actual = totals[cat]||0;
-    const budgeted = budgets[cat]||0;
-    if (!actual && !budgeted) return;
-    const pct = budgeted ? Math.min(actual/budgeted,1) : 0;
-    const over = actual > budgeted && budgeted > 0;
-    const warn = pct > 0.85;
-    const color = CAT_COLORS[cat] || '#7a84a8';
-    const pctDisp = budgeted ? Math.round(actual/budgeted*100)+'%' : '—';
-    const status = over ? 'over' : warn ? 'warn' : 'ok';
-    const statusTxt = over ? 'OVER' : warn ? 'HIGH' : 'OK';
-    html += `
-      <div class="cat-row">
-        <div class="cat-dot" style="background:${color}"></div>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span class="cat-name">${cat}</span>
-            <span class="badge ${status}">${statusTxt}</span>
-          </div>
-          <div class="pbar-wrap" style="margin-top:5px;">
-            <div class="pbar-label">
-              <span>${fmt(actual)} EGP</span>
-              <span>of ${fmt(budgeted)}</span>
-            </div>
-            <div class="pbar"><div class="pbar-fill ${over?'red':warn?'warn':'green'}" style="width:${Math.round(pct*100)}%"></div></div>
-          </div>
-        </div>
-      </div>`;
+  document.getElementById('k-income').textContent=fmt(totalIncome);
+  document.getElementById('k-expenses').textContent=fmt(Math.round(grandTotal));
+  document.getElementById('k-savings').textContent=fmt(Math.round(savings));
+  document.getElementById('k-rate').textContent=(totalIncome?((savings/totalIncome)*100).toFixed(1):'0')+'% rate';
+  document.getElementById('k-budgetpct').textContent=budgetTotal?(Math.round(grandTotal/budgetTotal*100))+'%':'—';
+  document.getElementById('hdr-income').textContent=fmt(totalIncome);
+
+  const cats=Object.keys(BUDGETS).filter(c=>(totals[c]||0)>0||(BUDGETS[c]||0)>0);
+  let html='';
+  cats.forEach(cat=>{
+    const actual=totals[cat]||0; const budgeted=BUDGETS[cat]||0;
+    if(!actual&&!budgeted) return;
+    const pct=budgeted?Math.min(actual/budgeted,1):0;
+    const over=actual>budgeted&&budgeted>0; const high=pct>0.85;
+    const color=COLORS[cat]||'#7a84a8';
+    html+=`<div class="row">
+      <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div class="flex"><span class="rname" style="font-size:13px">${cat}</span><span class="badge ${over?'bover':high?'bwarn':'bok'}">${over?'OVER':high?'HIGH':'OK'}</span></div>
+        <div class="plabel"><span>${fmt(actual)} EGP</span><span>of ${fmt(budgeted)}</span></div>
+        <div class="pbar"><div class="pfill ${over?'r':high?'w':'g'}" style="width:${Math.round(pct*100)}%"></div></div>
+      </div>
+    </div>`;
   });
-  document.getElementById('cat-breakdown').innerHTML = html;
-
-  // update KPI
-  const total = expenses.reduce((a,e)=>a+e.amount,0);
-  document.getElementById('kpi-expenses').textContent = fmt(Math.round(total));
+  document.getElementById('cat-list').innerHTML=html;
 }
 
-// ===== RENDER EXPENSES LIST =====
+// ── RENDER EXPENSES ──
 function renderExpenses() {
-  const sorted = [...expenses].sort((a,b)=>b.date.localeCompare(a.date));
-  let html = '';
-  sorted.forEach((e,i) => {
-    const icon = CAT_ICONS[e.cat] || '💸';
-    const color = CAT_COLORS[e.cat] || '#7a84a8';
-    html += `
-      <div class="tx-row">
-        <div class="tx-icon" style="background:${color}22">${icon}</div>
-        <div class="tx-info">
-          <div class="name">${e.desc}</div>
-          <div class="meta">${e.cat} · ${e.method} · ${e.date}</div>
-        </div>
-        <div class="tx-amount neg">-${fmt(e.amount)}</div>
-      </div>`;
+  const sorted=[...state.expenses].sort((a,b)=>b.date.localeCompare(a.date));
+  const total=sorted.reduce((a,e)=>a+e.amount,0);
+  document.getElementById('exp-count').textContent=sorted.length+' entries';
+  document.getElementById('exp-total').textContent=fmt(Math.round(total));
+  let html='';
+  sorted.forEach(e=>{
+    const icon=ICONS[e.cat]||'💸'; const color=COLORS[e.cat]||'#7a84a8';
+    html+=`<div class="row">
+      <div class="icon" style="background:${color}22">${icon}</div>
+      <div class="rinfo"><div class="rname">${e.desc}</div><div class="rmeta">${e.cat} · ${e.method} · ${e.date}</div></div>
+      <div class="ramount red">-${fmt(e.amount)}</div>
+    </div>`;
   });
-  document.getElementById('expenses-list').innerHTML = html;
-  document.getElementById('exp-count').textContent = sorted.length + ' entries';
+  document.getElementById('exp-list').innerHTML=html||'<div style="color:var(--muted);text-align:center;padding:20px">No expenses yet</div>';
 }
 
-// ===== RENDER INCOME =====
+// ── RENDER INCOME ──
 function renderIncome() {
-  let html = '';
-  incomes.forEach(i => {
-    html += `
-      <div class="tx-row">
-        <div class="tx-icon" style="background:rgba(0,201,167,.15)">💰</div>
-        <div class="tx-info">
-          <div class="name">${i.desc}</div>
-          <div class="meta">${i.cat} → ${i.account}</div>
-        </div>
-        <div class="tx-amount pos">+${fmt(i.actual)}</div>
-      </div>`;
+  const totExp=state.incomes.reduce((a,i)=>a+i.expected,0);
+  const totAct=state.incomes.reduce((a,i)=>a+i.actual,0);
+  document.getElementById('inc-exp').textContent=fmt(totExp);
+  document.getElementById('inc-act').textContent=fmt(totAct);
+  let html='';
+  state.incomes.forEach(i=>{
+    html+=`<div class="row">
+      <div class="icon" style="background:rgba(0,201,167,.15)">💰</div>
+      <div class="rinfo"><div class="rname">${i.desc}</div><div class="rmeta">${i.cat} → ${i.account}</div></div>
+      <div class="ramount green">+${fmt(i.actual)}</div>
+    </div>`;
   });
-  document.getElementById('income-list').innerHTML = html;
+  document.getElementById('inc-list').innerHTML=html||'<div style="color:var(--muted);text-align:center;padding:20px">No income yet</div>';
 }
 
-// ===== RENDER ACCOUNTS =====
+// ── RENDER ACCOUNTS ──
 function renderAccounts() {
-  let html = '';
-  accounts.forEach(a => {
-    const isCash = a.type !== 'Credit Card';
-    const balClass = isCash ? 'positive' : (a.balance < 0 ? 'negative' : 'positive');
-    const avail = a.limit ? (a.limit - Math.abs(a.balance)) : a.balance;
-    const util = a.limit ? Math.abs(a.balance)/a.limit : 0;
-    html += `
-      <div class="acc-card">
-        <div class="acc-header">
-          <div>
-            <div class="acc-name">${a.name}</div>
-            <div class="acc-type">${a.type} · ${a.institution}</div>
-          </div>
-          <div class="acc-balance ${balClass}">${fmt(a.balance)}</div>
-        </div>`;
-    if (a.limit) {
-      html += `
-        <div class="pbar-wrap">
-          <div class="pbar-label">
-            <span>Used: ${fmt(Math.abs(a.balance))}</span>
-            <span>Avail: ${fmt(Math.max(avail,0))}</span>
-          </div>
-          <div class="pbar"><div class="pbar-fill ${util>.9?'red':util>.7?'warn':'green'}" style="width:${Math.round(util*100)}%"></div></div>
-        </div>`;
+  let html='';
+  ACCOUNTS.forEach(a=>{
+    const pos=a.type!=='Credit Card';
+    const bal=a.balance; const util=a.limit?Math.abs(bal)/a.limit:0;
+    const avail=a.limit?Math.max(a.limit-Math.abs(bal),0):null;
+    html+=`<div class="card" style="margin-bottom:10px">
+      <div class="flex mb">
+        <div><div style="font-size:14px;font-weight:700">${a.name}</div><div style="font-size:10px;color:var(--muted)">${a.type} · ${a.inst}</div></div>
+        <div style="font-size:20px;font-weight:800;color:${pos?'var(--green)':'var(--red)'}">${fmt(bal)}</div>
+      </div>`;
+    if(a.limit){
+      html+=`<div class="plabel"><span>Used: ${fmt(Math.abs(bal))}</span><span>Avail: ${fmt(avail)}</span></div>
+      <div class="pbar"><div class="pfill ${util>.9?'r':util>.7?'w':'g'}" style="width:${Math.min(util*100,100)}%"></div></div>`;
     }
-    html += `</div>`;
+    html+='</div>';
   });
-  document.getElementById('accounts-list').innerHTML = html;
-
-  // Transfers
-  let thtml = '';
-  transfers.forEach(t => {
-    thtml += `
-      <div class="tx-row">
-        <div class="tx-icon" style="background:rgba(79,124,255,.15)">🔄</div>
-        <div class="tx-info">
-          <div class="name">${t.desc}</div>
-          <div class="meta">${t.from} → ${t.to} · ${t.date}</div>
-        </div>
-        <div class="tx-amount" style="color:var(--accent)">${fmt(t.amount)}</div>
-      </div>`;
+  document.getElementById('acc-list').innerHTML=html;
+  let thtml='';
+  TRANSFERS.forEach(t=>{
+    thtml+=`<div class="row">
+      <div class="icon" style="background:rgba(79,124,255,.15)">🔄</div>
+      <div class="rinfo"><div class="rname">${t.desc}</div><div class="rmeta">${t.from} → ${t.to} · ${t.date}</div></div>
+      <div class="ramount blue">${fmt(t.amount)}</div>
+    </div>`;
   });
-  document.getElementById('transfers-list').innerHTML = thtml;
+  document.getElementById('tr-list').innerHTML=thtml;
 }
 
-// ===== RENDER VISA =====
+// ── RENDER VISA ──
 function renderVisa() {
-  let html = '';
-  visaCards.forEach(c => {
-    const util = c.balance/c.limit;
-    const avail = Math.max(c.limit - c.balance, 0);
-    const statusColor = c.status==='OVER LIMIT'?'var(--danger)':c.status==='NEAR LIMIT'?'var(--warn)':'var(--income-color)';
-    html += `
-      <div class="visa-visual" style="margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:start;">
-          <div>
-            <div class="card-name">${c.name}</div>
-            <div class="card-limit">${c.bank} · Limit: ${fmt(c.limit)} EGP</div>
-          </div>
-          <span style="background:rgba(0,0,0,.3);color:${statusColor};font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;">${c.status}</span>
-        </div>
-        <div class="card-balance">${fmt(c.balance)} EGP</div>
-        <div class="card-avail">Available: ${fmt(avail)} EGP</div>
-        <div class="util-bar">
-          <div class="pbar-label" style="margin-bottom:4px;">
-            <span style="font-size:10px;opacity:.7;">Utilization ${Math.round(util*100)}%</span>
-          </div>
-          <div class="pbar"><div class="pbar-fill ${util>.9?'red':util>.7?'warn':'green'}" style="width:${Math.min(util*100,100)}%"></div></div>
-        </div>
-      </div>`;
+  let html='';
+  VISA_CARDS.forEach(c=>{
+    const util=c.balance/c.limit; const avail=Math.max(c.limit-c.balance,0);
+    const sc=c.status==='OVER LIMIT'?'var(--red)':c.status==='NEAR LIMIT'?'var(--warn)':'var(--green)';
+    html+=`<div class="vcard">
+      <div class="flex"><div><div class="vc-name">${c.name}</div><div style="font-size:11px;opacity:.6">${c.bank} · Limit ${fmt(c.limit)} EGP</div></div>
+      <span style="background:rgba(0,0,0,.3);color:${sc};font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">${c.status}</span></div>
+      <div class="vc-bal">${fmt(c.balance)} EGP</div>
+      <div class="vc-avail">Available: ${fmt(avail)} EGP</div>
+      <div class="plabel" style="margin-top:10px"><span style="font-size:10px;opacity:.7">Utilization ${Math.round(util*100)}%</span></div>
+      <div class="pbar"><div class="pfill ${util>.9?'r':util>.7?'w':'g'}" style="width:${Math.min(util*100,100)}%"></div></div>
+    </div>`;
   });
-  document.getElementById('visa-cards').innerHTML = html;
+  document.getElementById('vcards').innerHTML=html;
 
-  // Visa transactions
-  const visaTxns = expenses.filter(e => ['CIB Visa','NEXTBANK 18K','NEXTBANK 50K','Wafa Bank Visa'].includes(e.method))
-    .sort((a,b)=>b.date.localeCompare(a.date));
-  let thtml = '';
-  visaTxns.forEach(e => {
-    thtml += `
-      <div class="tx-row">
-        <div class="tx-icon" style="background:rgba(255,94,126,.12)">${CAT_ICONS[e.cat]||'💸'}</div>
-        <div class="tx-info">
-          <div class="name">${e.desc}</div>
-          <div class="meta">${e.method} · ${e.cat} · ${e.date}</div>
-        </div>
-        <div class="tx-amount neg">-${fmt(e.amount)}</div>
-      </div>`;
+  const vtxns=[...state.expenses].filter(e=>['CIB Visa','NEXTBANK 18K','NEXTBANK 50K','Wafa Bank Visa'].includes(e.method)).sort((a,b)=>b.date.localeCompare(a.date));
+  let vhtml='';
+  vtxns.forEach(e=>{
+    vhtml+=`<div class="row">
+      <div class="icon" style="background:rgba(255,94,126,.12)">${ICONS[e.cat]||'💸'}</div>
+      <div class="rinfo"><div class="rname">${e.desc}</div><div class="rmeta">${e.method} · ${e.cat} · ${e.date}</div></div>
+      <div class="ramount red">-${fmt(e.amount)}</div>
+    </div>`;
   });
-  document.getElementById('visa-txns').innerHTML = thtml;
+  document.getElementById('vtxns').innerHTML=vhtml||'<div style="color:var(--muted);text-align:center;padding:20px">No visa transactions</div>';
 }
 
-// ===== SAVE EXPENSE =====
-function saveExpense() {
-  const d = document.getElementById('f-date').value;
-  const cat = document.getElementById('f-cat').value;
-  const sub = document.getElementById('f-subcat').value;
-  const desc = document.getElementById('f-desc').value.trim();
-  const amount = parseFloat(document.getElementById('f-amount').value);
-  const method = document.getElementById('f-method').value;
-  const notes = document.getElementById('f-notes').value.trim();
+function renderAll(){renderDashboard();renderExpenses();renderIncome();renderAccounts();renderVisa();}
 
-  if (!d || !cat || !desc || isNaN(amount) || amount <= 0) {
-    showToast('⚠️ Please fill Date, Category, Description & Amount');
-    return;
-  }
-  expenses.push({date:d,cat,sub,desc,method,amount,notes});
-  showToast('✅ Expense saved!');
-  document.getElementById('f-desc').value='';
-  document.getElementById('f-amount').value='';
-  document.getElementById('f-notes').value='';
-  renderAll();
+// ── VOICE ──
+let recognition=null,isRec=false,parsedEntry=null;
+
+function openVoice(){
+  document.getElementById('vmodal').classList.add('open');
+  document.getElementById('tbox').textContent='Tap Start to begin...';
+  document.getElementById('pres').classList.remove('show');
+  document.getElementById('conf-btn').style.display='none';
+  document.getElementById('rec-btn').textContent='▶ Start';
+  parsedEntry=null;
 }
+function closeVoice(){if(isRec&&recognition)recognition.stop();document.getElementById('vmodal').classList.remove('open');}
 
-function saveIncome() {
-  const d = document.getElementById('fi-date').value;
-  const cat = document.getElementById('fi-cat').value;
-  const desc = document.getElementById('fi-desc').value.trim();
-  const expected = parseFloat(document.getElementById('fi-expected').value)||0;
-  const actual = parseFloat(document.getElementById('fi-actual').value)||0;
-  const account = document.getElementById('fi-account').value;
+function toggleRec(){isRec?stopRec():startRec();}
 
-  if (!d || !desc) { showToast('⚠️ Fill Date & Description'); return; }
-  incomes.push({date:d,cat,desc,freq:'One-time',expected,actual,account});
-  showToast('✅ Income saved!');
-  document.getElementById('fi-desc').value='';
-  document.getElementById('fi-expected').value='';
-  document.getElementById('fi-actual').value='';
-  renderAll();
-}
-
-// ===== VOICE =====
-let recognition = null;
-let isRecording = false;
-let parsedEntry = null;
-
-function openVoiceModal() {
-  document.getElementById('voice-modal').classList.add('open');
-  document.getElementById('transcript-box').textContent = 'Tap "Start Recording" to begin...';
-  document.getElementById('parsed-result').classList.remove('show');
-  document.getElementById('confirm-btn').style.display='none';
-  document.getElementById('record-btn').textContent='▶ Start Recording';
-  parsedEntry = null;
-}
-
-function closeVoiceModal() {
-  if (isRecording && recognition) recognition.stop();
-  document.getElementById('voice-modal').classList.remove('open');
-}
-
-function toggleRecording() {
-  if (!isRecording) startRecording();
-  else stopRecording();
-}
-
-function startRecording() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    showToast('⚠️ Voice not supported in this browser');
-    // Fallback: simulate for demo
-    simulateVoice();
-    return;
-  }
-  recognition = new SpeechRecognition();
-  recognition.lang = 'ar-EG';
-  recognition.interimResults = true;
-  recognition.continuous = false;
-
-  recognition.onstart = () => {
-    isRecording = true;
-    document.getElementById('voice-fab').classList.add('recording');
-    document.getElementById('voice-wave').style.display='flex';
-    document.getElementById('record-btn').textContent='⏹ Stop';
-    document.getElementById('transcript-box').textContent = 'Listening...';
-  };
-
-  recognition.onresult = (e) => {
-    const transcript = Array.from(e.results).map(r=>r[0].transcript).join('');
-    document.getElementById('transcript-box').textContent = transcript;
-    if (e.results[0].isFinal) parseTranscript(transcript);
-  };
-
-  recognition.onerror = () => stopRecording();
-  recognition.onend = () => stopRecording();
+function startRec(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){simulateVoice();return;}
+  recognition=new SR();
+  recognition.lang='ar-EG';
+  recognition.interimResults=true;
+  recognition.onstart=()=>{isRec=true;document.getElementById('fab').classList.add('rec');document.getElementById('wave').style.display='flex';document.getElementById('rec-btn').textContent='⏹ Stop';document.getElementById('tbox').textContent='Listening...';};
+  recognition.onresult=(e)=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');document.getElementById('tbox').textContent=t;if(e.results[0].isFinal)parseTxt(t);};
+  recognition.onerror=()=>stopRec();
+  recognition.onend=()=>stopRec();
   recognition.start();
 }
+function stopRec(){isRec=false;if(recognition)recognition.stop();document.getElementById('fab').classList.remove('rec');document.getElementById('wave').style.display='none';document.getElementById('rec-btn').textContent='▶ Start';}
 
-function stopRecording() {
-  isRecording = false;
-  if (recognition) recognition.stop();
-  document.getElementById('voice-fab').classList.remove('recording');
-  document.getElementById('voice-wave').style.display='none';
-  document.getElementById('record-btn').textContent='▶ Start Recording';
+function simulateVoice(){
+  document.getElementById('fab').classList.add('rec');document.getElementById('wave').style.display='flex';document.getElementById('rec-btn').textContent='⏹ Stop';document.getElementById('tbox').textContent='Listening (demo)...';
+  const demos=['Starbucks 150 pounds CIB Visa Food','Uber 85 pounds NEXTBANK wife','Groceries 500 CIB Debit','Cigarettes 250 CIB Visa'];
+  setTimeout(()=>{
+    const s=demos[Math.floor(Math.random()*demos.length)];
+    document.getElementById('tbox').textContent=s;
+    document.getElementById('fab').classList.remove('rec');document.getElementById('wave').style.display='none';document.getElementById('rec-btn').textContent='▶ Start';
+    parseTxt(s);
+  },2000);
 }
 
-function simulateVoice() {
-  // Demo simulation for browsers without mic
-  document.getElementById('voice-fab').classList.add('recording');
-  document.getElementById('voice-wave').style.display='flex';
-  document.getElementById('record-btn').textContent='⏹ Stop';
-  document.getElementById('transcript-box').textContent='Listening (demo)...';
-  setTimeout(() => {
-    const samples = [
-      'Starbucks 150 pounds CIB Visa Food',
-      'Uber 85 pounds NEXTBANK wife',
-      'groceries 500 CIB Debit',
-      'cigarettes 250 CIB Visa',
-    ];
-    const sample = samples[Math.floor(Math.random()*samples.length)];
-    document.getElementById('transcript-box').textContent = sample;
-    document.getElementById('voice-fab').classList.remove('recording');
-    document.getElementById('voice-wave').style.display='none';
-    document.getElementById('record-btn').textContent='▶ Start Recording';
-    parseTranscript(sample);
-  }, 2000);
+function parseTxt(text){
+  const am=text.match(/(\d+[\.,]?\d*)/);
+  const amount=am?parseFloat(am[1].replace(',','.')):0;
+  let method='CIB Visa';
+  if(/cib debit|debit|دبت/i.test(text))method='CIB Debit';
+  else if(/nextbank 18|next18/i.test(text))method='NEXTBANK 18K';
+  else if(/nextbank 50|next50/i.test(text))method='NEXTBANK 50K';
+  else if(/wafa/i.test(text))method='Wafa Bank Visa';
+  else if(/cash|نقدي/i.test(text))method='Cash in Hand';
+  let cat='Miscellaneous';
+  if(/star ?bucks|coffee|قهوة|كافيه|cafe/i.test(text))cat='Food and Dining';
+  else if(/uber|taxi|تاكسي|كريم/i.test(text))cat='Wife';
+  else if(/grocery|supermarket|hyperone|هايبر|بقالة/i.test(text))cat='Food and Dining';
+  else if(/restaurant|مطعم/i.test(text))cat='Food and Dining';
+  else if(/electricity|كهرباء/i.test(text))cat='Housing';
+  else if(/hala|هالة/i.test(text))cat='Hala';
+  else if(/nour|نور/i.test(text))cat='Nour';
+  else if(/wife|hadeer|هدير/i.test(text))cat='Wife';
+  else if(/cigarette|سيجارة|سجاير/i.test(text))cat='Miscellaneous';
+  else if(/internet|rent|إيجار/i.test(text))cat='Housing';
+  const desc=text.replace(/\d+[\.,]?\d*/g,'').replace(/(cib|nextbank|wafa|cash|debit|visa|pound|جنيه|egp)/gi,'').trim().substring(0,40)||'Expense';
+  const d=today();
+  parsedEntry={id:state.nextExpId++,date:d,cat,sub:'',desc,method,amount,notes:''};
+  document.getElementById('pr-cat').textContent=cat;
+  document.getElementById('pr-desc').textContent=desc;
+  document.getElementById('pr-amt').textContent=fmt(amount)+' EGP';
+  document.getElementById('pr-pay').textContent=method;
+  document.getElementById('pr-date').textContent=d;
+  document.getElementById('pres').classList.add('show');
+  document.getElementById('conf-btn').style.display='block';
 }
 
-function parseTranscript(text) {
-  // Extract amount
-  const amountMatch = text.match(/(\d+[\.,]?\d*)\s*(pound|جنيه|egp|ج|EGP)?/i);
-  const amount = amountMatch ? parseFloat(amountMatch[1].replace(',','.')) : 0;
-
-  // Extract payment method
-  let method = 'CIB Visa';
-  if (/cib debit|debit|دبت/i.test(text)) method='CIB Debit';
-  else if (/nextbank 18|next18/i.test(text)) method='NEXTBANK 18K';
-  else if (/nextbank 50|next50/i.test(text)) method='NEXTBANK 50K';
-  else if (/wafa/i.test(text)) method='Wafa Bank Visa';
-  else if (/cash|نقدي/i.test(text)) method='Cash in Hand';
-  else if (/qnb/i.test(text)) method='QNB Debit';
-
-  // Extract category
-  let cat = 'Miscellaneous';
-  if (/star ?bucks|coffee|قهوة|كافيه/i.test(text)) cat='Food and Dining';
-  else if (/uber|taxi|تاكسي|كاري/i.test(text)) cat='Transportation';
-  else if (/grocery|supermarket|hyperone|هايبر|بقالة|سوبر/i.test(text)) cat='Food and Dining';
-  else if (/restaurant|dining|مطعم|أكل/i.test(text)) cat='Food and Dining';
-  else if (/electricity|كهرباء/i.test(text)) cat='Housing';
-  else if (/wife|هدير/i.test(text)) cat='Wife';
-  else if (/hala|هالة/i.test(text)) cat='Hala';
-  else if (/nour|نور/i.test(text)) cat='Nour';
-  else if (/cigarette|سيجارة|سجاير/i.test(text)) cat='Miscellaneous';
-  else if (/internet|نت/i.test(text)) cat='Housing';
-  else if (/rent|إيجار/i.test(text)) cat='Housing';
-
-  const desc = text.replace(/(\d+[\.,]?\d*\s*(pound|جنيه|egp|ج)?)/i,'').replace(/(cib|nextbank|wafa|cash|debit|visa)/gi,'').trim() || 'Expense';
-  const today = new Date().toISOString().split('T')[0];
-
-  parsedEntry = { date:today, cat, sub:'', desc:desc.substring(0,40), method, amount, notes:'' };
-
-  document.getElementById('pr-cat').textContent = cat;
-  document.getElementById('pr-desc').textContent = desc.substring(0,40);
-  document.getElementById('pr-amount').textContent = fmt(amount)+' EGP';
-  document.getElementById('pr-method').textContent = method;
-  document.getElementById('pr-date').textContent = today;
-  document.getElementById('parsed-result').classList.add('show');
-  document.getElementById('confirm-btn').style.display='block';
+function confirmVoice(){
+  if(!parsedEntry)return;
+  state.expenses.push(parsedEntry);
+  saveState();renderAll();
+  toast('✅ Voice expense saved!');
+  closeVoice();
 }
 
-function confirmVoiceEntry() {
-  if (!parsedEntry) return;
-  expenses.push(parsedEntry);
-  showToast('✅ Expense added from voice!');
-  closeVoiceModal();
+// ── INIT ──
+window.addEventListener('DOMContentLoaded',()=>{
+  const loaded=loadState();
+  if(!loaded){
+    state.expenses=[...SEED_EXPENSES];
+    state.incomes=[...SEED_INCOMES];
+    state.nextExpId=200;
+    state.nextIncId=20;
+    saveState();
+  }
+  document.getElementById('f-date').value=today();
+  document.getElementById('fi-date').value=today();
   renderAll();
-}
-
-function renderAll() {
-  renderDashboard();
-  renderExpenses();
-  renderIncome();
-  renderAccounts();
-  renderVisa();
-}
-
-// ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
-  // Set today's date in forms
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('f-date').value = today;
-  document.getElementById('fi-date').value = today;
-  renderAll();
+  setSyncDot('ok');
 });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── EXPORT TO EXCEL ──
+function exportExcel() {
+  try {
+    const wb = XLSX.utils.book_new();
+
+    // ── EXPENSES SHEET ──
+    const expRows = [
+      ['Date','Category','Subcategory','Description','Payment Method','Amount (EGP)','Notes']
+    ];
+    [...state.expenses].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      expRows.push([e.date, e.cat, e.sub||'', e.desc, e.method, e.amount, e.notes||'']);
+    });
+    const wsExp = XLSX.utils.aoa_to_sheet(expRows);
+    wsExp['!cols'] = [{wch:12},{wch:20},{wch:25},{wch:30},{wch:18},{wch:14},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, wsExp, 'Expenses');
+
+    // ── INCOME SHEET ──
+    const incRows = [
+      ['Date','Category','Description','Frequency','Expected (EGP)','Actual (EGP)','Deposited To']
+    ];
+    state.incomes.forEach(i=>{
+      incRows.push([i.date, i.cat, i.desc, i.freq||'', i.expected, i.actual, i.account]);
+    });
+    const wsInc = XLSX.utils.aoa_to_sheet(incRows);
+    wsInc['!cols'] = [{wch:12},{wch:20},{wch:30},{wch:12},{wch:16},{wch:14},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, wsInc, 'Income');
+
+    // ── DASHBOARD SUMMARY SHEET ──
+    const totals = {};
+    state.expenses.forEach(e=> totals[e.cat]=(totals[e.cat]||0)+e.amount);
+    const totalExp = Object.values(totals).reduce((a,b)=>a+b,0);
+    const totalInc = state.incomes.reduce((a,i)=>a+i.actual,0);
+    const savings = totalInc - totalExp;
+
+    const dashRows = [
+      ['MY MONTHLY BUDGET SUMMARY'],
+      ['Generated:', new Date().toLocaleDateString('en-EG')],
+      [],
+      ['Metric','Amount (EGP)'],
+      ['Total Income', totalInc],
+      ['Total Expenses', Math.round(totalExp)],
+      ['Net Savings', Math.round(savings)],
+      ['Savings Rate %', totalInc ? ((savings/totalInc)*100).toFixed(1)+'%' : '0%'],
+      [],
+      ['EXPENSE BY CATEGORY','Budgeted (EGP)','Actual (EGP)','Variance (EGP)','% Used'],
+    ];
+    const BUDGETS_LOCAL={Housing:37200,'Food and Dining':19000,Transportation:3000,'Health and Medical':2000,'Personal Care':2500,Education:0,Entertainment:139.99,Technology:6440.18,Insurance:0,'Savings and Investments':0,'Debt Payments':9249.33,'Travel and Vacation':0,'Gifts and Donations':8500,'Childcare and Family':0,Miscellaneous:5500,Nour:9000,Hala:6539.99,Wife:9539.99};
+    Object.keys(BUDGETS_LOCAL).forEach(cat=>{
+      const act = totals[cat]||0;
+      const bud = BUDGETS_LOCAL[cat]||0;
+      const variance = bud - act;
+      const pct = bud ? ((act/bud)*100).toFixed(1)+'%' : '—';
+      dashRows.push([cat, bud, act, variance, pct]);
+    });
+    const wsDash = XLSX.utils.aoa_to_sheet(dashRows);
+    wsDash['!cols'] = [{wch:25},{wch:16},{wch:16},{wch:16},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, wsDash, 'Dashboard');
+
+    // ── DOWNLOAD ──
+    const month = new Date().toLocaleString('en-EG',{month:'long',year:'numeric'}).replace(' ','_');
+    XLSX.writeFile(wb, `Budget_${month}.xlsx`);
+    toast('✅ Excel file downloaded!');
+  } catch(e) {
+    toast('⚠️ Export failed: '+e.message);
+  }
+}
+
+// ── EXPORT TO CSV (fallback for iPhone if xlsx doesn't trigger download) ──
+function exportCSV() {
+  const rows = [['Date','Category','Subcategory','Description','Payment Method','Amount (EGP)','Notes']];
+  [...state.expenses].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    rows.push([e.date, e.cat, e.sub||'', e.desc, e.method, e.amount, e.notes||'']);
+  });
+  const csv = rows.map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'Budget_Expenses.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  toast('✅ CSV file downloaded!');
+}
 </script>
 </body>
 </html>
