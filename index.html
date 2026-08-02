@@ -150,6 +150,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <button class="nb" onclick="go('accounts',this)">Accounts</button>
   <button class="nb" onclick="go('visa',this)">Visa</button>
   <button class="nb" onclick="go('monthly',this)">📅 Monthly</button>
+  <button class="nb" onclick="go('settings',this)">⚙️ Settings</button>
 </div>
 
 <!-- DASHBOARD -->
@@ -315,6 +316,114 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="card">
     <div class="ctitle">Monthly History</div>
     <div id="monthly-history"></div>
+  </div>
+</div>
+
+
+<!-- SETTINGS TAB -->
+<div class="sec" id="tab-settings">
+
+  <!-- BUDGETS -->
+  <div class="card">
+    <div class="ctitle">Monthly Budgets</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Tap any category to edit its monthly budget</div>
+    <div id="settings-budgets"></div>
+  </div>
+
+  <!-- ADD CATEGORY -->
+  <div class="card">
+    <div class="ctitle">Add New Category</div>
+    <div class="fg"><label>Category Name</label><input type="text" id="new-cat-name" placeholder="e.g. Sports"></div>
+    <div class="fg"><label>Monthly Budget (EGP)</label><input type="number" id="new-cat-budget" placeholder="0.00" inputmode="decimal"></div>
+    <div class="fg"><label>Icon (emoji)</label><input type="text" id="new-cat-icon" placeholder="e.g. ⚽" maxlength="4"></div>
+    <div class="fg"><label>Color</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;" id="color-picker">
+        <div onclick="selectColor(this,'#4f7cff')" style="width:30px;height:30px;border-radius:50%;background:#4f7cff;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="selectColor(this,'#00c9a7')" style="width:30px;height:30px;border-radius:50%;background:#00c9a7;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="selectColor(this,'#ffb347')" style="width:30px;height:30px;border-radius:50%;background:#ffb347;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="selectColor(this,'#ff5e7e')" style="width:30px;height:30px;border-radius:50%;background:#ff5e7e;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="selectColor(this,'#a78bfa')" style="width:30px;height:30px;border-radius:50%;background:#a78bfa;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="selectColor(this,'#38bdf8')" style="width:30px;height:30px;border-radius:50%;background:#38bdf8;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="selectColor(this,'#34d399')" style="width:30px;height:30px;border-radius:50%;background:#34d399;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="selectColor(this,'#f472b6')" style="width:30px;height:30px;border-radius:50%;background:#f472b6;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="selectColor(this,'#fb923c')" style="width:30px;height:30px;border-radius:50%;background:#fb923c;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="selectColor(this,'#94a3b8')" style="width:30px;height:30px;border-radius:50%;background:#94a3b8;cursor:pointer;border:2px solid transparent;"></div>
+      </div>
+    </div>
+    <button class="btn" onclick="addCategory()" style="margin-top:8px">➕ Add Category</button>
+  </div>
+
+
+  <!-- THEME SETTINGS -->
+  <div class="card">
+    <div class="ctitle">App Theme</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Choose a preset or customize your own colors</div>
+
+    <!-- Preset themes -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" id="theme-grid"></div>
+
+    <!-- Custom accent color -->
+    <div class="ctitle" style="margin-top:4px;">Accent Color</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="accent-picker">
+      <div onclick="setAccent('#4f7cff',this)" style="width:34px;height:34px;border-radius:50%;background:#4f7cff;cursor:pointer;border:3px solid transparent;"></div>
+      <div onclick="setAccent('#00c9a7',this)" style="width:34px;height:34px;border-radius:50%;background:#00c9a7;cursor:pointer;border:3px solid transparent;"></div>
+      <div onclick="setAccent('#ff5e7e',this)" style="width:34px;height:34px;border-radius:50%;background:#ff5e7e;cursor:pointer;border:3px solid transparent;"></div>
+      <div onclick="setAccent('#ffb347',this)" style="width:34px;height:34px;border-radius:50%;background:#ffb347;cursor:pointer;border:3px solid transparent;"></div>
+      <div onclick="setAccent('#a78bfa',this)" style="width:34px;height:34px;border-radius:50%;background:#a78bfa;cursor:pointer;border:3px solid transparent;"></div>
+      <div onclick="setAccent('#f472b6',this)" style="width:34px;height:34px;border-radius:50%;background:#f472b6;cursor:pointer;border:3px solid transparent;"></div>
+      <div onclick="setAccent('#34d399',this)" style="width:34px;height:34px;border-radius:50%;background:#34d399;cursor:pointer;border:3px solid transparent;"></div>
+      <div onclick="setAccent('#fb923c',this)" style="width:34px;height:34px;border-radius:50%;background:#fb923c;cursor:pointer;border:3px solid transparent;"></div>
+    </div>
+
+    <!-- Font size -->
+    <div class="ctitle">Text Size</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button onclick="setFontSize('small',this)" class="btn sec-btn" style="flex:1;padding:8px;font-size:12px;">Small</button>
+      <button onclick="setFontSize('normal',this)" class="btn sec-btn" style="flex:1;padding:8px;font-size:14px;">Normal</button>
+      <button onclick="setFontSize('large',this)" class="btn sec-btn" style="flex:1;padding:8px;font-size:16px;">Large</button>
+    </div>
+
+    <!-- Border radius -->
+    <div class="ctitle">Card Shape</div>
+    <div style="display:flex;gap:8px;margin-bottom:6px;">
+      <button onclick="setRadius('6px',this)" class="btn sec-btn" style="flex:1;padding:8px;border-radius:6px;">Sharp</button>
+      <button onclick="setRadius('14px',this)" class="btn sec-btn" style="flex:1;padding:8px;border-radius:14px;">Rounded</button>
+      <button onclick="setRadius('22px',this)" class="btn sec-btn" style="flex:1;padding:8px;border-radius:22px;">Pill</button>
+    </div>
+  </div>
+
+  <!-- MANAGE SUBCATEGORIES -->
+  <div class="card">
+    <div class="ctitle">Manage Subcategories</div>
+    <div class="fg"><label>Select Category</label>
+      <select id="sub-cat-select" onchange="renderSubsList()">
+        <option value="">Select category...</option>
+      </select>
+    </div>
+    <div id="subs-list" style="margin-bottom:12px;"></div>
+    <div class="fg"><label>New Subcategory Name</label><input type="text" id="new-sub-name" placeholder="e.g. Netflix Premium"></div>
+    <button class="btn" onclick="addSubcategory()">➕ Add Subcategory</button>
+  </div>
+
+</div>
+
+<!-- EDIT BUDGET MODAL -->
+<div class="overlay" id="budget-modal">
+  <div class="modal">
+    <h2>✏️ Edit Budget</h2>
+    <p class="msub" id="bm-catname"></p>
+    <div class="fg"><label>Monthly Budget (EGP)</label>
+      <input type="number" id="bm-amount" placeholder="0.00" inputmode="decimal" step="0.01"
+        style="font-size:22px;font-weight:700;text-align:center;">
+    </div>
+    <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div class="pr"><span class="pk">Current Spent</span><span class="pv" id="bm-spent"></span></div>
+      <div class="pr"><span class="pk">Previous Budget</span><span class="pv" id="bm-prev"></span></div>
+    </div>
+    <div class="mbtns">
+      <button class="btn" onclick="saveBudget()">💾 Save Budget</button>
+      <button class="btn sec-btn" onclick="document.getElementById('budget-modal').classList.remove('open')" style="flex:0.5">✕</button>
+    </div>
   </div>
 </div>
 
@@ -550,9 +659,12 @@ const SUBS = {
   Hala:['University / Tuition Fees','Books and Study Materials','Transport and Commute','Mobile and Internet','Clothing and Shoes','Personal Care','Medical and Dental','Dining Out and Cafes','Entertainment and Social','Allowance / Pocket Money','Other'],
   Wife:['Allowance / Pocket Money','Clothing and Shoes','Personal Care and Salon','Mobile and Internet','Medical and Dental','Dining Out and Cafes','Entertainment and Social','Transport and Commute','Gym and Fitness','Gifts for Others','Other']
 };
-const COLORS={Housing:'#4f7cff','Food and Dining':'#00c9a7',Transportation:'#ffb347','Health and Medical':'#ff5e7e','Personal Care':'#a78bfa',Technology:'#38bdf8','Debt Payments':'#f87171','Gifts and Donations':'#fbbf24',Miscellaneous:'#94a3b8',Nour:'#34d399',Hala:'#f472b6',Wife:'#fb923c',Entertainment:'#818cf8',Education:'#facc15',Insurance:'#60a5fa','Savings and Investments':'#4ade80','Travel and Vacation':'#f59e0b','Childcare and Family':'#fb7185'};
-const ICONS={Housing:'🏠','Food and Dining':'🍽️',Transportation:'🚗','Health and Medical':'💊','Personal Care':'💇',Technology:'💻','Debt Payments':'💳','Gifts and Donations':'🎁',Miscellaneous:'📦',Nour:'👩‍🎓',Hala:'👧',Wife:'👩',Entertainment:'🎬',Education:'📚',Insurance:'🛡️','Savings and Investments':'💰','Travel and Vacation':'✈️','Childcare and Family':'👨‍👩‍👧'};
-const BUDGETS={Housing:37200,'Food and Dining':19000,Transportation:3000,'Health and Medical':2000,'Personal Care':2500,Education:0,Entertainment:139.99,Technology:6440.18,Insurance:0,'Savings and Investments':0,'Debt Payments':9249.33,'Travel and Vacation':0,'Gifts and Donations':8500,'Childcare and Family':0,Miscellaneous:5500,Nour:9000,Hala:6539.99,Wife:9539.99};
+const DEFAULT_COLORS={Housing:'#4f7cff','Food and Dining':'#00c9a7',Transportation:'#ffb347','Health and Medical':'#ff5e7e','Personal Care':'#a78bfa',Technology:'#38bdf8','Debt Payments':'#f87171','Gifts and Donations':'#fbbf24',Miscellaneous:'#94a3b8',Nour:'#34d399',Hala:'#f472b6',Wife:'#fb923c',Entertainment:'#818cf8',Education:'#facc15',Insurance:'#60a5fa','Savings and Investments':'#4ade80','Travel and Vacation':'#f59e0b','Childcare and Family':'#fb7185'};
+const DEFAULT_ICONS={Housing:'🏠','Food and Dining':'🍽️',Transportation:'🚗','Health and Medical':'💊','Personal Care':'💇',Technology:'💻','Debt Payments':'💳','Gifts and Donations':'🎁',Miscellaneous:'📦',Nour:'👩‍🎓',Hala:'👧',Wife:'👩',Entertainment:'🎬',Education:'📚',Insurance:'🛡️','Savings and Investments':'💰','Travel and Vacation':'✈️','Childcare and Family':'👨‍👩‍👧'};
+const DEFAULT_BUDGETS={Housing:37200,'Food and Dining':19000,Transportation:3000,'Health and Medical':2000,'Personal Care':2500,Education:0,Entertainment:139.99,Technology:6440.18,Insurance:0,'Savings and Investments':0,'Debt Payments':9249.33,'Travel and Vacation':0,'Gifts and Donations':8500,'Childcare and Family':0,Miscellaneous:5500,Nour:9000,Hala:6539.99,Wife:9539.99};
+let COLORS={...DEFAULT_COLORS};
+let ICONS={...DEFAULT_ICONS};
+let BUDGETS={...DEFAULT_BUDGETS};
 
 // ── DEFAULT SEED DATA (from Excel) ──
 const SEED_EXPENSES = [
@@ -651,7 +763,7 @@ const VISA_CARDS=[
 ];
 
 // ── STATE ──
-let state = { expenses:[], incomes:[], nextExpId:100, nextIncId:10 };
+let state = { expenses:[], incomes:[], nextExpId:100, nextIncId:10, budgets:{}, customCats:{}, customSubs:{} };
 
 // ── PERSISTENCE ──
 function saveState() {
@@ -662,7 +774,27 @@ function saveState() {
 function loadState() {
   try {
     const raw = localStorage.getItem(SK);
-    if (raw) { state = JSON.parse(raw); return true; }
+    if (raw) {
+      state = JSON.parse(raw);
+      // Restore budgets, colors, icons, subs from saved state
+      if (state.budgets && Object.keys(state.budgets).length) {
+        Object.assign(BUDGETS, state.budgets);
+      }
+      if (state.customCats) {
+        Object.entries(state.customCats).forEach(([cat, data]) => {
+          if (!COLORS[cat]) COLORS[cat] = data.color||'#94a3b8';
+          if (!ICONS[cat]) ICONS[cat] = data.icon||'📂';
+          if (!BUDGETS[cat]) BUDGETS[cat] = data.budget||0;
+        });
+      }
+      if (state.customSubs) {
+        Object.entries(state.customSubs).forEach(([cat, subs]) => {
+          if (!SUBS[cat]) SUBS[cat] = [];
+          subs.forEach(s => { if (!SUBS[cat].includes(s)) SUBS[cat].push(s); });
+        });
+      }
+      return true;
+    }
   } catch(e){}
   return false;
 }
@@ -873,7 +1005,7 @@ function renderVisa() {
   document.getElementById('vtxns').innerHTML=vhtml||'<div style="color:var(--muted);text-align:center;padding:20px">No visa transactions</div>';
 }
 
-function renderAll(){renderDashboard();renderExpenses();renderIncome();renderAccounts();renderVisa();renderMonthly();}
+function renderAll(){renderDashboard();renderExpenses();renderIncome();renderAccounts();renderVisa();renderMonthly();renderSettings();}
 
 // ── DELETE EXPENSE ──
 function deleteExp(id) {
@@ -1020,6 +1152,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     saveState();
   }
   currentMonthOffset=0;
+  restoreTheme();
+  refreshCatSelects();
   document.getElementById('f-date').value=today();
   document.getElementById('fi-date').value=today();
   renderAll();
@@ -1112,6 +1246,278 @@ function exportCSV() {
 }
 
 
+
+
+
+// ── THEMES ──
+const THEMES = {
+  'Dark Navy': { bg:'#0f1117', surface:'#1a1d27', card:'#21253a', border:'#2e3350', text:'#eaf0ff', muted:'#7a84a8', accent:'#4f7cff' },
+  'Midnight': { bg:'#000000', surface:'#111111', card:'#1a1a1a', border:'#2a2a2a', text:'#ffffff', muted:'#666666', accent:'#4f7cff' },
+  'Deep Ocean': { bg:'#0a1628', surface:'#0f2040', card:'#162b55', border:'#1e3a6e', text:'#e0f0ff', muted:'#6a9fd8', accent:'#00c9a7' },
+  'Forest': { bg:'#0d1f0f', surface:'#142918', card:'#1a3320', border:'#244d2c', text:'#e0ffe4', muted:'#6aad78', accent:'#34d399' },
+  'Sunset': { bg:'#1a0f0a', surface:'#271710', card:'#341f14', border:'#4a2c1c', text:'#fff0e8', muted:'#a87060', accent:'#fb923c' },
+  'Purple Haze': { bg:'#100d1a', surface:'#1a1428', card:'#231c38', border:'#332850', text:'#f0e8ff', muted:'#8070aa', accent:'#a78bfa' },
+  'Rose Gold': { bg:'#1a0f12', surface:'#271519', card:'#341b22', border:'#4a2530', text:'#ffe8ec', muted:'#aa7080', accent:'#f472b6' },
+  'Light': { bg:'#f0f2f8', surface:'#ffffff', card:'#f8f9fc', border:'#dde2f0', text:'#1a1d2e', muted:'#7a84a8', accent:'#4f7cff' },
+  'Sand': { bg:'#f5f0e8', surface:'#ffffff', card:'#faf7f2', border:'#e0d8c8', text:'#2a2218', muted:'#8a7a60', accent:'#fb923c' },
+  'Mint': { bg:'#f0faf6', surface:'#ffffff', card:'#f4fdf9', border:'#c8eedd', text:'#0f2a20', muted:'#60a880', accent:'#00c9a7' },
+};
+
+let currentTheme = 'Dark Navy';
+let currentAccent = '#4f7cff';
+
+function applyTheme(name, accentOverride) {
+  const t = THEMES[name] || THEMES['Dark Navy'];
+  const accent = accentOverride || t.accent;
+  const root = document.documentElement;
+  root.style.setProperty('--bg', t.bg);
+  root.style.setProperty('--surface', t.surface);
+  root.style.setProperty('--card', t.card);
+  root.style.setProperty('--border', t.border);
+  root.style.setProperty('--text', t.text);
+  root.style.setProperty('--muted', t.muted);
+  root.style.setProperty('--accent', accent);
+  currentTheme = name;
+  currentAccent = accent;
+  if (!state.theme) state.theme = {};
+  state.theme = { name, accent };
+  saveState();
+}
+
+function setAccent(color, el) {
+  document.querySelectorAll('#accent-picker div').forEach(d=>d.style.border='3px solid transparent');
+  el.style.border = '3px solid white';
+  currentAccent = color;
+  applyTheme(currentTheme, color);
+  toast('✅ Accent color updated');
+}
+
+function setFontSize(size, el) {
+  document.querySelectorAll('#tab-settings .btn').forEach(b=>{
+    if(['Small','Normal','Large'].some(s=>b.textContent.includes(s))) b.style.borderColor='var(--border)';
+  });
+  el.style.borderColor = 'var(--accent)';
+  const sizes = { small:'13px', normal:'15px', large:'17px' };
+  document.documentElement.style.setProperty('--base-font', sizes[size]);
+  document.body.style.fontSize = sizes[size];
+  if (!state.theme) state.theme = {};
+  state.theme.fontSize = size;
+  saveState();
+  toast('✅ Font size: '+size);
+}
+
+function setRadius(r, el) {
+  document.querySelectorAll('#tab-settings .btn').forEach(b=>{
+    if(['Sharp','Rounded','Pill'].some(s=>b.textContent.includes(s))) b.style.borderColor='var(--border)';
+  });
+  el.style.borderColor = 'var(--accent)';
+  document.documentElement.style.setProperty('--radius', r);
+  if (!state.theme) state.theme = {};
+  state.theme.radius = r;
+  saveState();
+  toast('✅ Card shape updated');
+}
+
+function renderThemeGrid() {
+  const grid = document.getElementById('theme-grid');
+  if (!grid) return;
+  let html = '';
+  Object.entries(THEMES).forEach(([name, t]) => {
+    const isActive = name === currentTheme;
+    html += `<div onclick="applyTheme('${name}');renderThemeGrid();toast('✅ Theme: ${name}');"
+      style="border-radius:12px;padding:12px;cursor:pointer;border:2px solid ${isActive?'var(--accent)':'transparent'};
+      background:${t.card};position:relative;overflow:hidden;">
+      <div style="display:flex;gap:5px;margin-bottom:8px;">
+        <div style="width:14px;height:14px;border-radius:50%;background:${t.accent}"></div>
+        <div style="width:14px;height:14px;border-radius:50%;background:${t.surface}"></div>
+        <div style="width:14px;height:14px;border-radius:50%;background:${t.bg}"></div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:${t.text};">${name}</div>
+      ${isActive?'<div style="position:absolute;top:6px;right:6px;font-size:12px;">✓</div>':''}
+    </div>`;
+  });
+  grid.innerHTML = html;
+}
+
+function restoreTheme() {
+  if (state.theme) {
+    if (state.theme.name) applyTheme(state.theme.name, state.theme.accent);
+    if (state.theme.fontSize) {
+      const sizes = { small:'13px', normal:'15px', large:'17px' };
+      document.body.style.fontSize = sizes[state.theme.fontSize]||'15px';
+    }
+    if (state.theme.radius) {
+      document.documentElement.style.setProperty('--radius', state.theme.radius);
+    }
+  }
+}
+
+// ── SETTINGS ──
+let selectedColor = '#4f7cff';
+
+function selectColor(el, color) {
+  selectedColor = color;
+  document.querySelectorAll('#color-picker div').forEach(d => d.style.border='2px solid transparent');
+  el.style.border = '2px solid white';
+}
+
+function renderSettings() {
+  // Populate category select for subcategories
+  const sel = document.getElementById('sub-cat-select');
+  if (sel) {
+    const cats = Object.keys(SUBS);
+    sel.innerHTML = '<option value="">Select category...</option>';
+    cats.forEach(c => sel.innerHTML += `<option>${c}</option>`);
+  }
+
+  // Render budgets list
+  const allCats = [...new Set([...Object.keys(BUDGETS), ...Object.keys(SUBS)])];
+  let html = '';
+  allCats.forEach(cat => {
+    const budget = BUDGETS[cat]||0;
+    const color = COLORS[cat]||'#94a3b8';
+    const icon = ICONS[cat]||'📂';
+    const isCustom = state.customCats && state.customCats[cat];
+    html += `<div class="row" style="cursor:pointer;" onclick="openBudgetEdit('${cat.replace(/'/g,"\'")}')">
+      <div class="icon" style="background:${color}22;font-size:16px;">${icon}</div>
+      <div class="rinfo">
+        <div class="rname">${cat} ${isCustom?'<span style="font-size:9px;background:var(--accent);color:#fff;padding:1px 5px;border-radius:6px;">custom</span>':''}</div>
+        <div class="rmeta">Budget: ${budget?fmt(budget)+' EGP/month':'No budget set'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div style="color:var(--accent);font-size:18px;">›</div>
+        ${isCustom?`<button onclick="event.stopPropagation();deleteCategory('${cat.replace(/'/g,"\'")}');" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;">🗑 Delete</button>`:''}
+      </div>
+    </div>`;
+  });
+  const el = document.getElementById('settings-budgets');
+  if (el) el.innerHTML = html;
+  renderThemeGrid();
+}
+
+function renderSubsList() {
+  const cat = document.getElementById('sub-cat-select').value;
+  if (!cat) { document.getElementById('subs-list').innerHTML=''; return; }
+  const subs = SUBS[cat]||[];
+  let html = '';
+  subs.forEach((s,i) => {
+    html += `<div class="row">
+      <div class="rinfo"><div class="rname" style="font-size:13px;">${s}</div></div>
+      <button onclick="deleteSub('${cat.replace(/'/g,"\'")}',${i})" style="background:rgba(255,94,126,.12);color:var(--red);border:1px solid rgba(255,94,126,.3);border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;">🗑</button>
+    </div>`;
+  });
+  document.getElementById('subs-list').innerHTML = html || '<div style="color:var(--muted);font-size:12px;padding:8px 0;">No subcategories yet</div>';
+}
+
+function addCategory() {
+  const name = document.getElementById('new-cat-name').value.trim();
+  const budget = parseFloat(document.getElementById('new-cat-budget').value)||0;
+  const icon = document.getElementById('new-cat-icon').value.trim()||'📂';
+  if (!name) { toast('⚠️ Enter a category name'); return; }
+  if (BUDGETS.hasOwnProperty(name)) { toast('⚠️ Category already exists'); return; }
+
+  COLORS[name] = selectedColor;
+  ICONS[name] = icon;
+  BUDGETS[name] = budget;
+  if (!SUBS[name]) SUBS[name] = [];
+
+  if (!state.customCats) state.customCats = {};
+  state.customCats[name] = { color: selectedColor, icon, budget };
+  if (!state.budgets) state.budgets = {};
+  state.budgets[name] = budget;
+
+  // Add to form selects
+  refreshCatSelects();
+  saveState();
+  renderSettings();
+  renderAll();
+  toast('✅ Category "'+name+'" added!');
+  document.getElementById('new-cat-name').value='';
+  document.getElementById('new-cat-budget').value='';
+  document.getElementById('new-cat-icon').value='';
+}
+
+function addSubcategory() {
+  const cat = document.getElementById('sub-cat-select').value;
+  const sub = document.getElementById('new-sub-name').value.trim();
+  if (!cat) { toast('⚠️ Select a category first'); return; }
+  if (!sub) { toast('⚠️ Enter a subcategory name'); return; }
+  if (!SUBS[cat]) SUBS[cat] = [];
+  if (SUBS[cat].includes(sub)) { toast('⚠️ Subcategory already exists'); return; }
+
+  SUBS[cat].push(sub);
+  if (!state.customSubs) state.customSubs = {};
+  if (!state.customSubs[cat]) state.customSubs[cat] = [];
+  state.customSubs[cat].push(sub);
+
+  saveState();
+  renderSubsList();
+  toast('✅ Subcategory "'+sub+'" added!');
+  document.getElementById('new-sub-name').value='';
+}
+
+function deleteSub(cat, idx) {
+  if (!confirm('Delete this subcategory?')) return;
+  SUBS[cat].splice(idx,1);
+  if (state.customSubs && state.customSubs[cat]) {
+    state.customSubs[cat] = state.customSubs[cat].filter(s=>s!==SUBS[cat][idx]);
+  }
+  saveState();
+  renderSubsList();
+  toast('🗑 Subcategory deleted');
+}
+
+function deleteCategory(cat) {
+  if (!confirm('Delete category "'+cat+'"? Existing expenses will keep this category name.')) return;
+  delete COLORS[cat]; delete ICONS[cat]; delete BUDGETS[cat]; delete SUBS[cat];
+  if (state.customCats) delete state.customCats[cat];
+  if (state.budgets) delete state.budgets[cat];
+  refreshCatSelects();
+  saveState(); renderSettings(); renderAll();
+  toast('🗑 Category deleted');
+}
+
+function refreshCatSelects() {
+  const allCats = Object.keys(BUDGETS);
+  ['f-cat','edit-cat'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(!sel) return;
+    const current=sel.value;
+    sel.innerHTML='<option value="">Select...</option>';
+    allCats.forEach(c=>sel.innerHTML+=`<option${c===current?' selected':''}>${c}</option>`);
+  });
+  // Also refresh sub-cat-select in settings
+  const ss=document.getElementById('sub-cat-select');
+  if(ss){
+    const cur=ss.value;
+    ss.innerHTML='<option value="">Select category...</option>';
+    Object.keys(SUBS).forEach(c=>ss.innerHTML+=`<option${c===cur?' selected':''}>${c}</option>`);
+  }
+}
+
+// ── BUDGET EDIT ──
+let editingBudgetCat = null;
+function openBudgetEdit(cat) {
+  editingBudgetCat = cat;
+  const budget = BUDGETS[cat]||0;
+  const spent = state.expenses.filter(e=>e.cat===cat).reduce((a,e)=>a+e.amount,0);
+  document.getElementById('bm-catname').textContent = (ICONS[cat]||'📂')+' '+cat;
+  document.getElementById('bm-amount').value = budget;
+  document.getElementById('bm-spent').textContent = fmt(Math.round(spent))+' EGP this month';
+  document.getElementById('bm-prev').textContent = fmt(budget)+' EGP';
+  document.getElementById('budget-modal').classList.add('open');
+}
+
+function saveBudget() {
+  if (!editingBudgetCat) return;
+  const amt = parseFloat(document.getElementById('bm-amount').value)||0;
+  BUDGETS[editingBudgetCat] = amt;
+  if (!state.budgets) state.budgets = {};
+  state.budgets[editingBudgetCat] = amt;
+  saveState(); renderSettings(); renderAll();
+  document.getElementById('budget-modal').classList.remove('open');
+  toast('✅ Budget updated for '+editingBudgetCat);
+}
 
 // ── MONTHLY BUDGET ──
 let currentMonthOffset = 0; // 0 = current month
