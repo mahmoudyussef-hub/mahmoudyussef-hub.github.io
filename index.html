@@ -841,13 +841,50 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <!-- Wave animation (shown when recording) -->
     <div class="wave" id="wave" style="margin-bottom:10px;"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
 
-    <!-- Parsed result -->
-    <div class="pres" id="pres">
-      <div class="pr"><span class="pk">📂 Category</span><span class="pv" id="pr-cat">—</span></div>
-      <div class="pr"><span class="pk">📝 Description</span><span class="pv" id="pr-desc">—</span></div>
-      <div class="pr"><span class="pk">💰 Amount</span><span class="pv" id="pr-amt">—</span></div>
-      <div class="pr"><span class="pk">💳 Payment</span><span class="pv" id="pr-pay">—</span></div>
-      <div class="pr"><span class="pk">📅 Date</span><span class="pv" id="pr-date">—</span></div>
+    <!-- Editable parsed result -->
+    <div class="pres" id="pres" style="padding:0;background:transparent;border:none;">
+      <div style="background:rgba(79,124,255,.08);border:1px solid rgba(79,124,255,.25);border-radius:12px;padding:12px;margin-bottom:8px;">
+        <div style="font-size:10px;color:var(--accent);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">✏️ Review & Edit Before Saving</div>
+        <div class="fg" style="margin-bottom:8px;">
+          <label style="font-size:10px;">Description</label>
+          <input type="text" id="ve-desc" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div class="fg" style="margin-bottom:0;">
+            <label style="font-size:10px;">Amount (EGP)</label>
+            <input type="number" id="ve-amount" inputmode="decimal" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;">
+          </div>
+          <div class="fg" style="margin-bottom:0;">
+            <label style="font-size:10px;">Date</label>
+            <input type="date" id="ve-date" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;">
+          </div>
+        </div>
+        <div class="fg" style="margin-bottom:8px;">
+          <label style="font-size:10px;">Category</label>
+          <select id="ve-cat" onchange="fillVoiceSubcats()" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;appearance:none;">
+            <option>Housing</option><option>Food and Dining</option><option>Transportation</option>
+            <option>Health and Medical</option><option>Personal Care</option><option>Education</option>
+            <option>Entertainment</option><option>Technology</option><option>Insurance</option>
+            <option>Savings and Investments</option><option>Debt Payments</option>
+            <option>Travel and Vacation</option><option>Gifts and Donations</option>
+            <option>Childcare and Family</option><option>Miscellaneous</option>
+            <option>Nour</option><option>Hala</option><option>Wife</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:8px;">
+          <label style="font-size:10px;">Subcategory</label>
+          <select id="ve-sub" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;appearance:none;">
+            <option value="">Select...</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:0;">
+          <label style="font-size:10px;">Payment Method</label>
+          <select id="ve-method" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;appearance:none;">
+            <option>CIB Visa</option><option>CIB Debit</option><option>NEXTBANK 18K</option>
+            <option>NEXTBANK 50K</option><option>Wafa Bank Visa</option><option>QNB Debit</option><option>Cash in Hand</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- Examples -->
@@ -1613,14 +1650,22 @@ function parseTxt(text){
 
   parsedEntry = {_type:'expense', id:state.nextExpId++, date:d, cat, sub, desc, method, amount, notes:''};
 
-  document.getElementById('pr-cat').textContent  = cat + (sub?' › '+sub:'');
-  document.getElementById('pr-desc').textContent = desc;
-  document.getElementById('pr-amt').textContent  = fmt(amount)+' EGP';
-  document.getElementById('pr-pay').textContent  = method;
-  document.getElementById('pr-date').textContent = d;
+  // Show EDITABLE result
   document.getElementById('pres').classList.add('show');
   document.getElementById('conf-btn').style.display='block';
   document.getElementById('conf-btn').textContent='✓ Add Expense';
+
+  // Populate editable fields
+  document.getElementById('ve-desc').value   = desc;
+  document.getElementById('ve-amount').value = amount;
+  document.getElementById('ve-method').value = method;
+  document.getElementById('ve-date').value   = d;
+
+  // Set category dropdown
+  const catSel = document.getElementById('ve-cat');
+  catSel.value = cat;
+  fillVoiceSubcats();
+  setTimeout(()=>{ document.getElementById('ve-sub').value = sub; }, 50);
 }
 
 function confirmVoice(){
@@ -1629,10 +1674,25 @@ function confirmVoice(){
     state.transfers.push({id:parsedEntry.id,date:parsedEntry.date,from:parsedEntry.from,to:parsedEntry.to,amount:parsedEntry.amount,desc:parsedEntry.desc});
     toast('✅ Transfer saved!');
   } else {
-    state.expenses.push({id:parsedEntry.id,date:parsedEntry.date,cat:parsedEntry.cat,sub:parsedEntry.sub,desc:parsedEntry.desc,method:parsedEntry.method,amount:parsedEntry.amount,notes:parsedEntry.notes});
+    // Read from editable fields — user may have corrected them
+    const desc   = document.getElementById('ve-desc').value.trim() || parsedEntry.desc;
+    const amount = parseFloat(document.getElementById('ve-amount').value) || parsedEntry.amount;
+    const cat    = document.getElementById('ve-cat').value || parsedEntry.cat;
+    const sub    = document.getElementById('ve-sub').value || parsedEntry.sub;
+    const method = document.getElementById('ve-method').value || parsedEntry.method;
+    const date   = document.getElementById('ve-date').value || parsedEntry.date;
+    if(!amount || amount<=0){ toast('⚠️ Enter a valid amount'); return; }
+    state.expenses.push({id:parsedEntry.id, date, cat, sub, desc, method, amount, notes:''});
     toast('✅ Expense saved!');
   }
   saveState(); renderAll(); closeVoice();
+}
+
+function fillVoiceSubcats(){
+  const cat = document.getElementById('ve-cat').value;
+  const sel = document.getElementById('ve-sub');
+  sel.innerHTML = '<option value="">Select...</option>';
+  (SUBS[cat]||[]).forEach(s => sel.innerHTML += `<option>${s}</option>`);
 }
 
 // ── INIT ──
