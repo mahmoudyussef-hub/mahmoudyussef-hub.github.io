@@ -894,8 +894,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
 
     <div class="mbtns">
-      <button class="btn" id="conf-btn" onclick="processQuickInput()" style="display:block;">✓ Add Expense</button>
-      <button class="btn" id="voice-conf-btn" onclick="confirmVoice()" style="display:none;">✓ Confirm Voice</button>
+      <button class="btn" id="conf-btn" onclick="handleAddExpense()" style="display:block;">✓ Add Expense</button>
     </div>
 
     <!-- Mic blocked help -->
@@ -1412,6 +1411,7 @@ function useExample(text) {
 }
 
 function liveParseInput(val) {
+  parsedEntry = null; // reset so button re-parses
   const hint = document.getElementById('quick-hint');
   if (!val.trim()) {
     if (hint) hint.textContent = '';
@@ -1420,7 +1420,25 @@ function liveParseInput(val) {
     if (sec) sec.style.display = 'block';
     return;
   }
-  if (hint) hint.textContent = '⚡ Tap Add Expense or press Enter to process...';
+  if (hint) hint.textContent = '⚡ Tap "Add Expense" to process...';
+}
+
+
+function handleAddExpense() {
+  // If already parsed (parsedEntry exists), save it
+  if (parsedEntry) {
+    confirmVoice();
+    return;
+  }
+  // Otherwise parse the input first then save
+  const input = document.getElementById('quick-input');
+  const val = input ? input.value.trim() : '';
+  if (!val) { toast('⚠️ Type your expense or tap an example first'); return; }
+  parseTxt(val);
+  // After parseTxt sets parsedEntry, save it
+  setTimeout(() => {
+    if (parsedEntry) confirmVoice();
+  }, 100);
 }
 
 function processQuickInput() {
@@ -1431,7 +1449,7 @@ function processQuickInput() {
   setTimeout(() => {
     const pres = document.getElementById('pres');
     if (pres) pres.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 100);
+  }, 150);
 }
 
 function tryVoice() {
@@ -1480,6 +1498,11 @@ function doVoiceRecord(btn) {
     if (inp) inp.value = t;
     if (e.results[e.results.length-1].isFinal) {
       parseTxt(t);
+      // Scroll to show editable form
+      setTimeout(() => {
+        const pres = document.getElementById('pres');
+        if (pres) pres.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      }, 200);
     }
   };
   rec.onend = () => {
