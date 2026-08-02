@@ -272,6 +272,71 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="card"><div class="ctitle">Visa Transactions</div><div id="vtxns"></div></div>
 </div>
 
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detail-modal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div>
+        <div id="dm-icon" style="font-size:32px;margin-bottom:4px;"></div>
+        <h2 id="dm-desc" style="font-size:17px;"></h2>
+        <div id="dm-cat" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+      </div>
+      <div style="text-align:right;">
+        <div id="dm-amount" style="font-size:26px;font-weight:900;color:var(--red);"></div>
+        <div id="dm-date" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
+      </div>
+    </div>
+    <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:16px;">
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Payment Method</span><span class="pv" id="dm-method"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Subcategory</span><span class="pv" id="dm-sub"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Category Total (this month)</span><span class="pv" id="dm-cattotal"></span></div>
+      <div class="pr" style="padding:6px 0;border-bottom:1px solid var(--border);"><span class="pk">Budget Remaining</span><span class="pv" id="dm-remaining"></span></div>
+      <div class="pr" style="padding:6px 0;"><span class="pk">Notes</span><span class="pv" id="dm-notes"></span></div>
+    </div>
+    <div class="mbtns">
+      <button class="btn" onclick="openEditFromDetail()" >✏️ Edit</button>
+      <button class="btn danger" onclick="deleteFromDetail()" style="flex:0.8;">🗑 Delete</button>
+      <button class="btn sec-btn" onclick="closeDetail()" style="flex:0.5;">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="overlay" id="edit-modal">
+  <div class="modal">
+    <h2>✏️ Edit Expense</h2>
+    <p class="msub">Update the details below and save.</p>
+    <input type="hidden" id="edit-id">
+    <div class="fg"><label>Date</label><input type="date" id="edit-date"></div>
+    <div class="fg"><label>Category</label>
+      <select id="edit-cat" onchange="fillEditSubs()">
+        <option value="">Select...</option>
+        <option>Housing</option><option>Food and Dining</option><option>Transportation</option>
+        <option>Health and Medical</option><option>Personal Care</option><option>Education</option>
+        <option>Entertainment</option><option>Technology</option><option>Insurance</option>
+        <option>Savings and Investments</option><option>Debt Payments</option>
+        <option>Travel and Vacation</option><option>Gifts and Donations</option>
+        <option>Childcare and Family</option><option>Miscellaneous</option>
+        <option>Nour</option><option>Hala</option><option>Wife</option>
+      </select>
+    </div>
+    <div class="fg"><label>Subcategory</label><select id="edit-sub"><option value="">Select...</option></select></div>
+    <div class="fg"><label>Description</label><input type="text" id="edit-desc"></div>
+    <div class="fg"><label>Amount (EGP)</label><input type="number" id="edit-amt" step="0.01" inputmode="decimal"></div>
+    <div class="fg"><label>Payment Method</label>
+      <select id="edit-pay">
+        <option>CIB Visa</option><option>CIB Debit</option><option>NEXTBANK 18K</option>
+        <option>NEXTBANK 50K</option><option>Wafa Bank Visa</option><option>QNB Debit</option><option>Cash in Hand</option>
+      </select>
+    </div>
+    <div class="fg"><label>Notes</label><input type="text" id="edit-notes"></div>
+    <div class="mbtns">
+      <button class="btn" onclick="saveEdit()">💾 Save Changes</button>
+      <button class="btn sec-btn" onclick="closeEdit()" style="flex:0.5">✕</button>
+    </div>
+  </div>
+</div>
+
 <!-- VOICE FAB -->
 <button class="fab" id="fab" onclick="openVoice()">🎤</button>
 
@@ -561,10 +626,13 @@ function renderExpenses() {
   let html='';
   sorted.forEach(e=>{
     const icon=ICONS[e.cat]||'💸'; const color=COLORS[e.cat]||'#7a84a8';
-    html+=`<div class="row">
+    html+=`<div class="row" style="cursor:pointer;" onclick="openDetail(${e.id})">
       <div class="icon" style="background:${color}22">${icon}</div>
       <div class="rinfo"><div class="rname">${e.desc}</div><div class="rmeta">${e.cat} · ${e.method} · ${e.date}</div></div>
-      <div class="ramount red">-${fmt(e.amount)}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div class="ramount red">-${fmt(e.amount)}</div>
+        <div style="font-size:10px;color:var(--muted);">tap for details ›</div>
+      </div>
     </div>`;
   });
   document.getElementById('exp-list').innerHTML=html||'<div style="color:var(--muted);text-align:center;padding:20px">No expenses yet</div>';
@@ -647,6 +715,60 @@ function renderVisa() {
 }
 
 function renderAll(){renderDashboard();renderExpenses();renderIncome();renderAccounts();renderVisa();}
+
+// ── DELETE EXPENSE ──
+function deleteExp(id) {
+  if (!confirm('Delete this expense?')) return;
+  state.expenses = state.expenses.filter(e=>e.id!==id);
+  saveState(); renderAll(); toast('🗑 Expense deleted');
+}
+
+// ── EDIT EXPENSE ──
+function openEdit(id) {
+  const e = state.expenses.find(e=>e.id===id);
+  if (!e) return;
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-date').value = e.date;
+  document.getElementById('edit-cat').value = e.cat;
+  fillEditSubs();
+  setTimeout(()=>{ document.getElementById('edit-sub').value = e.sub||''; }, 50);
+  document.getElementById('edit-desc').value = e.desc;
+  document.getElementById('edit-amt').value = e.amount;
+  document.getElementById('edit-pay').value = e.method;
+  document.getElementById('edit-notes').value = e.notes||'';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function fillEditSubs() {
+  const cat = document.getElementById('edit-cat').value;
+  const sel = document.getElementById('edit-sub');
+  sel.innerHTML = '<option value="">Select...</option>';
+  (SUBS[cat]||[]).forEach(s=>sel.innerHTML+=`<option>${s}</option>`);
+}
+
+function closeEdit() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+
+function saveEdit() {
+  const id = parseInt(document.getElementById('edit-id').value);
+  const amt = parseFloat(document.getElementById('edit-amt').value);
+  const desc = document.getElementById('edit-desc').value.trim();
+  if (!desc || isNaN(amt) || amt<=0) { toast('⚠️ Fill Description & Amount'); return; }
+  const idx = state.expenses.findIndex(e=>e.id===id);
+  if (idx===-1) return;
+  state.expenses[idx] = {
+    ...state.expenses[idx],
+    date: document.getElementById('edit-date').value,
+    cat: document.getElementById('edit-cat').value,
+    sub: document.getElementById('edit-sub').value,
+    desc,
+    amount: amt,
+    method: document.getElementById('edit-pay').value,
+    notes: document.getElementById('edit-notes').value.trim(),
+  };
+  saveState(); renderAll(); closeEdit(); toast('✅ Expense updated!');
+}
 
 // ── VOICE ──
 let recognition=null,isRec=false,parsedEntry=null;
@@ -828,6 +950,57 @@ function exportCSV() {
   document.body.removeChild(a); URL.revokeObjectURL(url);
   toast('✅ CSV file downloaded!');
 }
+
+// ── TRANSACTION DETAIL ──
+let currentDetailId = null;
+
+function openDetail(id) {
+  const e = state.expenses.find(e=>e.id===id);
+  if (!e) return;
+  currentDetailId = id;
+
+  const icon = ICONS[e.cat]||'💸';
+  const color = COLORS[e.cat]||'#7a84a8';
+
+  // Category total
+  const catTotal = state.expenses.filter(x=>x.cat===e.cat).reduce((a,x)=>a+x.amount,0);
+  const budget = BUDGETS[e.cat]||0;
+  const remaining = budget - catTotal;
+
+  document.getElementById('dm-icon').textContent = icon;
+  document.getElementById('dm-desc').textContent = e.desc;
+  document.getElementById('dm-cat').textContent = e.cat + (e.sub ? ' › ' + e.sub : '');
+  document.getElementById('dm-amount').textContent = '-' + fmt(e.amount) + ' EGP';
+  document.getElementById('dm-date').textContent = new Date(e.date).toLocaleDateString('en-EG', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('dm-method').textContent = e.method;
+  document.getElementById('dm-sub').textContent = e.sub || '—';
+  document.getElementById('dm-cattotal').textContent = fmt(Math.round(catTotal)) + ' EGP';
+  document.getElementById('dm-remaining').innerHTML = remaining >= 0
+    ? `<span style="color:var(--green)">${fmt(Math.round(remaining))} EGP left</span>`
+    : `<span style="color:var(--red)">${fmt(Math.round(Math.abs(remaining)))} EGP over budget</span>`;
+  document.getElementById('dm-notes').textContent = e.notes || '—';
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-modal').classList.remove('open');
+  currentDetailId = null;
+}
+
+function openEditFromDetail() {
+  const id = currentDetailId;
+  closeDetail();
+  setTimeout(()=>openEdit(id), 150);
+}
+
+function deleteFromDetail() {
+  if (!currentDetailId) return;
+  if (!confirm('Delete this expense?')) return;
+  state.expenses = state.expenses.filter(e=>e.id!==currentDetailId);
+  saveState(); renderAll(); closeDetail(); toast('🗑 Expense deleted');
+}
+
 </script>
 </body>
 </html>
