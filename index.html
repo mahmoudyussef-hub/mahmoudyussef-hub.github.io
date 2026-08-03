@@ -246,6 +246,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="flex" style="font-size:12px;color:var(--muted);margin-bottom:10px;">
       <span>Budgeted: 118,609</span><span style="color:var(--red);font-weight:700">Actual: <span id="exp-total">—</span> EGP</span>
     </div>
+    <!-- SEARCH BAR -->
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input type="text" id="exp-search" placeholder="🔍 Search expenses..." oninput="renderExpenses()"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;padding:8px 12px;outline:none;font-family:inherit;">
+      <button onclick="clearExpSearch()" style="background:var(--border);border:none;color:var(--muted);border-radius:10px;padding:8px 11px;font-size:13px;cursor:pointer;">✕</button>
+    </div>
+    <!-- FILTER CHIPS -->
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px;scrollbar-width:none;" id="exp-filter-chips">
+      <button onclick="setExpFilter('all',this)" class="fchip on" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;">All</button>
+      <button onclick="setExpFilter('month',this)" class="fchip" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--border);color:var(--muted);">This Month</button>
+      <button onclick="setExpFilter('week',this)" class="fchip" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--border);color:var(--muted);">This Week</button>
+      <button onclick="setExpFilter('visa',this)" class="fchip" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--border);color:var(--muted);">Visa Only</button>
+      <button onclick="setExpFilter('cash',this)" class="fchip" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--border);color:var(--muted);">Cash</button>
+    </div>
     <div id="exp-list"></div>
   </div>
 </div>
@@ -1210,24 +1224,53 @@ function renderDashboard() {
 }
 
 // ── RENDER EXPENSES ──
+let expFilter='all';
+function setExpFilter(f,el){
+  expFilter=f;
+  document.querySelectorAll('.fchip').forEach(b=>{b.style.background='var(--border)';b.style.color='var(--muted)';});
+  el.style.background='var(--accent)';el.style.color='#fff';
+  renderExpenses();
+}
+function clearExpSearch(){
+  const el=document.getElementById('exp-search');
+  if(el){el.value='';renderExpenses();}
+}
 function renderExpenses() {
-  const sorted=[...state.expenses].sort((a,b)=>b.date.localeCompare(a.date));
-  const total=sorted.reduce((a,e)=>a+e.amount,0);
-  document.getElementById('exp-count').textContent=sorted.length+' entries';
+  const q=(document.getElementById('exp-search')||{value:''}).value.trim().toLowerCase();
+  const now=new Date();
+  const thisMonth=now.toISOString().slice(0,7);
+  const weekAgo=new Date(now-7*864e5).toISOString().slice(0,10);
+  const visaMethods=['CIB Visa','NEXTBANK 18K','NEXTBANK 50K','Wafa Bank Visa'];
+
+  let filtered=[...state.expenses].filter(e=>{
+    if(expFilter==='month' && !e.date.startsWith(thisMonth)) return false;
+    if(expFilter==='week'  && e.date < weekAgo) return false;
+    if(expFilter==='visa'  && !visaMethods.includes(e.method)) return false;
+    if(expFilter==='cash'  && e.method!=='Cash in Hand') return false;
+    if(q){
+      const haystack=(e.desc+' '+e.cat+' '+(e.sub||'')+' '+e.method+' '+e.date+' '+e.amount).toLowerCase();
+      if(!haystack.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=>b.date.localeCompare(a.date));
+
+  const total=filtered.reduce((a,e)=>a+e.amount,0);
+  document.getElementById('exp-count').textContent=filtered.length+(q||expFilter!=='all'?' matched':' entries');
   document.getElementById('exp-total').textContent=fmt(Math.round(total));
   let html='';
-  sorted.forEach(e=>{
+  filtered.forEach(e=>{
     const icon=ICONS[e.cat]||'💸'; const color=COLORS[e.cat]||'#7a84a8';
+    const qBold=(str)=>q?str.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:rgba(255,179,71,.35);border-radius:3px;padding:0 2px">$1</mark>'):str;
     html+=`<div class="row" style="cursor:pointer;" onclick="openDetail(${e.id})">
       <div class="icon" style="background:${color}22">${icon}</div>
-      <div class="rinfo"><div class="rname">${e.desc}</div><div class="rmeta">${e.cat} · ${e.method} · ${e.date}</div></div>
+      <div class="rinfo"><div class="rname">${qBold(e.desc)}</div><div class="rmeta">${e.cat} · ${e.method} · ${e.date}</div></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
         <div class="ramount red">-${fmt(e.amount)}</div>
-        <div style="font-size:10px;color:var(--muted);">tap for details ›</div>
+        <div style="font-size:10px;color:var(--muted);">tap ›</div>
       </div>
     </div>`;
   });
-  document.getElementById('exp-list').innerHTML=html||'<div style="color:var(--muted);text-align:center;padding:20px">No expenses yet</div>';
+  document.getElementById('exp-list').innerHTML=html||`<div style="color:var(--muted);text-align:center;padding:24px">${q||expFilter!=='all'?'🔍 No matches — try different search':'No expenses yet'}</div>`;
 }
 
 // ── RENDER INCOME ──
