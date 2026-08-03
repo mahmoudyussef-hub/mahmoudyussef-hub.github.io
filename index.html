@@ -942,24 +942,9 @@ const SUBS = {
 const DEFAULT_COLORS={Housing:'#4f7cff','Food and Dining':'#00c9a7',Transportation:'#ffb347','Health and Medical':'#ff5e7e','Personal Care':'#a78bfa',Technology:'#38bdf8','Debt Payments':'#f87171','Gifts and Donations':'#fbbf24',Miscellaneous:'#94a3b8',Nour:'#34d399',Hala:'#f472b6',Wife:'#fb923c',Entertainment:'#818cf8',Education:'#facc15',Insurance:'#60a5fa','Savings and Investments':'#4ade80','Travel and Vacation':'#f59e0b','Childcare and Family':'#fb7185'};
 const DEFAULT_ICONS={Housing:'🏠','Food and Dining':'🍽️',Transportation:'🚗','Health and Medical':'💊','Personal Care':'💇',Technology:'💻','Debt Payments':'💳','Gifts and Donations':'🎁',Miscellaneous:'📦',Nour:'👩‍🎓',Hala:'👧',Wife:'👩',Entertainment:'🎬',Education:'📚',Insurance:'🛡️','Savings and Investments':'💰','Travel and Vacation':'✈️','Childcare and Family':'👨‍👩‍👧'};
 const DEFAULT_BUDGETS={Housing:37200,'Food and Dining':19000,Transportation:3000,'Health and Medical':2000,'Personal Care':2500,Education:0,Entertainment:139.99,Technology:6440.18,Insurance:0,'Savings and Investments':0,'Debt Payments':9249.33,'Travel and Vacation':0,'Gifts and Donations':8500,'Childcare and Family':0,Miscellaneous:5500,Nour:9000,Hala:6539.99,Wife:9539.99};
-const DEFAULT_SUB_BUDGETS={
-  Housing:{'Rent / Mortgage':8800,'Electricity — Home 1':520,'Electricity — 2nd Home':3500,'Water & Sewage — Home 1':100,'Water & Sewage — 2nd Home':880,'Natural Gas / Heating':60,'Internet':700,'Mobile Phone':145,'2nd Home Monthly Fees':15000,'Home Maintenance & Repairs':500,'House Keeper':200},
-  'Food and Dining':{'Groceries / Supermarket':8000,'Restaurants & Dining Out':4000,'Coffee Shops & Snacks':2000,'Food Delivery Apps':2000,'Work Lunches':1000},
-  Transportation:{'Fuel / Gasoline':0,'Car Garage / Parking Rental':600,'Ride Share (Uber / Lyft)':1000,'Car Maintenance & Service':0,'Car Insurance':0,'Car Payment / Lease':0,'Parking':0},
-  'Health and Medical':{'Health Insurance Premium':0,'Doctor / Specialist Visits':500,'Dental Care':0,'Pharmacy / Medications':500,'Gym / Fitness Membership':500,'Mental Health / Therapy':0},
-  'Personal Care':{'Haircut / Salon / Barber':500,'Personal Hygiene Products':500,'Clothing & Shoes':1500},
-  Technology:{'Mobile Phone Bill':2958,'1Password':250,'iCloud':0,'ChatGPT':1024,'Tracelight':0,'New Devices & Equipment':0},
-  'Debt Payments':{'Visa Payment — CIB Visa':0,'Visa Payment — NEXTBANK 18K':0,'Visa Payment — NEXTBANK 50K':0,'Visa Payment — Wafa Bank Visa':0,'Value Loan Instalment':5661,'Sohoula Loan Instalment':3588,'Other Debt Payments':0},
-  'Gifts and Donations':{'Birthday & Holiday Gifts':1000,'Charitable Donations':6500,'Family Support & Remittances':1000},
-  Miscellaneous:{'Unexpected Expenses':1000,'Cash Withdrawals':1500,'Cigarettes / Tobacco':2500,'Bank Charges & Fees':500},
-  Nour:{'University / Tuition Fees':0,'Transport and Commute':0,'Mobile and Internet':0,'Dining Out and Cafes':0,'Allowance / Pocket Money':9000,'Other':0},
-  Hala:{'University / Tuition Fees':0,'Transport and Commute':0,'Mobile and Internet':40,'Dining Out and Cafes':500,'Allowance / Pocket Money':6000,'Other':0},
-  Wife:{'Allowance / Pocket Money':3500,'Clothing and Shoes':2000,'Personal Care and Salon':2000,'Mobile and Internet':0,'Dining Out and Cafes':1000,'Transport and Commute':1040,'Other':0},
-  Entertainment:{'Netflix':0,'YouTube Music':0,'Movies / Concerts / Events':140,'Gaming':0},
-  Education:{'Tuition / School Fees':0,'Books & Educational Supplies':0,'Online Courses & Training':0},
-};
 let COLORS={...DEFAULT_COLORS};
 let ICONS={...DEFAULT_ICONS};
+const DEFAULT_SUB_BUDGETS={'Housing':{'Rent / Mortgage':8800,'Electricity — Home 1':2000,'Electricity — 2nd Home':3600,'Water & Sewage — Home 1':300,'Water & Sewage — 2nd Home':900,'Natural Gas / Heating':400,'Internet':1500,'Mobile Phone':3000,'HOA / Condo Fees':500,'2nd Home Monthly Fees':15000,'Home Maintenance & Repairs':1000,'House Keeper':200},'Food and Dining':{'Groceries / Supermarket':15000,'Restaurants & Dining Out':2000,'Coffee Shops & Snacks':2000},'Transportation':{'Fuel / Gasoline':1000,'Parking':200,'Tolls':200,'Car Maintenance & Service':1000,'Car Garage / Parking Rental':600},'Health and Medical':{'Pharmacy / Medications':2000},'Personal Care':{'Haircut / Salon / Barber':1000,'Dry Cleaning / Laundry':1500},'Entertainment':{'YouTube Music':139.99},'Technology':{'Mobile Phone Bill':3000,'1Password':249.99,'iCloud':149.99,'Tracelight':2026.8000000000002,'ChatGPT':1013.4000000000001},'Debt Payments':{'Value Loan Instalment':5616,'Sohoula Loan Instalment':3633.33},'Gifts and Donations':{'Charitable Donations':6500,'Family Support & Remittances':2000},'Miscellaneous':{'Cigarettes / Tobacco':5000,'Bank Charges & Fees':500},'Nour':{'Transport and Commute':2000,'Personal Care':1000,'Medical and Dental':2500,'Dining Out and Cafes':1000,'Allowance / Pocket Money':2500},'Hala':{'Transport and Commute':2000,'Mobile and Internet':39.99,'Personal Care':1000,'Dining Out and Cafes':1000,'Allowance / Pocket Money':2500},'Wife':{'Allowance / Pocket Money':3500,'Personal Care and Salon':2000,'Mobile and Internet':39.99,'Transport and Commute':4000}};
 let BUDGETS={...DEFAULT_BUDGETS};
 let SUB_BUDGETS=JSON.parse(JSON.stringify(DEFAULT_SUB_BUDGETS));
 
@@ -1065,7 +1050,7 @@ let state = { expenses:[], incomes:[], transfers:[], nextExpId:100, nextIncId:10
 // ── PERSISTENCE ──
 function saveState() {
   setSyncDot('saving');
-  try { state.subBudgets = SUB_BUDGETS; localStorage.setItem(SK, JSON.stringify(state)); setSyncDot('ok'); }
+  try { state.subBudgets=SUB_BUDGETS; localStorage.setItem(SK, JSON.stringify(state)); setSyncDot('ok'); }
   catch(e){ setSyncDot('error'); toast('⚠️ Storage full — export data!'); }
 }
 function loadState() {
@@ -1088,7 +1073,7 @@ function loadState() {
       // Restore budgets, colors, icons, subs from saved state
       if (state.budgets && Object.keys(state.budgets).length) {
         Object.assign(BUDGETS, state.budgets);
-        if (saved.subBudgets) { Object.keys(saved.subBudgets).forEach(cat=>{ if(!SUB_BUDGETS[cat]) SUB_BUDGETS[cat]={}; Object.assign(SUB_BUDGETS[cat], saved.subBudgets[cat]); }); }
+        if(saved.subBudgets){Object.keys(saved.subBudgets).forEach(cat=>{if(!SUB_BUDGETS[cat])SUB_BUDGETS[cat]={};Object.assign(SUB_BUDGETS[cat],saved.subBudgets[cat]);});}
       }
       if (state.customCats) {
         Object.entries(state.customCats).forEach(([cat, data]) => {
@@ -1545,7 +1530,7 @@ function parseTxt(text) {
     else if(/nour|نور/i.test(raw)){cat='Nour';sub='Transport and Commute';}
     else{cat='Transportation';sub='Ride Share (Uber / Lyft)';}
   }
-  else if(/grocer|supermarket|hyperone|هايبر|بقالة|talabat|instashop|بقالة/i.test(raw)){cat='Food and Dining';sub='Groceries / Supermarket';}
+  else if(/grocery|supermarket|hyperone|هايبر|بقالة|talabat|instashop/i.test(raw)){cat='Food and Dining';sub='Groceries / Supermarket';}
   else if(/restaurant|مطعم|dining|lunch|dinner/i.test(raw)){cat='Food and Dining';sub='Restaurants & Dining Out';}
   else if(/electricity|كهرباء/i.test(raw)){cat='Housing';sub='Electricity — Home 1';}
   else if(/water|مياه/i.test(raw)){cat='Housing';sub='Water & Sewage — Home 1';}
@@ -2115,34 +2100,31 @@ function renderSettings() {
     const color = COLORS[cat]||'#94a3b8';
     const icon = ICONS[cat]||'📂';
     const isCustom = state.customCats && state.customCats[cat];
-    // Sub-budget rows
-    const subs = SUBS[cat]||[];
-    const subBudMap = SUB_BUDGETS[cat]||{};
-    const subTotal = Object.values(subBudMap).reduce((a,b)=>a+b,0);
-    const subSpent = state.expenses.filter(e=>e.cat===cat);
-    let subHtml = '';
-    subs.forEach(sub => {
-      const sbud = subBudMap[sub]||0;
-      const sact = subSpent.filter(e=>e.sub===sub).reduce((a,e)=>a+e.amount,0);
-      const spct = sbud ? Math.min(sact/sbud,1) : 0;
-      const sover = sact>sbud&&sbud>0;
-      const scol = sover?'var(--red)':spct>.85?'var(--warn)':'var(--green)';
-      subHtml += `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0 5px 10px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="event.stopPropagation();openSubBudgetEdit('${cat.replace(/'/g,"\'")}','${sub.replace(/'/g,"\'")}')">
-        <div>
-          <div style="font-size:12px;color:var(--text);">${sub}</div>
-          <div style="font-size:10px;color:var(--muted);">${sact?fmt(Math.round(sact))+' spent':'No spend'} ${sbud?' / '+fmt(sbud)+' budget':''}</div>
-          ${sbud?`<div style="width:100%;height:3px;background:var(--border);border-radius:99px;margin-top:3px;"><div style="width:${Math.round(spct*100)}%;height:100%;background:${scol};border-radius:99px;"></div></div>`:''}
+    const subMap=SUB_BUDGETS[cat]||{};
+    const subSpentArr=state.expenses.filter(e=>e.cat===cat);
+    let subHtml='';
+    (SUBS[cat]||[]).forEach(sub=>{
+      const sbud=subMap[sub]||0; if(!sbud)return;
+      const sact=subSpentArr.filter(e=>e.sub===sub).reduce((a,e)=>a+e.amount,0);
+      const spct=sbud?Math.min(sact/sbud,1):0; const sover=sact>sbud;
+      const scol=sover?'var(--red)':spct>.85?'var(--warn)':'var(--green)';
+      const catE=cat.replace(/'/g,"\'"); const subE=sub.replace(/'/g,"\'");
+      subHtml+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 6px 12px;border-top:1px solid var(--border);cursor:pointer;" onclick="event.stopPropagation();openSubBudgetEdit('${catE}','${subE}')">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;">${sub}</div>
+          <div style="font-size:10px;color:var(--muted);">${fmt(Math.round(sact))} / ${fmt(sbud)} EGP</div>
+          <div style="height:3px;background:var(--border);border-radius:9px;margin-top:3px;"><div style="width:${Math.round(spct*100)}%;height:100%;background:${scol};border-radius:9px;"></div></div>
         </div>
-        <div style="font-size:11px;color:var(--accent);padding-left:8px;">✏️</div>
+        <div style="color:var(--accent);font-size:12px;padding-left:10px;">✏️</div>
       </div>`;
     });
-    html += `<div class="card" style="margin-bottom:9px;padding:11px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;cursor:pointer;" onclick="openBudgetEdit('${cat.replace(/'/g,"\'")}')">
+    html+=`<div class="card" style="margin-bottom:9px;padding:11px 13px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${subHtml?'4px':'0'};cursor:pointer;" onclick="openBudgetEdit('${cat.replace(/'/g,"\'")}')">
         <div style="display:flex;align-items:center;gap:9px;">
           <div style="width:34px;height:34px;border-radius:9px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:16px;">${icon}</div>
           <div>
-            <div style="font-size:14px;font-weight:700;">${cat} ${isCustom?'<span style="font-size:9px;background:var(--accent);color:#fff;padding:1px 5px;border-radius:6px;">custom</span>':''}</div>
-            <div style="font-size:11px;color:var(--muted);">Total: ${budget?fmt(budget)+' EGP/mo':'No budget'} · tap to edit</div>
+            <div style="font-size:14px;font-weight:700;">${cat}${isCustom?' <span style="font-size:9px;background:var(--accent);color:#fff;padding:1px 5px;border-radius:6px;">custom</span>':''}</div>
+            <div style="font-size:11px;color:var(--muted);">Total: ${budget?fmt(budget)+' EGP/mo':'No budget'}</div>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
@@ -2263,24 +2245,21 @@ function refreshCatSelects() {
 // ── BUDGET EDIT ──
 let editingBudgetCat = null;
 
-let editingSubBudgetCat = '', editingSubBudgetSub = '';
-function openSubBudgetEdit(cat, sub) {
-  editingSubBudgetCat = cat;
-  editingSubBudgetSub = sub;
-  if (!SUB_BUDGETS[cat]) SUB_BUDGETS[cat] = {};
-  const sbud = SUB_BUDGETS[cat][sub]||0;
-  const sact = state.expenses.filter(e=>e.cat===cat&&e.sub===sub).reduce((a,e)=>a+e.amount,0);
-  document.getElementById('bm-catname').textContent = (ICONS[cat]||'📂')+' '+cat+' › '+sub;
-  document.getElementById('bm-amount').value = sbud;
-  document.getElementById('bm-spent').textContent = fmt(Math.round(sact))+' EGP spent';
-  document.getElementById('bm-prev').textContent = fmt(sbud)+' EGP budgeted';
-  // Flag that we're editing a sub-budget
-  document.getElementById('budget-modal').setAttribute('data-mode','sub');
+let editingSubBudgetCat='', editingSubBudgetSub='';
+function openSubBudgetEdit(cat,sub){
+  editingSubBudgetCat=cat; editingSubBudgetSub=sub;
+  if(!SUB_BUDGETS[cat])SUB_BUDGETS[cat]={};
+  const sbud=SUB_BUDGETS[cat][sub]||0;
+  const sact=state.expenses.filter(e=>e.cat===cat&&e.sub===sub).reduce((a,e)=>a+e.amount,0);
+  document.getElementById('bm-catname').textContent=(ICONS[cat]||'📂')+' '+cat+' › '+sub;
+  document.getElementById('bm-amount').value=sbud;
+  document.getElementById('bm-spent').textContent=fmt(Math.round(sact))+' EGP spent';
+  document.getElementById('bm-prev').textContent=fmt(sbud)+' EGP budgeted';
+  document.getElementById('budget-modal').setAttribute('data-submode','1');
   document.getElementById('budget-modal').classList.add('open');
 }
-
 function openBudgetEdit(cat) {
-  document.getElementById('budget-modal').setAttribute('data-mode','cat');
+  document.getElementById('budget-modal').removeAttribute('data-submode');
   editingBudgetCat = cat;
   const budget = BUDGETS[cat]||0;
   const spent = state.expenses.filter(e=>e.cat===cat).reduce((a,e)=>a+e.amount,0);
@@ -2292,20 +2271,19 @@ function openBudgetEdit(cat) {
 }
 
 function saveBudget() {
-  const mode = document.getElementById('budget-modal').getAttribute('data-mode');
-  const amt = parseFloat(document.getElementById('bm-amount').value)||0;
-  if (mode === 'sub') {
-    if (!editingSubBudgetCat || !editingSubBudgetSub) return;
-    if (!SUB_BUDGETS[editingSubBudgetCat]) SUB_BUDGETS[editingSubBudgetCat] = {};
-    SUB_BUDGETS[editingSubBudgetCat][editingSubBudgetSub] = amt;
+  const amt=parseFloat(document.getElementById('bm-amount').value)||0;
+  if(document.getElementById('budget-modal').getAttribute('data-submode')==='1'){
+    if(!editingSubBudgetCat||!editingSubBudgetSub)return;
+    if(!SUB_BUDGETS[editingSubBudgetCat])SUB_BUDGETS[editingSubBudgetCat]={};
+    SUB_BUDGETS[editingSubBudgetCat][editingSubBudgetSub]=amt;
     saveState(); renderSettings();
     document.getElementById('budget-modal').classList.remove('open');
     toast('✅ Sub-budget updated for '+editingSubBudgetSub);
   } else {
-    if (!editingBudgetCat) return;
-    BUDGETS[editingBudgetCat] = amt;
-    if (!state.budgets) state.budgets = {};
-    state.budgets[editingBudgetCat] = amt;
+    if(!editingBudgetCat)return;
+    BUDGETS[editingBudgetCat]=amt;
+    if(!state.budgets)state.budgets={};
+    state.budgets[editingBudgetCat]=amt;
     saveState(); renderSettings(); renderAll();
     document.getElementById('budget-modal').classList.remove('open');
     toast('✅ Budget updated for '+editingBudgetCat);
@@ -2654,11 +2632,11 @@ window.addEventListener('DOMContentLoaded', () => {
     state.nextTrId  = 30;
     saveState();
   } else {
-    let needsSave = false;
-    if (!state.expenses  || state.expenses.length  === 0) { state.expenses  = [...SEED_EXPENSES];  needsSave = true; }
-    if (!state.incomes   || state.incomes.length   === 0) { state.incomes   = [...SEED_INCOMES];   needsSave = true; }
-    if (!state.transfers || state.transfers.length === 0) { state.transfers = [...SEED_TRANSFERS]; needsSave = true; }
-    if (needsSave) saveState();
+    let needsSave=false;
+    if(!state.expenses||state.expenses.length===0){state.expenses=[...SEED_EXPENSES];needsSave=true;}
+    if(!state.incomes||state.incomes.length===0){state.incomes=[...SEED_INCOMES];needsSave=true;}
+    if(!state.transfers||state.transfers.length===0){state.transfers=[...SEED_TRANSFERS];needsSave=true;}
+    if(needsSave)saveState();
   }
   const t = today();
   document.getElementById('f-date').value  = t;
