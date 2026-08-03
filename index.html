@@ -162,7 +162,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="kpi"><label>Total Income</label><div class="v green" id="k-income">120,000</div><div class="sub">EGP / month</div></div>
     <div class="kpi"><label>Total Expenses</label><div class="v red" id="k-expenses">—</div><div class="sub">EGP actual</div></div>
     <div class="kpi"><label>Net Savings</label><div class="v blue" id="k-savings">—</div><div class="sub" id="k-rate">—</div></div>
-    <div class="kpi"><label>Budget Used</label><div class="v warn" id="k-budgetpct">—</div><div class="sub">of <span id="k-budget">117,809</span> EGP</div></div>
+    <div class="kpi"><label>Budget Used</label><div class="v warn" id="k-budgetpct">—</div><div class="sub">of <span id="k-budget">—</span> EGP</div></div>
   </div>
   <div class="card">
     <div class="ctitle">Net Position</div>
@@ -251,7 +251,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="card">
     <div class="flex mb"><div class="ctitle" style="margin-bottom:0">All Expenses</div><span class="badge btag" id="exp-count">0 entries</span></div>
     <div class="flex" style="font-size:12px;color:var(--muted);margin-bottom:10px;">
-      <span>Budgeted: 118,609</span><span style="color:var(--red);font-weight:700">Actual: <span id="exp-total">—</span> EGP</span>
+      <span>Budgeted: <span id="exp-budgeted">—</span> EGP</span><span style="color:var(--red);font-weight:700">Actual: <span id="exp-total">—</span> EGP</span>
     </div>
     <!-- SEARCH BAR -->
     <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -1210,6 +1210,7 @@ function renderDashboard() {
   document.getElementById('k-savings').textContent=fmt(Math.round(savings));
   document.getElementById('k-rate').textContent=(totalIncome?((savings/totalIncome)*100).toFixed(1):'0')+'% rate';
   document.getElementById('k-budgetpct').textContent=budgetTotal?(Math.round(grandTotal/budgetTotal*100))+'%':'—';
+  document.getElementById('k-budget').textContent=fmt(Math.round(budgetTotal));
   document.getElementById('hdr-income').textContent=fmt(totalIncome);
 
   const cats=Object.keys(BUDGETS).filter(c=>(totals[c]||0)>0||(BUDGETS[c]||0)>0);
@@ -1291,6 +1292,7 @@ function renderExpenses() {
   const total=filtered.reduce((a,e)=>a+e.amount,0);
   renderCatChips();
   document.getElementById('exp-count').textContent=filtered.length+(q||expFilter!=='all'||expCatFilter?' matched':' entries');
+  const _bt=Object.values(BUDGETS).reduce((a,b)=>a+b,0); const _bel=document.getElementById('exp-budgeted'); if(_bel)_bel.textContent=fmt(Math.round(_bt));
   document.getElementById('exp-total').textContent=fmt(Math.round(total));
   let html='';
   filtered.forEach(e=>{
@@ -1813,6 +1815,61 @@ function exportExcel() {
     const wsDash=XLSX.utils.aoa_to_sheet(dashRows);
     wsDash['!cols']=[{wch:25},{wch:16},{wch:16},{wch:16},{wch:10}];
     XLSX.utils.book_append_sheet(wb,wsDash,'Dashboard');
+    // ── TRANSFERS sheet ──
+    const trRows=[['Date','From Account','To Account','Amount (EGP)','Description']];
+    [...state.transfers].sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
+      trRows.push([t.date,t.from,t.to,t.amount,t.desc]);
+    });
+    const wsTr=XLSX.utils.aoa_to_sheet(trRows);
+    wsTr['!cols']=[{wch:12},{wch:20},{wch:20},{wch:14},{wch:30}];
+    XLSX.utils.book_append_sheet(wb,wsTr,'Transfers');
+
+    // ── ACCOUNTS sheet ──
+    const accRows=[['Account','Type','Institution','Balance (EGP)','Credit Limit','Available','Utilization %']];
+    ACCOUNTS.forEach(a=>{
+      const avail=a.limit?Math.max(a.limit-Math.abs(a.bal),0):null;
+      const util=a.limit?((Math.abs(a.bal)/a.limit)*100).toFixed(1)+'%':'—';
+      accRows.push([a.name,a.type,a.inst,a.bal,a.limit||'—',avail!==null?avail:'—',util]);
+    });
+    const wsAcc=XLSX.utils.aoa_to_sheet(accRows);
+    wsAcc['!cols']=[{wch:20},{wch:10},{wch:15},{wch:14},{wch:14},{wch:14},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,wsAcc,'Accounts');
+
+    // ── VISA ACCOUNT sheet ──
+    const visaRows=[['Card','Bank','Credit Limit','Outstanding Balance','Charges This Month','Payments This Month','Available','Utilization %','Status']];
+    VISA_CARDS.forEach(v=>{
+      const avail=Math.max(v.limit-v.bal,0);
+      const util=((v.bal/v.limit)*100).toFixed(1)+'%';
+      visaRows.push([v.name,v.bank,v.limit,v.bal,v.charges,v.payments,avail,util,v.status]);
+    });
+    const wsVisa=XLSX.utils.aoa_to_sheet(visaRows);
+    wsVisa['!cols']=[{wch:18},{wch:12},{wch:14},{wch:18},{wch:18},{wch:18},{wch:14},{wch:14},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,wsVisa,'Visa Account');
+
+    // ── BUDGET CONTROL sheet ──
+    const bcRows=[['Category','Subcategory','Monthly Budget (EGP)','Actual Spent (EGP)','Variance (EGP)','% Used']];
+    Object.keys(BUDGETS).forEach(cat=>{
+      const catAct=totals[cat]||0;
+      const catBud=BUDGETS[cat]||0;
+      const subMap=SUB_BUDGETS[cat]||{};
+      const hasSubs=Object.keys(subMap).length>0;
+      if(hasSubs){
+        (SUBS[cat]||[]).forEach(sub=>{
+          const sbud=subMap[sub]||0; if(!sbud)return;
+          const sact=state.expenses.filter(e=>e.cat===cat&&e.sub===sub).reduce((a,e)=>a+e.amount,0);
+          const svar=sbud-sact;
+          const spct=sbud?((sact/sbud)*100).toFixed(1)+'%':'—';
+          bcRows.push([cat,sub,sbud,Math.round(sact),Math.round(svar),spct]);
+        });
+      } else {
+        const v=catBud-catAct;
+        bcRows.push([cat,'',catBud,Math.round(catAct),Math.round(v),catBud?((catAct/catBud)*100).toFixed(1)+'%':'—']);
+      }
+    });
+    const wsBC=XLSX.utils.aoa_to_sheet(bcRows);
+    wsBC['!cols']=[{wch:22},{wch:32},{wch:18},{wch:16},{wch:16},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,wsBC,'Budget Control');
+
     const month=new Date().toLocaleString('en-EG',{month:'long',year:'numeric'}).replace(' ','_');
     XLSX.writeFile(wb,'Budget_'+month+'.xlsx');
     toast('✅ Excel downloaded!');
