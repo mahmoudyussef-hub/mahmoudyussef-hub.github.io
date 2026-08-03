@@ -233,7 +233,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="card" style="margin-top:4px;">
     <div class="ctitle">Export Data</div>
     <button class="btn" onclick="exportExcel()" style="margin-bottom:10px">📥 Export to Excel (.xlsx)</button>
-    <button class="btn sec-btn" onclick="exportCSV()" style="margin-bottom:18px">📄 Export to CSV</button>
+    <button class="btn sec-btn" onclick="exportCSV()" style="margin-bottom:10px">📄 Export to CSV</button>
+    <button class="btn sec-btn" onclick="exportJSON()" style="margin-bottom:18px">🔄 Export Backup (.json)</button>
+    <div class="ctitle">Import / Sync</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.6;">Import a backup JSON file to restore or sync data from another device. <strong style="color:var(--warn);">This will merge with existing data.</strong></div>
+    <label style="display:block;width:100%;padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;color:var(--text);text-align:center;cursor:pointer;margin-bottom:18px;">
+      📂 Import Backup (.json)
+      <input type="file" accept=".json" onchange="importJSON(this)" style="display:none">
+    </label>
     <div class="ctitle">Danger Zone</div>
     <button class="btn danger" onclick="clearAll()">🗑 Clear All Data</button>
   </div>
@@ -1704,6 +1711,78 @@ function fillVoiceSubcats() {
 }
 
 
+
+
+function exportJSON() {
+  const payload = {
+    _version: 2,
+    _exported: new Date().toISOString(),
+    _device: navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('Mac') ? 'Mac' : 'Other',
+    expenses:  state.expenses,
+    incomes:   state.incomes,
+    transfers: state.transfers,
+    nextExpId: state.nextExpId,
+    nextIncId: state.nextIncId,
+    nextTrId:  state.nextTrId,
+    budgets:   state.budgets,
+    subBudgets: SUB_BUDGETS,
+    customCats: state.customCats,
+    customSubs: state.customSubs,
+    theme:      state.theme,
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = 'BudgetBackup_' + date + '.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  toast('✅ Backup exported!');
+}
+
+function importJSON(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.expenses || !Array.isArray(data.expenses)) {
+        toast('⚠️ Invalid backup file'); return;
+      }
+      const newExp   = data.expenses  || [];
+      const newInc   = data.incomes   || [];
+      const newTr    = data.transfers || [];
+      // Merge: add items not already in current state (by id)
+      const existExpIds = new Set(state.expenses.map(x=>x.id));
+      const existIncIds = new Set(state.incomes.map(x=>x.id));
+      const existTrIds  = new Set(state.transfers.map(x=>x.id));
+      let addedExp=0, addedInc=0, addedTr=0;
+      newExp.forEach(e => { if(!existExpIds.has(e.id)){ state.expenses.push(e); addedExp++; }});
+      newInc.forEach(i => { if(!existIncIds.has(i.id)){ state.incomes.push(i);  addedInc++; }});
+      newTr.forEach(t  => { if(!existTrIds.has(t.id)) { state.transfers.push(t); addedTr++; }});
+      // Update nextIds to avoid collisions
+      if(data.nextExpId > state.nextExpId) state.nextExpId = data.nextExpId;
+      if(data.nextIncId > state.nextIncId) state.nextIncId = data.nextIncId;
+      if(data.nextTrId  > state.nextTrId)  state.nextTrId  = data.nextTrId;
+      // Merge budgets
+      if(data.budgets) Object.assign(state.budgets, data.budgets), Object.assign(BUDGETS, data.budgets);
+      if(data.subBudgets) Object.keys(data.subBudgets).forEach(cat => {
+        if(!SUB_BUDGETS[cat]) SUB_BUDGETS[cat]={};
+        Object.assign(SUB_BUDGETS[cat], data.subBudgets[cat]);
+      });
+      if(data.customCats) Object.assign(state.customCats, data.customCats);
+      if(data.customSubs) Object.assign(state.customSubs, data.customSubs);
+      saveState(); renderAll();
+      toast(`✅ Imported: +${addedExp} expenses, +${addedInc} income, +${addedTr} transfers`);
+    } catch(err) {
+      toast('⚠️ Failed to read file: ' + err.message);
+    }
+    input.value = ''; // reset so same file can be re-imported
+  };
+  reader.readAsText(file);
+}
 
 function exportExcel() {
   try {
