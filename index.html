@@ -129,6 +129,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-left:6px;}
 .sync-dot.saving{background:var(--warn);}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -1470,6 +1472,88 @@ function startMic() {
   try { voiceRec.start(); } catch(e) { stopMicUI(); toast('⚠️ Could not start mic'); }
 }
 
+
+function parseTxt(text) {
+  const raw = text.trim();
+  const d = today();
+  const norm = raw.replace(/[٠-٩]/g, c => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(c)]);
+  const am = norm.match(/(\d[\d,\.]*)/);
+  const amount = am ? parseFloat(am[1].replace(/,/g,'')) : 0;
+  const isTransfer = /transfer|تحويل/i.test(raw);
+  if (isTransfer) {
+    let fromAcc='CIB Debit', toAcc='CIB Visa';
+    const parts = raw.toLowerCase().split(/\bto\b/i);
+    if(/cib debit|debit/i.test(parts[0]||''))   fromAcc='CIB Debit';
+    if(/cib visa/i.test(parts[0]||''))            fromAcc='CIB Visa';
+    if(/cib debit|debit/i.test(parts[1]||''))    toAcc='CIB Debit';
+    if(/cib visa/i.test(parts[1]||''))             toAcc='CIB Visa';
+    if(/nextbank 18/i.test(parts[1]||''))          toAcc='NEXTBANK 18K';
+    if(/nextbank 50/i.test(parts[1]||''))          toAcc='NEXTBANK 50K';
+    if(/wafa/i.test(parts[1]||''))                 toAcc='Wafa Bank Visa';
+    parsedEntry={_type:'transfer',date:d,from:fromAcc,to:toAcc,amount,desc:'Transfer '+fmt(amount)+' EGP'};
+    document.getElementById('ve-desc').value=parsedEntry.desc;
+    document.getElementById('ve-amount').value=amount;
+    document.getElementById('ve-date').value=d;
+    document.getElementById('ve-cat').value='Miscellaneous';
+    document.getElementById('ve-method').value=fromAcc;
+    return;
+  }
+  let method='CIB Visa';
+  if(/cib debit|debit/i.test(raw))        method='CIB Debit';
+  else if(/nextbank 18|next18/i.test(raw)) method='NEXTBANK 18K';
+  else if(/nextbank 50|next50/i.test(raw)) method='NEXTBANK 50K';
+  else if(/wafa/i.test(raw))               method='Wafa Bank Visa';
+  else if(/qnb/i.test(raw))               method='QNB Debit';
+  else if(/cash|كاش|نقدي/i.test(raw))    method='Cash in Hand';
+  let cat='Miscellaneous', sub='';
+  if(/starbucks|coffee|قهوة|كافيه|cafe|breadfast/i.test(raw))      {cat='Food and Dining';sub='Coffee Shops & Snacks';}
+  else if(/uber|careem|كريم|taxi/i.test(raw)){
+    if(/wife|hadeer|هدير/i.test(raw)){cat='Wife';sub='Transport and Commute';}
+    else if(/hala|هالة/i.test(raw)){cat='Hala';sub='Transport and Commute';}
+    else if(/nour|نور/i.test(raw)){cat='Nour';sub='Transport and Commute';}
+    else{cat='Transportation';sub='Ride Share (Uber / Lyft)';}
+  }
+  else if(/grocery|supermarket|hyperone|هايبر|بقالة|talabat|instashop/i.test(raw)){cat='Food and Dining';sub='Groceries / Supermarket';}
+  else if(/restaurant|مطعم|dining|lunch|dinner/i.test(raw)){cat='Food and Dining';sub='Restaurants & Dining Out';}
+  else if(/electricity|كهرباء/i.test(raw)){cat='Housing';sub='Electricity — Home 1';}
+  else if(/water|مياه/i.test(raw)){cat='Housing';sub='Water & Sewage — Home 1';}
+  else if(/internet|نت|wifi/i.test(raw)){cat='Housing';sub='Internet';}
+  else if(/rent|إيجار|ايجار/i.test(raw)){cat='Housing';sub='Rent / Mortgage';}
+  else if(/housekeeper|cleaner|حمادة|شغالة/i.test(raw)){cat='Housing';sub='House Keeper';}
+  else if(/hala|هالة/i.test(raw)){cat='Hala';sub='Allowance / Pocket Money';}
+  else if(/nour|نور/i.test(raw)){cat='Nour';sub='Allowance / Pocket Money';}
+  else if(/wife|hadeer|هدير/i.test(raw)){cat='Wife';sub='Allowance / Pocket Money';}
+  else if(/cigarette|سيجارة|سجاير|دخان/i.test(raw)){cat='Miscellaneous';sub='Cigarettes / Tobacco';}
+  else if(/gym|fitness|رياضة/i.test(raw)){cat='Health and Medical';sub='Gym / Fitness Membership';}
+  else if(/doctor|دكتور|clinic|عيادة/i.test(raw)){cat='Health and Medical';sub='Doctor / Specialist Visits';}
+  else if(/pharmacy|صيدلية|دواء/i.test(raw)){cat='Health and Medical';sub='Pharmacy / Medications';}
+  else if(/netflix|spotify|apple|subscription|اشتراك/i.test(raw)){cat='Technology';sub='Mobile Phone Bill';}
+  else if(/phone|موبايل|etisalat|vodafone/i.test(raw)){cat='Technology';sub='Mobile Phone Bill';}
+  else if(/salon|barber|haircut|حلاقة/i.test(raw)){cat='Personal Care';sub='Haircut / Salon / Barber';}
+  else if(/clothes|clothing|shoes|ملابس/i.test(raw)){cat='Personal Care';sub='Clothing & Shoes';}
+  else if(/donation|charity|تبرع|صدقة/i.test(raw)){cat='Gifts and Donations';sub='Charitable Donations';}
+  else if(/gift|هدية/i.test(raw)){cat='Gifts and Donations';sub='Birthday & Holiday Gifts';}
+  else if(/visa payment|سداد فيزا/i.test(raw)){cat='Debt Payments';sub='Visa Payment — CIB Visa';}
+  else if(/loan|قرض|instalment|قسط/i.test(raw)){cat='Debt Payments';sub='Other Debt Payments';}
+  else if(/garage|parking|جراج/i.test(raw)){cat='Transportation';sub='Car Garage / Parking Rental';}
+  else if(/fuel|petrol|بنزين|وقود/i.test(raw)){cat='Transportation';sub='Fuel / Gasoline';}
+  else if(/allowance|pocket|مصروف/i.test(raw)){
+    if(/wife|hadeer|هدير/i.test(raw)){cat='Wife';sub='Allowance / Pocket Money';}
+    else if(/hala|هالة/i.test(raw)){cat='Hala';sub='Allowance / Pocket Money';}
+    else if(/nour|نور/i.test(raw)){cat='Nour';sub='Allowance / Pocket Money';}
+  }
+  let desc=norm.replace(/\d[\d,\.]*/g,'').replace(/\b(pound|pounds|egp|visa|cib|nextbank|wafa|debit|cash|كاش|نقدي|دبت|جنيه)\b/gi,'').replace(/\s{2,}/g,' ').trim();
+  if(!desc||desc.length<2) desc=cat;
+  desc=desc.substring(0,45);
+  parsedEntry={_type:'expense',date:d,cat,sub,desc,method,amount,notes:''};
+  document.getElementById('ve-desc').value=desc;
+  document.getElementById('ve-amount').value=amount;
+  document.getElementById('ve-date').value=d;
+  document.getElementById('ve-method').value=method;
+  const catSel=document.getElementById('ve-cat');
+  if(catSel){catSel.value=cat;fillVoiceSubcats();setTimeout(()=>{document.getElementById('ve-sub').value=sub;},60);}
+}
+
 function doAdd() {
   const raw = document.getElementById('quick-input').value.trim();
   if (!raw) { toast('⚠️ Type your expense first'); return; }
@@ -1523,6 +1607,180 @@ function fillVoiceSubcats() {
   (SUBS[cat]||[]).forEach(s=>sel.innerHTML+=`<option>${s}</option>`);
 }
 
+
+
+function exportExcel() {
+  try {
+    if(typeof XLSX==='undefined'){toast('⚠️ Export library not loaded yet, try again');return;}
+    const wb=XLSX.utils.book_new();
+    const expRows=[['Date','Category','Subcategory','Description','Payment Method','Amount (EGP)','Notes']];
+    [...state.expenses].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      expRows.push([e.date,e.cat,e.sub||'',e.desc,e.method,e.amount,e.notes||'']);
+    });
+    const wsExp=XLSX.utils.aoa_to_sheet(expRows);
+    wsExp['!cols']=[{wch:12},{wch:20},{wch:25},{wch:30},{wch:18},{wch:14},{wch:20}];
+    XLSX.utils.book_append_sheet(wb,wsExp,'Expenses');
+    const incRows=[['Date','Category','Description','Expected (EGP)','Actual (EGP)','Deposited To']];
+    state.incomes.forEach(i=>incRows.push([i.date,i.cat,i.desc,i.expected,i.actual,i.account]));
+    const wsInc=XLSX.utils.aoa_to_sheet(incRows);
+    XLSX.utils.book_append_sheet(wb,wsInc,'Income');
+    const totals={};
+    state.expenses.forEach(e=>totals[e.cat]=(totals[e.cat]||0)+e.amount);
+    const totalExp=Object.values(totals).reduce((a,b)=>a+b,0);
+    const totalInc=state.incomes.reduce((a,i)=>a+i.actual,0);
+    const dashRows=[['MY MONTHLY BUDGET SUMMARY'],['Generated:',new Date().toLocaleDateString()],[],
+      ['Metric','Amount (EGP)'],['Total Income',totalInc],['Total Expenses',Math.round(totalExp)],
+      ['Net Savings',Math.round(totalInc-totalExp)],[],['CATEGORY','BUDGETED','ACTUAL','VARIANCE','% USED']];
+    Object.keys(BUDGETS).forEach(cat=>{
+      const act=totals[cat]||0,bud=BUDGETS[cat]||0;
+      dashRows.push([cat,bud,act,bud-act,bud?((act/bud)*100).toFixed(1)+'%':'—']);
+    });
+    const wsDash=XLSX.utils.aoa_to_sheet(dashRows);
+    wsDash['!cols']=[{wch:25},{wch:16},{wch:16},{wch:16},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,wsDash,'Dashboard');
+    const month=new Date().toLocaleString('en-EG',{month:'long',year:'numeric'}).replace(' ','_');
+    XLSX.writeFile(wb,'Budget_'+month+'.xlsx');
+    toast('✅ Excel downloaded!');
+  } catch(e){toast('⚠️ Export failed: '+e.message);}
+}
+
+function exportCSV() {
+  const rows=[['Date','Category','Subcategory','Description','Payment Method','Amount (EGP)','Notes']];
+  [...state.expenses].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    rows.push([e.date,e.cat,e.sub||'',e.desc,e.method,e.amount,e.notes||'']);
+  });
+  const csv=rows.map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='Budget_Expenses.csv';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('✅ CSV downloaded!');
+}
+
+
+function renderCharts() {
+  const months = getMonthKeys(chartPeriodMonths||1);
+  // Income vs Expense
+  if(typeof Chart==='undefined') return;
+  ['income-expense','trend','pie','savings'].forEach(id=>{
+    if(chartInstances[id]){chartInstances[id].destroy();delete chartInstances[id];}
+  });
+  const ieCtx=document.getElementById('chart-income-expense');
+  if(ieCtx){
+    const incData=months.map(k=>state.incomes.filter(i=>i.date.startsWith(k)).reduce((a,i)=>a+i.actual,0));
+    const expData=months.map(k=>state.expenses.filter(e=>e.date.startsWith(k)).reduce((a,e)=>a+e.amount,0));
+    const savData=months.map((k,i)=>Math.max(incData[i]-expData[i],0));
+    chartInstances['income-expense']=new Chart(ieCtx,{type:'bar',
+      data:{labels:months.map(getMonthShort),datasets:[
+        {label:'Income',data:incData,backgroundColor:'rgba(0,201,167,0.8)',borderRadius:6},
+        {label:'Expenses',data:expData,backgroundColor:'rgba(255,94,126,0.8)',borderRadius:6},
+        {label:'Savings',data:savData,backgroundColor:'rgba(79,124,255,0.6)',borderRadius:6}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>' '+fmt(Math.round(ctx.raw))+' EGP'}}},
+        scales:{x:{ticks:{color:'#7a84a8',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{ticks:{color:'#7a84a8',font:{size:10},callback:v=>fmt(v/1000)+'k'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+  }
+  const tCtx=document.getElementById('chart-trend');
+  if(tCtx){
+    const expData=months.map(k=>state.expenses.filter(e=>e.date.startsWith(k)).reduce((a,e)=>a+e.amount,0));
+    const avg=expData.reduce((a,b)=>a+b,0)/(expData.filter(x=>x>0).length||1);
+    const last=expData[expData.length-1]||0;
+    const pct=avg?Math.abs(((last-avg)/avg)*100).toFixed(1):0;
+    const el=document.getElementById('chart-trend-insight');
+    if(el) el.textContent=(last>avg?'📈 Above':'📉 Below')+' average by '+pct+'%';
+    chartInstances['trend']=new Chart(tCtx,{type:'line',
+      data:{labels:months.map(getMonthShort),datasets:[{label:'Spending',data:expData,
+        borderColor:'rgba(255,94,126,.9)',backgroundColor:'rgba(255,94,126,.1)',fill:true,tension:0.4,pointRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#7a84a8',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{ticks:{color:'#7a84a8',font:{size:10},callback:v=>fmt(v/1000)+'k'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+  }
+  const pCtx=document.getElementById('chart-pie');
+  if(pCtx){
+    const startKey=months[0]+'-01';
+    const catTotals={};
+    state.expenses.filter(e=>e.date>=startKey).forEach(e=>catTotals[e.cat]=(catTotals[e.cat]||0)+e.amount);
+    const sorted=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const total=Object.values(catTotals).reduce((a,b)=>a+b,0);
+    document.getElementById('pie-total').textContent=fmt(Math.round(total/1000))+'k';
+    chartInstances['pie']=new Chart(pCtx,{type:'doughnut',
+      data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([k])=>COLORS[k]||'#94a3b8'),borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false}}}
+    });
+    let lHtml='';
+    sorted.forEach(([cat,amt])=>{
+      const pct=((amt/total)*100).toFixed(1);
+      lHtml+=`<div class="row" style="padding:4px 0;cursor:pointer;" onclick="openCatDetail('${cat}')">
+        <div style="width:10px;height:10px;border-radius:50%;background:${COLORS[cat]||'#94a3b8'};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${cat}</div>
+        <div style="font-size:10px;color:var(--muted);">${pct}%</div></div>
+        <div style="font-size:11px;font-weight:700;color:var(--red);">${fmt(Math.round(amt))}</div></div>`;
+    });
+    document.getElementById('pie-legend').innerHTML=lHtml;
+  }
+  const startKey2=months[0]+'-01';
+  const mTotals={};
+  state.expenses.filter(e=>e.date>=startKey2).forEach(e=>mTotals[e.method]=(mTotals[e.method]||0)+e.amount);
+  const mSorted=Object.entries(mTotals).sort((a,b)=>b[1]-a[1]);
+  const mMax=Math.max(...mSorted.map(([,v])=>v),1);
+  const mColors={'CIB Visa':'#4f7cff','CIB Debit':'#00c9a7','NEXTBANK 18K':'#ffb347','NEXTBANK 50K':'#ff5e7e','Wafa Bank Visa':'#a78bfa','Cash in Hand':'#34d399','QNB Debit':'#fb923c'};
+  let mHtml='';
+  mSorted.forEach(([m,amt])=>{
+    const col=mColors[m]||'#94a3b8';
+    mHtml+=`<div style="margin-bottom:10px;"><div class="flex" style="margin-bottom:4px;"><span style="font-size:12px;font-weight:600;">${m}</span><span style="font-size:12px;font-weight:700;color:${col};">${fmt(Math.round(amt))} EGP</span></div>
+    <div class="pbar"><div class="pfill" style="width:${(amt/mMax*100).toFixed(0)}%;background:${col};"></div></div></div>`;
+  });
+  document.getElementById('method-bars').innerHTML=mHtml||'<div style="color:var(--muted);text-align:center;padding:12px">No data</div>';
+  const dTotals={};
+  state.expenses.filter(e=>e.date>=startKey2).forEach(e=>dTotals[e.date]=(dTotals[e.date]||0)+e.amount);
+  const topDays=Object.entries(dTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  let dHtml='';
+  topDays.forEach(([date,amt],i)=>{
+    const txns=state.expenses.filter(e=>e.date===date);
+    const label=new Date(date+'T12:00:00').toLocaleDateString('en-EG',{weekday:'short',month:'short',day:'numeric'});
+    dHtml+=`<div class="row" style="cursor:pointer;" onclick="openDayDetail('${date.slice(0,7)}',${parseInt(date.slice(8,10))})">
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">${i+1}</div>
+      <div class="rinfo"><div class="rname" style="font-size:13px;">${label}</div><div class="rmeta">${txns.length} transactions</div></div>
+      <div class="ramount red">${fmt(Math.round(amt))}</div></div>`;
+  });
+  document.getElementById('top-days').innerHTML=dHtml||'<div style="color:var(--muted);text-align:center;padding:12px">No data</div>';
+  const sCtx=document.getElementById('chart-savings');
+  if(sCtx){
+    const aMonths=getMonthKeys(Math.max(chartPeriodMonths||1,3));
+    const rates=aMonths.map(k=>{
+      const inc=state.incomes.filter(i=>i.date.startsWith(k)).reduce((a,i)=>a+i.actual,0);
+      const exp=state.expenses.filter(e=>e.date.startsWith(k)).reduce((a,e)=>a+e.amount,0);
+      return inc>0?parseFloat(((inc-exp)/inc*100).toFixed(1)):0;
+    });
+    const avgR=(rates.reduce((a,b)=>a+b,0)/rates.length).toFixed(1);
+    const si=document.getElementById('savings-insight');
+    if(si) si.textContent='Average savings rate: '+avgR+'%';
+    chartInstances['savings']=new Chart(sCtx,{type:'bar',
+      data:{labels:aMonths.map(getMonthShort),datasets:[{data:rates,
+        backgroundColor:rates.map(r=>r>=10?'rgba(0,201,167,.8)':r>=0?'rgba(255,179,71,.8)':'rgba(255,94,126,.8)'),borderRadius:6}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>' '+ctx.raw+'%'}}},
+        scales:{x:{ticks:{color:'#7a84a8',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{ticks:{color:'#7a84a8',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+  }
+}
+let chartPeriodMonths=1;
+let chartInstances={};
+function setChartPeriod(months,el){
+  chartPeriodMonths=months;
+  document.querySelectorAll('.period-btn').forEach(b=>{b.style.background='var(--border)';b.style.color='var(--muted)';});
+  el.style.background='var(--accent)';el.style.color='#fff';
+  renderCharts();
+}
+function getMonthKeys(n){const keys=[];for(let i=n-1;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);keys.push(d.toISOString().slice(0,7));}return keys;}
+function getMonthShort(key){return new Date(key+'-15').toLocaleString('en-EG',{month:'short'});}
+function destroyChart(id){if(chartInstances[id]){chartInstances[id].destroy();delete chartInstances[id];}}
 
 // ── TRANSFERS ──
 let currentTransferId = null;
