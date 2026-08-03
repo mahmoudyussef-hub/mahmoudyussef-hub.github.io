@@ -1818,32 +1818,39 @@ function exportExcel() {
     // ── TRANSFERS sheet ──
     const trRows=[['Date','From Account','To Account','Amount (EGP)','Description']];
     [...state.transfers].sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
-      trRows.push([t.date,t.from,t.to,t.amount,t.desc]);
+      trRows.push([t.date,t.from,t.to,safeN(t.amount),t.desc]);
     });
     const wsTr=XLSX.utils.aoa_to_sheet(trRows);
     wsTr['!cols']=[{wch:12},{wch:20},{wch:20},{wch:14},{wch:30}];
     XLSX.utils.book_append_sheet(wb,wsTr,'Transfers');
 
     // ── ACCOUNTS sheet ──
-    const accRows=[['Account','Type','Institution','Balance (EGP)','Credit Limit','Available','Utilization %']];
+    const safeN=(v,fb=0)=>typeof v==='number'&&!isNaN(v)?v:fb;
+    const accRows=[['Account','Type','Institution','Balance (EGP)','Credit Limit (EGP)','Available (EGP)','Utilization %']];
     ACCOUNTS.forEach(a=>{
-      const avail=a.limit?Math.max(a.limit-Math.abs(a.bal),0):null;
-      const util=a.limit?((Math.abs(a.bal)/a.limit)*100).toFixed(1)+'%':'—';
-      accRows.push([a.name,a.type,a.inst,a.bal,a.limit||'—',avail!==null?avail:'—',util]);
+      const bal=safeN(a.balance);
+      const lim=safeN(a.limit,null);
+      const avail=lim!==null?Math.max(lim-Math.abs(bal),0):null;
+      const util=lim?((Math.abs(bal)/lim)*100).toFixed(1)+'%':'—';
+      accRows.push([a.name,a.type,a.inst,bal,lim!==null?lim:'—',avail!==null?avail:'—',util]);
     });
     const wsAcc=XLSX.utils.aoa_to_sheet(accRows);
-    wsAcc['!cols']=[{wch:20},{wch:10},{wch:15},{wch:14},{wch:14},{wch:14},{wch:14}];
+    wsAcc['!cols']=[{wch:20},{wch:12},{wch:15},{wch:14},{wch:14},{wch:14},{wch:14}];
     XLSX.utils.book_append_sheet(wb,wsAcc,'Accounts');
 
     // ── VISA ACCOUNT sheet ──
-    const visaRows=[['Card','Bank','Credit Limit','Outstanding Balance','Charges This Month','Payments This Month','Available','Utilization %','Status']];
+    const visaRows=[['Card','Bank','Credit Limit (EGP)','Outstanding Balance (EGP)','Charges This Month (EGP)','Payments This Month (EGP)','Available (EGP)','Utilization %','Status']];
     VISA_CARDS.forEach(v=>{
-      const avail=Math.max(v.limit-v.bal,0);
-      const util=((v.bal/v.limit)*100).toFixed(1)+'%';
-      visaRows.push([v.name,v.bank,v.limit,v.bal,v.charges,v.payments,avail,util,v.status]);
+      const bal=safeN(v.balance);
+      const lim=safeN(v.limit);
+      const charges=safeN(v.charges);
+      const payments=safeN(v.payments);
+      const avail=lim?Math.max(lim-bal,0):0;
+      const util=lim?((bal/lim)*100).toFixed(1)+'%':'—';
+      visaRows.push([v.name,v.bank,lim,bal,charges,payments,avail,util,v.status||'—']);
     });
     const wsVisa=XLSX.utils.aoa_to_sheet(visaRows);
-    wsVisa['!cols']=[{wch:18},{wch:12},{wch:14},{wch:18},{wch:18},{wch:18},{wch:14},{wch:14},{wch:14}];
+    wsVisa['!cols']=[{wch:18},{wch:12},{wch:14},{wch:20},{wch:20},{wch:20},{wch:14},{wch:14},{wch:12}];
     XLSX.utils.book_append_sheet(wb,wsVisa,'Visa Account');
 
     // ── BUDGET CONTROL sheet ──
@@ -1859,11 +1866,11 @@ function exportExcel() {
           const sact=state.expenses.filter(e=>e.cat===cat&&e.sub===sub).reduce((a,e)=>a+e.amount,0);
           const svar=sbud-sact;
           const spct=sbud?((sact/sbud)*100).toFixed(1)+'%':'—';
-          bcRows.push([cat,sub,sbud,Math.round(sact),Math.round(svar),spct]);
+          bcRows.push([cat,sub,safeN(sbud),safeN(Math.round(sact)),safeN(Math.round(svar)),spct]);
         });
       } else {
         const v=catBud-catAct;
-        bcRows.push([cat,'',catBud,Math.round(catAct),Math.round(v),catBud?((catAct/catBud)*100).toFixed(1)+'%':'—']);
+        bcRows.push([cat,'',safeN(catBud),safeN(Math.round(catAct)),safeN(Math.round(v)),catBud?((catAct/catBud)*100).toFixed(1)+'%':'—']);
       }
     });
     const wsBC=XLSX.utils.aoa_to_sheet(bcRows);
