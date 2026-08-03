@@ -252,14 +252,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;padding:8px 12px;outline:none;font-family:inherit;">
       <button onclick="clearExpSearch()" style="background:var(--border);border:none;color:var(--muted);border-radius:10px;padding:8px 11px;font-size:13px;cursor:pointer;">✕</button>
     </div>
-    <!-- FILTER CHIPS -->
-    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px;scrollbar-width:none;" id="exp-filter-chips">
+    <!-- FILTER CHIPS: Period + Method -->
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;scrollbar-width:none;" id="exp-filter-chips">
       <button onclick="setExpFilter('all',this)" class="fchip on" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;">All</button>
       <button onclick="setExpFilter('month',this)" class="fchip" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--border);color:var(--muted);">This Month</button>
       <button onclick="setExpFilter('week',this)" class="fchip" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--border);color:var(--muted);">This Week</button>
       <button onclick="setExpFilter('visa',this)" class="fchip" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--border);color:var(--muted);">Visa Only</button>
       <button onclick="setExpFilter('cash',this)" class="fchip" style="flex:none;padding:4px 11px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--border);color:var(--muted);">Cash</button>
     </div>
+    <!-- FILTER CHIPS: Categories (rendered dynamically) -->
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:2px;scrollbar-width:none;" id="exp-cat-chips"></div>
     <div id="exp-list"></div>
   </div>
 </div>
@@ -1224,16 +1226,40 @@ function renderDashboard() {
 }
 
 // ── RENDER EXPENSES ──
-let expFilter='all';
+let expFilter='all', expCatFilter='';
 function setExpFilter(f,el){
   expFilter=f;
   document.querySelectorAll('.fchip').forEach(b=>{b.style.background='var(--border)';b.style.color='var(--muted)';});
   el.style.background='var(--accent)';el.style.color='#fff';
   renderExpenses();
 }
+function setExpCat(cat,el){
+  expCatFilter = (expCatFilter===cat)?'':cat; // toggle
+  document.querySelectorAll('.ccchip').forEach(b=>{b.style.background='var(--border)';b.style.color='var(--muted)';b.style.border='1px solid transparent';});
+  if(expCatFilter){el.style.background=(COLORS[cat]||'#7a84a8')+'33';el.style.color=(COLORS[cat]||'#7a84a8');el.style.border='1px solid '+(COLORS[cat]||'#7a84a8');}
+  renderExpenses();
+}
+function renderCatChips(){
+  const cats=[...new Set(state.expenses.map(e=>e.cat))].sort();
+  const wrap=document.getElementById('exp-cat-chips');
+  if(!wrap)return;
+  wrap.innerHTML=cats.map(cat=>{
+    const color=COLORS[cat]||'#7a84a8';
+    const icon=ICONS[cat]||'📂';
+    const active=expCatFilter===cat;
+    return `<button onclick="setExpCat('${cat.replace(/'/g,"\'")}',this)" class="ccchip"
+      style="flex:none;padding:4px 10px;border-radius:18px;font-size:11px;font-weight:700;border:1px solid ${active?color:'transparent'};cursor:pointer;background:${active?color+'33':'var(--border)'};color:${active?color:'var(--muted)'};white-space:nowrap;">
+      ${icon} ${cat}</button>`;
+  }).join('');
+}
 function clearExpSearch(){
   const el=document.getElementById('exp-search');
-  if(el){el.value='';renderExpenses();}
+  if(el) el.value='';
+  expCatFilter='';
+  document.querySelectorAll('.fchip').forEach(b=>{b.style.background='var(--border)';b.style.color='var(--muted)';});
+  const allBtn=document.querySelector('.fchip.on')||document.querySelector('.fchip');
+  if(allBtn){allBtn.style.background='var(--accent)';allBtn.style.color='#fff';}
+  renderExpenses();
 }
 function renderExpenses() {
   const q=(document.getElementById('exp-search')||{value:''}).value.trim().toLowerCase();
@@ -1247,6 +1273,7 @@ function renderExpenses() {
     if(expFilter==='week'  && e.date < weekAgo) return false;
     if(expFilter==='visa'  && !visaMethods.includes(e.method)) return false;
     if(expFilter==='cash'  && e.method!=='Cash in Hand') return false;
+    if(expCatFilter && e.cat!==expCatFilter) return false;
     if(q){
       const haystack=(e.desc+' '+e.cat+' '+(e.sub||'')+' '+e.method+' '+e.date+' '+e.amount).toLowerCase();
       if(!haystack.includes(q)) return false;
@@ -1255,7 +1282,8 @@ function renderExpenses() {
   }).sort((a,b)=>b.date.localeCompare(a.date));
 
   const total=filtered.reduce((a,e)=>a+e.amount,0);
-  document.getElementById('exp-count').textContent=filtered.length+(q||expFilter!=='all'?' matched':' entries');
+  renderCatChips();
+  document.getElementById('exp-count').textContent=filtered.length+(q||expFilter!=='all'||expCatFilter?' matched':' entries');
   document.getElementById('exp-total').textContent=fmt(Math.round(total));
   let html='';
   filtered.forEach(e=>{
