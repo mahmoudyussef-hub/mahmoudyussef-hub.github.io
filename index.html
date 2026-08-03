@@ -895,7 +895,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
 
     <!-- Action buttons -->
-    <button onclick="document.getElementById('vform').style.display==='none'?doAdd():doSave()" id="save-btn" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:8px;">
+    <button onclick="handleBtn()" id="save-btn" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:8px;">
       ✓ Add Expense
     </button>
     <div id="mic-help" style="display:none;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3);border-radius:10px;padding:10px;font-size:11px;color:var(--warn);line-height:1.6;">
@@ -1084,6 +1084,17 @@ function loadState() {
           if (!SUBS[cat]) SUBS[cat] = [];
           subs.forEach(s => { if (!SUBS[cat].includes(s)) SUBS[cat].push(s); });
         });
+      }
+      // ── Migration: if incomes empty but should have data, reset to seed ──
+      if (!state.incomes || state.incomes.length === 0) {
+        state.incomes = [...SEED_INCOMES];
+      }
+      // If expenses empty, restore seed
+      if (!state.expenses || state.expenses.length === 0) {
+        state.expenses = [...SEED_EXPENSES];
+      }
+      if (!state.transfers || state.transfers.length === 0) {
+        state.transfers = [...SEED_TRANSFERS];
       }
       return true;
     }
@@ -1406,16 +1417,18 @@ function openVoice() {
   document.getElementById('quick-input').value = '';
   document.getElementById('quick-input').placeholder = saved==='ar-EG'?'ستاربكس ١٠٥ فيزا CIB':'Starbucks 105 CIB Visa';
   document.getElementById('vstatus').textContent = '';
-  document.getElementById('vform').style.display = 'none';
+  const vf=document.getElementById('vform');vf.style.display='none';vf.setAttribute('data-ready','0');
   document.getElementById('vexamples').style.display = 'block';
   document.getElementById('wave').style.display = 'none';
   document.getElementById('mic-help').style.display = 'none';
   document.getElementById('mic-btn').textContent = '🎤';
   document.getElementById('mic-btn').style.background = 'var(--accent)';
   parsedEntry = null;
+  const btn=document.getElementById('save-btn');
+  if(btn) btn.textContent='✓ Add Expense';
   renderExamples();
   document.getElementById('vmodal').classList.add('open');
-  setTimeout(()=>document.getElementById('quick-input').focus(), 400);
+  setTimeout(()=>{ const inp=document.getElementById('quick-input'); if(inp)inp.focus(); }, 400);
 }
 
 function closeVoice() {
@@ -1454,10 +1467,11 @@ function startMic() {
   voiceRec.onresult = (e) => {
     const t = Array.from(e.results).map(r=>r[0].transcript).join('');
     document.getElementById('quick-input').value = t;
-    document.getElementById('vstatus').textContent = t;
+    document.getElementById('vstatus').textContent = '🎤 ' + t;
     if (e.results[e.results.length-1].isFinal) {
       stopMicUI();
-      doAdd();
+      // Small delay to let UI settle then parse and show form
+      setTimeout(() => doAdd(), 200);
     }
   };
   voiceRec.onerror = (e) => {
@@ -1554,22 +1568,30 @@ function parseTxt(text) {
   if(catSel){catSel.value=cat;fillVoiceSubcats();setTimeout(()=>{document.getElementById('ve-sub').value=sub;},60);}
 }
 
+
+function handleBtn() {
+  const vform = document.getElementById('vform');
+  // Check visibility using offsetParent or computed style (Safari safe)
+  const isHidden = !vform || vform.getAttribute('data-ready') !== '1';
+  if (isHidden || !parsedEntry) {
+    doAdd();
+  } else {
+    doSave();
+  }
+}
+
 function doAdd() {
   const raw = document.getElementById('quick-input').value.trim();
   if (!raw) { toast('⚠️ Type your expense first'); return; }
-
-  // Parse
   parseTxt(raw);
-
-  // Show form with parsed values
-  document.getElementById('vform').style.display = 'block';
+  const vform = document.getElementById('vform');
+  vform.style.display = 'block';
+  vform.setAttribute('data-ready','1');
   document.getElementById('vexamples').style.display = 'none';
   document.getElementById('vstatus').textContent = '✅ Review & tap Save below';
-
-  // Scroll down
-  setTimeout(()=>{
-    document.getElementById('vform').scrollIntoView({behavior:'smooth',block:'nearest'});
-  }, 100);
+  const btn = document.getElementById('save-btn');
+  if (btn) btn.textContent = '💾 Save Expense';
+  setTimeout(()=>{ vform.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 150);
 }
 
 function doSave() {
@@ -2559,6 +2581,13 @@ window.addEventListener('DOMContentLoaded', () => {
     state.nextIncId = 20;
     state.nextTrId  = 30;
     saveState();
+  } else {
+    // Migrate: restore seed data if arrays are empty (old localStorage format)
+    let needsSave = false;
+    if (!state.expenses  || state.expenses.length  === 0) { state.expenses  = [...SEED_EXPENSES];  needsSave=true; }
+    if (!state.incomes   || state.incomes.length   === 0) { state.incomes   = [...SEED_INCOMES];   needsSave=true; }
+    if (!state.transfers || state.transfers.length === 0) { state.transfers = [...SEED_TRANSFERS]; needsSave=true; }
+    if (needsSave) saveState();
   }
   const t = today();
   document.getElementById('f-date').value  = t;
