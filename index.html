@@ -1527,7 +1527,7 @@ function parseTxt(text) {
     else if(/nour|نور/i.test(raw)){cat='Nour';sub='Transport and Commute';}
     else{cat='Transportation';sub='Ride Share (Uber / Lyft)';}
   }
-  else if(/grocery|supermarket|hyperone|هايبر|بقالة|talabat|instashop/i.test(raw)){cat='Food and Dining';sub='Groceries / Supermarket';}
+  else if(/grocer|supermarket|hyperone|هايبر|بقالة|talabat|instashop|بقالة/i.test(raw)){cat='Food and Dining';sub='Groceries / Supermarket';}
   else if(/restaurant|مطعم|dining|lunch|dinner/i.test(raw)){cat='Food and Dining';sub='Restaurants & Dining Out';}
   else if(/electricity|كهرباء/i.test(raw)){cat='Housing';sub='Electricity — Home 1';}
   else if(/water|مياه/i.test(raw)){cat='Housing';sub='Water & Sewage — Home 1';}
@@ -2582,11 +2582,10 @@ window.addEventListener('DOMContentLoaded', () => {
     state.nextTrId  = 30;
     saveState();
   } else {
-    // Migrate: restore seed data if arrays are empty (old localStorage format)
     let needsSave = false;
-    if (!state.expenses  || state.expenses.length  === 0) { state.expenses  = [...SEED_EXPENSES];  needsSave=true; }
-    if (!state.incomes   || state.incomes.length   === 0) { state.incomes   = [...SEED_INCOMES];   needsSave=true; }
-    if (!state.transfers || state.transfers.length === 0) { state.transfers = [...SEED_TRANSFERS]; needsSave=true; }
+    if (!state.expenses  || state.expenses.length  === 0) { state.expenses  = [...SEED_EXPENSES];  needsSave = true; }
+    if (!state.incomes   || state.incomes.length   === 0) { state.incomes   = [...SEED_INCOMES];   needsSave = true; }
+    if (!state.transfers || state.transfers.length === 0) { state.transfers = [...SEED_TRANSFERS]; needsSave = true; }
     if (needsSave) saveState();
   }
   const t = today();
