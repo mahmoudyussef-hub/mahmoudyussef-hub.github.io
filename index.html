@@ -166,10 +166,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
   <div class="card">
     <div class="ctitle">Net Position</div>
-    <div class="flex mb"><span style="color:var(--muted)">Cash &amp; Bank</span><span style="font-weight:700;color:var(--green)">33,670 EGP</span></div>
-    <div class="flex mb"><span style="color:var(--muted)">Credit Debt</span><span style="font-weight:700;color:var(--red)">-143,984 EGP</span></div>
+    <div class="flex mb"><span style="color:var(--muted)">Cash &amp; Bank</span><span style="font-weight:700;color:var(--green)" id="nw-cash">—</span></div>
+    <div class="flex mb"><span style="color:var(--muted)">Credit Debt</span><span style="font-weight:700;color:var(--red)" id="nw-credit">—</span></div>
     <div class="divider"></div>
-    <div class="flex"><span style="font-weight:700">Net Worth</span><span style="font-size:20px;font-weight:800;color:var(--red)">-110,314</span></div>
+    <div class="flex"><span style="font-weight:700">Net Worth</span><span style="font-size:20px;font-weight:800;" id="nw-total">—</span></div>
   </div>
   <div class="card"><div class="ctitle">Expense by Category</div><div id="cat-list"></div></div>
   <div class="card">
@@ -1042,13 +1042,13 @@ const SEED_INCOMES=[
   {id:2,date:'2026-08-01',cat:'Primary Salary',desc:'Car Compensation',freq:'Monthly',expected:20000,actual:20000,account:'CIB Debit'},
 ];
 const ACCOUNTS=[
-  {name:'Cash in Hand',type:'Cash',inst:'—',balance:4980.78,limit:null},
-  {name:'CIB Debit',type:'Bank',inst:'CIB',balance:28689.42,limit:null},
-  {name:'QNB Debit',type:'Bank',inst:'QNB',balance:0,limit:null},
-  {name:'CIB Visa',type:'Credit Card',inst:'CIB',balance:-55587.42,limit:54000,status:'OVER LIMIT'},
-  {name:'NEXTBANK 18K',type:'Credit Card',inst:'NEXTBANK',balance:-14781.39,limit:18000,status:'MODERATE'},
-  {name:'NEXTBANK 50K',type:'Credit Card',inst:'NEXTBANK',balance:-44000,limit:50000,status:'MODERATE'},
-  {name:'Wafa Bank Visa',type:'Credit Card',inst:'Wafa Bank',balance:-29615,limit:31200,status:'NEAR LIMIT'},
+  {name:'Cash in Hand',type:'Cash',inst:'—',openingBalance:4980.78,limit:null},
+  {name:'CIB Debit',type:'Bank',inst:'CIB',openingBalance:28689.42,limit:null},
+  {name:'QNB Debit',type:'Bank',inst:'QNB',openingBalance:0,limit:null},
+  {name:'CIB Visa',type:'Credit Card',inst:'CIB',openingBalance:-55587.42,limit:54000,status:'OVER LIMIT'},
+  {name:'NEXTBANK 18K',type:'Credit Card',inst:'NEXTBANK',openingBalance:-14781.39,limit:18000,status:'MODERATE'},
+  {name:'NEXTBANK 50K',type:'Credit Card',inst:'NEXTBANK',openingBalance:-44000,limit:50000,status:'MODERATE'},
+  {name:'Wafa Bank Visa',type:'Credit Card',inst:'Wafa Bank',openingBalance:-29615,limit:31200,status:'NEAR LIMIT'},
 ];
 const SEED_TRANSFERS=[
   {id:1,date:'2026-08-01',from:'CIB Debit',to:'CIB Visa',amount:10000,desc:'Visa Payment'},
@@ -1068,7 +1068,7 @@ const VISA_CARDS=[
 ];
 
 // ── STATE ──
-let state = { expenses:[], incomes:[], transfers:[], nextExpId:100, nextIncId:10, nextTrId:20, budgets:{}, customCats:{}, customSubs:{} };
+let state = { expenses:[], incomes:[], transfers:[], nextExpId:200, nextIncId:10, nextTrId:30, budgets:{}, customCats:{}, customSubs:{} };
 
 // ── PERSISTENCE ──
 function saveState() {
@@ -1086,9 +1086,9 @@ function loadState() {
       if (!Array.isArray(state.expenses))   state.expenses   = [...SEED_EXPENSES];
       if (!Array.isArray(state.incomes))    state.incomes    = [...SEED_INCOMES];
       if (!Array.isArray(state.transfers))  state.transfers  = [...SEED_TRANSFERS];
-      if (!state.nextExpId)  state.nextExpId  = 200;
+      if (!state.nextExpId || state.nextExpId < 200) state.nextExpId = 200;
       if (!state.nextIncId)  state.nextIncId  = 20;
-      if (!state.nextTrId)   state.nextTrId   = 30;
+      if (!state.nextTrId || state.nextTrId < 30) state.nextTrId = 30;
       if (!state.budgets)    state.budgets    = {};
       if (!state.customCats) state.customCats = {};
       if (!state.customSubs) state.customSubs = {};
@@ -1212,6 +1212,13 @@ function renderDashboard() {
   document.getElementById('k-budgetpct').textContent=budgetTotal?(Math.round(grandTotal/budgetTotal*100))+'%':'—';
   document.getElementById('k-budget').textContent=fmt(Math.round(budgetTotal));
   document.getElementById('hdr-income').textContent=fmt(totalIncome);
+  // ── Live net worth ──
+  const cashBank = ACCOUNTS.filter(a=>a.type!=='Credit Card').reduce((s,a)=>s+computeBalance(a.name),0);
+  const creditDebt = ACCOUNTS.filter(a=>a.type==='Credit Card').reduce((s,a)=>s+computeBalance(a.name),0);
+  const netWorth = cashBank + creditDebt;
+  const nwCash=document.getElementById('nw-cash'); if(nwCash) nwCash.textContent=fmt(Math.round(cashBank))+' EGP';
+  const nwCredit=document.getElementById('nw-credit'); if(nwCredit) nwCredit.textContent=fmt(Math.round(creditDebt))+' EGP';
+  const nwTotal=document.getElementById('nw-total'); if(nwTotal){ nwTotal.textContent=fmt(Math.round(netWorth))+' EGP'; nwTotal.style.color=netWorth>=0?'var(--green)':'var(--red)'; }
 
   const cats=Object.keys(BUDGETS).filter(c=>(totals[c]||0)>0||(BUDGETS[c]||0)>0);
   let html='';
@@ -1330,12 +1337,30 @@ function renderIncome() {
   document.getElementById('inc-list').innerHTML=html||'<div style="color:var(--muted);text-align:center;padding:20px">No income yet</div>';
 }
 
+// ── LIVE BALANCE CALCULATOR ──
+// openingBalance is a snapshot as of 2026-08-02 (includes all seed data).
+// Only transactions dated AFTER the snapshot date adjust the live balance.
+const OPENING_DATE = '2026-08-02'; // seed data ends on this date
+function computeBalance(name) {
+  const acc = ACCOUNTS.find(a=>a.name===name);
+  if (!acc) return 0;
+  const opening = acc.openingBalance || 0;
+  // Expenses paid from this account AFTER the opening date
+  const expOut = state.expenses
+    .filter(e=>e.method===name && e.date > OPENING_DATE)
+    .reduce((s,e)=>s+e.amount, 0);
+  // Transfers AFTER the opening date
+  const trIn  = state.transfers.filter(t=>t.to===name   && t.date > OPENING_DATE).reduce((s,t)=>s+t.amount, 0);
+  const trOut = state.transfers.filter(t=>t.from===name && t.date > OPENING_DATE).reduce((s,t)=>s+t.amount, 0);
+  return opening - expOut + trIn - trOut;
+}
+
 // ── RENDER ACCOUNTS ──
 function renderAccounts() {
   let html='';
   ACCOUNTS.forEach(a=>{
     const pos=a.type!=='Credit Card';
-    const bal=a.balance; const util=a.limit?Math.abs(bal)/a.limit:0;
+    const bal=computeBalance(a.name); const util=a.limit?Math.abs(bal)/a.limit:0;
     const avail=a.limit?Math.max(a.limit-Math.abs(bal),0):null;
     html+=`<div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="openAccountDetail('${a.name}')">
       <div class="flex mb">
@@ -1373,12 +1398,12 @@ function renderAccounts() {
 function renderVisa() {
   let html='';
   VISA_CARDS.forEach(c=>{
-    const util=c.balance/c.limit; const avail=Math.max(c.limit-c.balance,0);
+    const liveBal=Math.abs(computeBalance(c.name)); const util=liveBal/c.limit; const avail=Math.max(c.limit-liveBal,0);
     const sc=c.status==='OVER LIMIT'?'var(--red)':c.status==='NEAR LIMIT'?'var(--warn)':'var(--green)';
     html+=`<div class="vcard" style="cursor:pointer;" onclick="openVisaDetail('${c.name}')">
       <div class="flex"><div><div class="vc-name">${c.name}</div><div style="font-size:11px;opacity:.6">${c.bank} · Limit ${fmt(c.limit)} EGP · tap for details</div></div>
       <span style="background:rgba(0,0,0,.3);color:${sc};font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">${c.status}</span></div>
-      <div class="vc-bal">${fmt(c.balance)} EGP</div>
+      <div class="vc-bal">${fmt(liveBal)} EGP</div>
       <div class="vc-avail">Available: ${fmt(avail)} EGP</div>
       <div class="plabel" style="margin-top:10px"><span style="font-size:10px;opacity:.7">Utilization ${Math.round(util*100)}%</span></div>
       <div class="pbar"><div class="pfill ${util>.9?'r':util>.7?'w':'g'}" style="width:${Math.min(util*100,100)}%"></div></div>
@@ -1828,7 +1853,7 @@ function exportExcel() {
     // ── ACCOUNTS sheet ──
     const accRows=[['Account','Type','Institution','Balance (EGP)','Credit Limit (EGP)','Available (EGP)','Utilization %']];
     ACCOUNTS.forEach(a=>{
-      const bal=safeN(a.balance);
+      const bal=safeN(computeBalance(a.name));
       const lim=safeN(a.limit,null);
       const avail=lim!==null?Math.max(lim-Math.abs(bal),0):null;
       const util=lim?((Math.abs(bal)/lim)*100).toFixed(1)+'%':'—';
@@ -1841,7 +1866,7 @@ function exportExcel() {
     // ── VISA ACCOUNT sheet ──
     const visaRows=[['Card','Bank','Credit Limit (EGP)','Outstanding Balance (EGP)','Charges This Month (EGP)','Payments This Month (EGP)','Available (EGP)','Utilization %','Status']];
     VISA_CARDS.forEach(v=>{
-      const bal=safeN(v.balance);
+      const bal=safeN(Math.abs(computeBalance(v.name)));
       const lim=safeN(v.limit);
       const charges=safeN(v.charges);
       const payments=safeN(v.payments);
@@ -2704,7 +2729,7 @@ function openAccountDetail(name) {
   if (!a) return;
   const txns = state.expenses.filter(e=>e.method===name).sort((a,b)=>b.date.localeCompare(a.date));
   const isCC = a.type==='Credit Card';
-  const bal = a.balance;
+  const bal = computeBalance(a.name);
   const avail = a.limit ? Math.max(a.limit-Math.abs(bal),0) : null;
   const util = a.limit ? Math.abs(bal)/a.limit : null;
 
@@ -2737,13 +2762,14 @@ function openVisaDetail(name) {
   const c = VISA_CARDS.find(x=>x.name===name);
   if (!c) return;
   const txns = state.expenses.filter(e=>e.method===name).sort((a,b)=>b.date.localeCompare(a.date));
-  const util = c.balance/c.limit;
-  const avail = Math.max(c.limit-c.balance,0);
+  const liveBal=Math.abs(computeBalance(c.name));
+  const util = liveBal/c.limit;
+  const avail = Math.max(c.limit-liveBal,0);
   const sc = c.status==='OVER LIMIT'?'var(--red)':c.status==='NEAR LIMIT'?'var(--warn)':'var(--green)';
 
   document.getElementById('vdm-name').textContent = c.name;
   document.getElementById('vdm-bank').textContent = c.bank+' Credit Card';
-  document.getElementById('vdm-bal').textContent = fmt(c.balance)+' EGP';
+  document.getElementById('vdm-bal').textContent = fmt(liveBal)+' EGP';
   document.getElementById('vdm-avail').textContent = 'Available: '+fmt(avail)+' EGP';
   document.getElementById('vdm-limit').textContent = fmt(c.limit)+' EGP';
   document.getElementById('vdm-opening').textContent = fmt(c.opening||0)+' EGP';
