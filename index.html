@@ -2290,6 +2290,28 @@ function deleteFromDetail() {
   saveState(); renderAll(); closeDetail(); toast('🗑 Expense deleted');
 }
 
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', () => {
+  const loaded = loadState();
+  if (!loaded) {
+    state.expenses  = [...SEED_EXPENSES];
+    state.incomes   = [...SEED_INCOMES];
+    state.transfers = [...SEED_TRANSFERS];
+    state.nextExpId = 200;
+    state.nextIncId = 20;
+    state.nextTrId  = 30;
+    saveState();
+  }
+  const t = today();
+  document.getElementById('f-date').value  = t;
+  document.getElementById('fi-date').value = t;
+  currentMonthOffset = 0;
+  restoreTheme();
+  refreshCatSelects();
+  renderAll();
+  setSyncDot('ok');
+});
+
 </script>
 </body>
 </html>
