@@ -1591,19 +1591,65 @@ function startMic() {
 }
 
 
+function wordsToNum(str) {
+  // Convert spoken English numbers to digits
+  // Handles: "one ninety two"→192, "one hundred fifty"→150, "two thousand"→2000
+  const singles = {zero:'0',one:'1',two:'2',three:'3',four:'4',five:'5',
+    six:'6',seven:'7',eight:'8',nine:'9'};
+  const teens = {ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',
+    fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19'};
+  const tens = {twenty:'20',thirty:'30',forty:'40',fifty:'50',
+    sixty:'60',seventy:'70',eighty:'80',ninety:'90'};
+  const tokens = str.toLowerCase().replace(/[-]/g,' ').split(/\s+/);
+  // First try: digit-by-digit concatenation for patterns like "one ninety two" = 192
+  const numTokens = tokens.filter(t => singles[t]!==undefined||teens[t]!==undefined||tens[t]!==undefined||(t==='hundred')||(t==='thousand'));
+  if(!numTokens.length) return 0;
+  // If contains hundred/thousand use additive method
+  if(numTokens.includes('hundred')||numTokens.includes('thousand')){
+    let total=0,current=0;
+    numTokens.forEach(t=>{
+      const v=parseInt(singles[t]||teens[t]||(tens[t])||0);
+      if(t==='hundred') current=current?current*100:100;
+      else if(t==='thousand'){total+=(current||1)*1000;current=0;}
+      else current+=v;
+    });
+    return total+current;
+  }
+  // Build number by processing pairs: tens+single, single+tens, lone tens, lone single
+  let parts=[];
+  for(let i=0;i<numTokens.length;i++){
+    const t=numTokens[i]; const next=numTokens[i+1];
+    if(tens[t]){
+      if(next && singles[next]){ parts.push(String(parseInt(tens[t])+parseInt(singles[next]))); i++; }
+      else { parts.push(tens[t]); }
+    } else if(singles[t]){
+      // Only combine single+tens if tens is NOT followed by another single (e.g. "two fifty" yes, "one ninety two" no)
+      const after=numTokens[i+2];
+      if(next && tens[next] && !singles[after]){ parts.push(singles[t]+tens[next]); i++; }
+      else { parts.push(singles[t]); }
+    } else if(teens[t]) parts.push(teens[t]);
+  }
+  // Join parts: if all single digits (length 1 each) → concatenate, else concatenate all
+  return parseInt(parts.join(''))||0;
+}
+
 function parseTxt(text) {
   const raw = text.trim();
   const d = today();
   // Normalize Arabic numerals and common speech artifacts
   const norm = raw
     .replace(/[٠-٩]/g, c => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(c)])
-    .replace(/\bو\s*نص\b/gi, '.5')      // "ونص" = .5
-    .replace(/\bألف\b/gi, '000')          // ألف = 000
-    .replace(/\bمية\b|\bمئة\b/gi, '00'); // مية/مئة = 00
+    .replace(/\bو\s*نص\b/gi, '.5')
+    .replace(/\bألف\b|\bthousand\b/gi, '000')
+    .replace(/\bمية\b|\bمئة\b|\bhundred\b/gi, '00');
 
-  // Extract amount — take LAST number (most likely the amount)
+  // Extract amount — prefer digits, fallback to spoken words
   const nums = norm.match(/\d[\d,\.]*/g);
-  const amount = nums ? parseFloat(nums[nums.length-1].replace(/,/g,'')) : 0;
+  let amount = nums ? parseFloat(nums[nums.length-1].replace(/,/g,'')) : 0;
+  if (!amount) {
+    // Try to parse spoken number words
+    amount = wordsToNum(raw);
+  }
 
   // ── TRANSFER detection ──
   const isTransfer = /transfer|تحويل/i.test(raw);
@@ -1628,7 +1674,7 @@ function parseTxt(text) {
 
   // ── PAYMENT METHOD ──
   let method='CIB Visa';
-  if(/cib debit|cie debit|دبت|debit card/i.test(raw))      method='CIB Debit';
+  if(/cib debit|cie debit|دبت|debit card/i.test(raw))       method='CIB Debit';
   else if(/nextbank 18|next bank 18|نيكست 18/i.test(raw))  method='NEXTBANK 18K';
   else if(/nextbank 50|next bank 50|نيكست 50/i.test(raw))  method='NEXTBANK 50K';
   else if(/wafa|وفا/i.test(raw))                            method='Wafa Bank Visa';
@@ -1675,7 +1721,7 @@ function parseTxt(text) {
   else if(/maintenance|صيانة|repair|إصلاح/i.test(raw))
     {cat='Housing';sub='Home Maintenance & Repairs';}
   else if(/fees|رسوم|monthly fees|رسوم شهرية/i.test(raw))
-    {cat='Housing';sub:'2nd Home Monthly Fees';}
+    {cat='Housing';sub='2nd Home Monthly Fees';}
 
   // People allowances
   else if(/hala|هالة/i.test(raw))      {cat='Hala';sub='Allowance / Pocket Money';}
@@ -1693,6 +1739,8 @@ function parseTxt(text) {
     {cat='Health and Medical';sub='Dental Care';}
 
   // Personal Care
+  else if(/personal care|hygiene|نظافة شخصية/i.test(raw))
+    {cat='Personal Care';sub='Personal Hygiene Products';}
   else if(/salon|barber|haircut|حلاقة|كوافير|coiffure/i.test(raw))
     {cat='Personal Care';sub='Haircut / Salon / Barber';}
   else if(/clothes|clothing|shoes|ملابس|هدوم|حذاء|جزمة/i.test(raw))
@@ -1713,7 +1761,7 @@ function parseTxt(text) {
   else if(/garage|parking|جراج|موقف/i.test(raw))
     {cat='Transportation';sub='Car Garage / Parking Rental';}
   else if(/car service|صيانة عربية|service center/i.test(raw))
-    {cat='Transportation';sub:'Car Maintenance & Service';}
+    {cat='Transportation';sub='Car Maintenance & Service';}
 
   // Debt
   else if(/visa payment|سداد فيزا|سداد كارت/i.test(raw))
@@ -1734,15 +1782,18 @@ function parseTxt(text) {
     {cat='Miscellaneous';sub='Unexpected Expenses';}
 
   // ── CLEAN DESCRIPTION ──
-  // Remove: numbers, payment method words, noise words — keep only the meaningful label
-  const stopWords = /\b(\d[\d,\.]*|pound|pounds|egp|جنيه|visa|cib|nextbank|next bank|wafa|وفا|debit|دبت|cash|كاش|نقدي|فلوس|qnb|paid|دفعت|دفع|اشتريت|عملت|من|على|في|to|من حساب|بكارت|بكرت)\b/gi;
+  // Strip all noise: filler phrases, payment words, amounts, method names
+  const noiseEn = /\b(i have|i've|i|have|paid|pay|bought|purchased|spent|for|by|with|using|from|the|a|an|to|of|my|on|in|at|and|or|is|was|it|this|that|just|please|add|log|record|save|note|entry|expense|egp|pound|pounds|bound|sound|round|found|le|egyptian|ejection|injection|ejaculation|rejection|egyptian|hundred|thousand|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|visa|cib|nextbank|next bank|wafa|debit|cash|qnb|card|account|nour|noor|hala|wife|زوجة|نور|هالة)\b/gi;
+  const noiseAr = /\b(دفعت|دفع|اشتريت|عملت|سجل|أضف|اضف|من|على|في|إلى|الى|عشان|بـ|بكارت|بكرت|جنيه|جنيهات|مئة|مية|ألف|فيزا|دبت|كاش|نقدي|فلوس)\b/gi;
   let desc = raw
-    .replace(stopWords, '')
+    .replace(/\d[\d,\.]*/g, '')   // remove all digit sequences
+    .replace(noiseEn, '')
+    .replace(noiseAr, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
-  // If description is just numbers or empty, use category name
-  if (!desc || desc.length < 2 || /^\d+$/.test(desc)) desc = cat;
-  desc = desc.charAt(0).toUpperCase() + desc.slice(1);
+  // Use subcategory or category as fallback
+  if (!desc || desc.length < 2) desc = sub || cat;
+  desc = desc.charAt(0).toUpperCase() + desc.slice(1).toLowerCase();
   desc = desc.substring(0, 40);
 
   parsedEntry={_type:'expense',date:d,cat,sub,desc,method,amount,notes:''};
