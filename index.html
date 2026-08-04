@@ -1693,6 +1693,12 @@ function parseTxt(text) {
   else if(/uber.*nour|uber.*نور|نور.*uber|كريم.*نور|أوبر.*نور/i.test(raw))
     {cat='Nour';sub='Transport and Commute';}
 
+  // People — standalone name = default to their allowance subcategory
+  // Check BEFORE generic categories so "nour personal care" → Nour, not Personal Care
+  else if(/\bnour\b|\bnoor\b|\bنور\b/i.test(raw))   {cat='Nour';sub='Allowance / Pocket Money';}
+  else if(/\bhala\b|\bهالة\b/i.test(raw))             {cat='Hala';sub='Allowance / Pocket Money';}
+  else if(/\bwife\b|\bهدير\b|\bhadeer\b/i.test(raw)){cat='Wife';sub='Allowance / Pocket Money';}
+
   // Food & Dining
   else if(/starbucks|ستاربكس|coffee|قهوة|كافيه|cafe|كافية|breadfast|بريدفاست|cappuccino|latte/i.test(raw))
     {cat='Food and Dining';sub='Coffee Shops & Snacks';}
@@ -1723,10 +1729,7 @@ function parseTxt(text) {
   else if(/fees|رسوم|monthly fees|رسوم شهرية/i.test(raw))
     {cat='Housing';sub='2nd Home Monthly Fees';}
 
-  // People allowances
-  else if(/hala|هالة/i.test(raw))      {cat='Hala';sub='Allowance / Pocket Money';}
-  else if(/nour|نور/i.test(raw))       {cat='Nour';sub='Allowance / Pocket Money';}
-  else if(/wife|هدير|hadeer/i.test(raw)){cat='Wife';sub='Allowance / Pocket Money';}
+  // People allowances moved above
 
   // Health
   else if(/pharmacy|صيدلية|دواء|medicine|علاج|دكتوره|دكتور/i.test(raw))
