@@ -1338,20 +1338,15 @@ function renderIncome() {
 }
 
 // ── LIVE BALANCE CALCULATOR ──
-// openingBalance is a snapshot as of 2026-08-02 (includes all seed data).
-// Only transactions dated AFTER the snapshot date adjust the live balance.
-const OPENING_DATE = '2026-08-02'; // seed data ends on this date
+// openingBalance already reflects all seed transactions (tagged isSeed:true).
+// Only non-seed (user-added) transactions adjust the live balance.
 function computeBalance(name) {
   const acc = ACCOUNTS.find(a=>a.name===name);
   if (!acc) return 0;
   const opening = acc.openingBalance || 0;
-  // Expenses paid from this account AFTER the opening date
-  const expOut = state.expenses
-    .filter(e=>e.method===name && e.date > OPENING_DATE)
-    .reduce((s,e)=>s+e.amount, 0);
-  // Transfers AFTER the opening date
-  const trIn  = state.transfers.filter(t=>t.to===name   && t.date > OPENING_DATE).reduce((s,t)=>s+t.amount, 0);
-  const trOut = state.transfers.filter(t=>t.from===name && t.date > OPENING_DATE).reduce((s,t)=>s+t.amount, 0);
+  const expOut = state.expenses.filter(e=>!e.isSeed && e.method===name).reduce((s,e)=>s+e.amount, 0);
+  const trIn   = state.transfers.filter(t=>!t.isSeed && t.to===name).reduce((s,t)=>s+t.amount, 0);
+  const trOut  = state.transfers.filter(t=>!t.isSeed && t.from===name).reduce((s,t)=>s+t.amount, 0);
   return opening - expOut + trIn - trOut;
 }
 
@@ -1569,8 +1564,9 @@ function startMic() {
   if (!SR) { toast('⚠️ Voice not supported on this browser'); return; }
   voiceRec = new SR();
   voiceRec.lang = voiceLang;
-  voiceRec.interimResults = true;
+  voiceRec.interimResults = false; // final result only = more accurate
   voiceRec.continuous = false;
+  voiceRec.maxAlternatives = 3; // try multiple interpretations
   voiceRec.onstart = () => startMicUI();
   voiceRec.onresult = (e) => {
     const t = Array.from(e.results).map(r=>r[0].transcript).join('');
@@ -1598,20 +1594,29 @@ function startMic() {
 function parseTxt(text) {
   const raw = text.trim();
   const d = today();
-  const norm = raw.replace(/[٠-٩]/g, c => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(c)]);
-  const am = norm.match(/(\d[\d,\.]*)/);
-  const amount = am ? parseFloat(am[1].replace(/,/g,'')) : 0;
+  // Normalize Arabic numerals and common speech artifacts
+  const norm = raw
+    .replace(/[٠-٩]/g, c => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(c)])
+    .replace(/\bو\s*نص\b/gi, '.5')      // "ونص" = .5
+    .replace(/\bألف\b/gi, '000')          // ألف = 000
+    .replace(/\bمية\b|\bمئة\b/gi, '00'); // مية/مئة = 00
+
+  // Extract amount — take LAST number (most likely the amount)
+  const nums = norm.match(/\d[\d,\.]*/g);
+  const amount = nums ? parseFloat(nums[nums.length-1].replace(/,/g,'')) : 0;
+
+  // ── TRANSFER detection ──
   const isTransfer = /transfer|تحويل/i.test(raw);
   if (isTransfer) {
     let fromAcc='CIB Debit', toAcc='CIB Visa';
-    const parts = raw.toLowerCase().split(/\bto\b/i);
-    if(/cib debit|debit/i.test(parts[0]||''))   fromAcc='CIB Debit';
-    if(/cib visa/i.test(parts[0]||''))            fromAcc='CIB Visa';
-    if(/cib debit|debit/i.test(parts[1]||''))    toAcc='CIB Debit';
-    if(/cib visa/i.test(parts[1]||''))             toAcc='CIB Visa';
-    if(/nextbank 18/i.test(parts[1]||''))          toAcc='NEXTBANK 18K';
-    if(/nextbank 50/i.test(parts[1]||''))          toAcc='NEXTBANK 50K';
-    if(/wafa/i.test(parts[1]||''))                 toAcc='Wafa Bank Visa';
+    const parts = raw.toLowerCase().split(/\bto\b|إلى/i);
+    if(/cib debit|debit|دبت/i.test(parts[0]||''))  fromAcc='CIB Debit';
+    if(/cib visa/i.test(parts[0]||''))               fromAcc='CIB Visa';
+    if(/cib debit|debit|دبت/i.test(parts[1]||''))   toAcc='CIB Debit';
+    if(/cib visa/i.test(parts[1]||''))                toAcc='CIB Visa';
+    if(/nextbank 18/i.test(parts[1]||''))             toAcc='NEXTBANK 18K';
+    if(/nextbank 50/i.test(parts[1]||''))             toAcc='NEXTBANK 50K';
+    if(/wafa/i.test(parts[1]||''))                    toAcc='Wafa Bank Visa';
     parsedEntry={_type:'transfer',date:d,from:fromAcc,to:toAcc,amount,desc:'Transfer '+fmt(amount)+' EGP'};
     document.getElementById('ve-desc').value=parsedEntry.desc;
     document.getElementById('ve-amount').value=amount;
@@ -1620,53 +1625,126 @@ function parseTxt(text) {
     document.getElementById('ve-method').value=fromAcc;
     return;
   }
+
+  // ── PAYMENT METHOD ──
   let method='CIB Visa';
-  if(/cib debit|debit/i.test(raw))        method='CIB Debit';
-  else if(/nextbank 18|next18/i.test(raw)) method='NEXTBANK 18K';
-  else if(/nextbank 50|next50/i.test(raw)) method='NEXTBANK 50K';
-  else if(/wafa/i.test(raw))               method='Wafa Bank Visa';
-  else if(/qnb/i.test(raw))               method='QNB Debit';
-  else if(/cash|كاش|نقدي/i.test(raw))    method='Cash in Hand';
+  if(/cib debit|cie debit|دبت|debit card/i.test(raw))      method='CIB Debit';
+  else if(/nextbank 18|next bank 18|نيكست 18/i.test(raw))  method='NEXTBANK 18K';
+  else if(/nextbank 50|next bank 50|نيكست 50/i.test(raw))  method='NEXTBANK 50K';
+  else if(/wafa|وفا/i.test(raw))                            method='Wafa Bank Visa';
+  else if(/qnb|كيو إن بي/i.test(raw))                      method='QNB Debit';
+  else if(/cash|كاش|نقدي|كاش|فلوس/i.test(raw))            method='Cash in Hand';
+
+  // ── CATEGORY + SUBCATEGORY ──
+  // Uses FIRST strong keyword match — ordered from most specific to least
   let cat='Miscellaneous', sub='';
-  if(/starbucks|coffee|قهوة|كافيه|cafe|breadfast/i.test(raw))      {cat='Food and Dining';sub='Coffee Shops & Snacks';}
-  else if(/uber|careem|كريم|taxi/i.test(raw)){
-    if(/wife|hadeer|هدير/i.test(raw)){cat='Wife';sub='Transport and Commute';}
-    else if(/hala|هالة/i.test(raw)){cat='Hala';sub='Transport and Commute';}
-    else if(/nour|نور/i.test(raw)){cat='Nour';sub='Transport and Commute';}
-    else{cat='Transportation';sub='Ride Share (Uber / Lyft)';}
-  }
-  else if(/grocery|supermarket|hyperone|هايبر|بقالة|talabat|instashop/i.test(raw)){cat='Food and Dining';sub='Groceries / Supermarket';}
-  else if(/restaurant|مطعم|dining|lunch|dinner/i.test(raw)){cat='Food and Dining';sub='Restaurants & Dining Out';}
-  else if(/electricity|كهرباء/i.test(raw)){cat='Housing';sub='Electricity — Home 1';}
-  else if(/water|مياه/i.test(raw)){cat='Housing';sub='Water & Sewage — Home 1';}
-  else if(/internet|نت|wifi/i.test(raw)){cat='Housing';sub='Internet';}
-  else if(/rent|إيجار|ايجار/i.test(raw)){cat='Housing';sub='Rent / Mortgage';}
-  else if(/housekeeper|cleaner|حمادة|شغالة/i.test(raw)){cat='Housing';sub='House Keeper';}
-  else if(/hala|هالة/i.test(raw)){cat='Hala';sub='Allowance / Pocket Money';}
-  else if(/nour|نور/i.test(raw)){cat='Nour';sub='Allowance / Pocket Money';}
-  else if(/wife|hadeer|هدير/i.test(raw)){cat='Wife';sub='Allowance / Pocket Money';}
-  else if(/cigarette|سيجارة|سجاير|دخان/i.test(raw)){cat='Miscellaneous';sub='Cigarettes / Tobacco';}
-  else if(/gym|fitness|رياضة/i.test(raw)){cat='Health and Medical';sub='Gym / Fitness Membership';}
-  else if(/doctor|دكتور|clinic|عيادة/i.test(raw)){cat='Health and Medical';sub='Doctor / Specialist Visits';}
-  else if(/pharmacy|صيدلية|دواء/i.test(raw)){cat='Health and Medical';sub='Pharmacy / Medications';}
-  else if(/netflix|spotify|apple|subscription|اشتراك/i.test(raw)){cat='Technology';sub='Mobile Phone Bill';}
-  else if(/phone|موبايل|etisalat|vodafone/i.test(raw)){cat='Technology';sub='Mobile Phone Bill';}
-  else if(/salon|barber|haircut|حلاقة/i.test(raw)){cat='Personal Care';sub='Haircut / Salon / Barber';}
-  else if(/clothes|clothing|shoes|ملابس/i.test(raw)){cat='Personal Care';sub='Clothing & Shoes';}
-  else if(/donation|charity|تبرع|صدقة/i.test(raw)){cat='Gifts and Donations';sub='Charitable Donations';}
-  else if(/gift|هدية/i.test(raw)){cat='Gifts and Donations';sub='Birthday & Holiday Gifts';}
-  else if(/visa payment|سداد فيزا/i.test(raw)){cat='Debt Payments';sub='Visa Payment — CIB Visa';}
-  else if(/loan|قرض|instalment|قسط/i.test(raw)){cat='Debt Payments';sub='Other Debt Payments';}
-  else if(/garage|parking|جراج/i.test(raw)){cat='Transportation';sub='Car Garage / Parking Rental';}
-  else if(/fuel|petrol|بنزين|وقود/i.test(raw)){cat='Transportation';sub='Fuel / Gasoline';}
-  else if(/allowance|pocket|مصروف/i.test(raw)){
-    if(/wife|hadeer|هدير/i.test(raw)){cat='Wife';sub='Allowance / Pocket Money';}
-    else if(/hala|هالة/i.test(raw)){cat='Hala';sub='Allowance / Pocket Money';}
-    else if(/nour|نور/i.test(raw)){cat='Nour';sub='Allowance / Pocket Money';}
-  }
-  let desc=norm.replace(/\d[\d,\.]*/g,'').replace(/\b(pound|pounds|egp|visa|cib|nextbank|wafa|debit|cash|كاش|نقدي|دبت|جنيه)\b/gi,'').replace(/\s{2,}/g,' ').trim();
-  if(!desc||desc.length<2) desc=cat;
-  desc=desc.substring(0,45);
+
+  // People-specific transport (check BEFORE generic uber)
+  if(/uber.*wife|uber.*هدير|هدير.*uber|كريم.*هدير|أوبر.*هدير|أوبر.*wife/i.test(raw))
+    {cat='Wife';sub='Transport and Commute';}
+  else if(/uber.*hala|uber.*هالة|هالة.*uber|كريم.*هالة|أوبر.*هالة/i.test(raw))
+    {cat='Hala';sub='Transport and Commute';}
+  else if(/uber.*nour|uber.*نور|نور.*uber|كريم.*نور|أوبر.*نور/i.test(raw))
+    {cat='Nour';sub='Transport and Commute';}
+
+  // Food & Dining
+  else if(/starbucks|ستاربكس|coffee|قهوة|كافيه|cafe|كافية|breadfast|بريدفاست|cappuccino|latte/i.test(raw))
+    {cat='Food and Dining';sub='Coffee Shops & Snacks';}
+  else if(/uber|careem|كريم|taxi|تاكسي|أوبر|اوبر/i.test(raw))
+    {cat='Transportation';sub='Ride Share (Uber / Lyft)';}
+  else if(/grocer|supermarket|hyperone|هايبر|بقالة|talabat|تالابات|instashop|carrefour|كارفور|spinneys|سبينس/i.test(raw))
+    {cat='Food and Dining';sub='Groceries / Supermarket';}
+  else if(/restaurant|مطعم|dining|lunch|غداء|dinner|عشاء|أكل|اكل|وجبة|فطار|فطور|breakfast/i.test(raw))
+    {cat='Food and Dining';sub='Restaurants & Dining Out';}
+  else if(/delivery|توصيل|order|طلبية/i.test(raw))
+    {cat='Food and Dining';sub='Food Delivery Apps';}
+
+  // Housing
+  else if(/electricity|كهرباء|عداد كهرباء/i.test(raw))
+    {cat='Housing';sub='Electricity — Home 1';}
+  else if(/water|مياه|عداد مياه/i.test(raw))
+    {cat='Housing';sub='Water & Sewage — Home 1';}
+  else if(/internet|نت|wifi|وايفاي|اتصالات منزل/i.test(raw))
+    {cat='Housing';sub='Internet';}
+  else if(/rent|إيجار|ايجار|أيجار/i.test(raw))
+    {cat='Housing';sub='Rent / Mortgage';}
+  else if(/gas bill|فاتورة غاز|غاز/i.test(raw))
+    {cat='Housing';sub='Natural Gas / Heating';}
+  else if(/housekeeper|cleaner|حمادة|شغالة|نظافة|cleaning/i.test(raw))
+    {cat='Housing';sub='House Keeper';}
+  else if(/maintenance|صيانة|repair|إصلاح/i.test(raw))
+    {cat='Housing';sub='Home Maintenance & Repairs';}
+  else if(/fees|رسوم|monthly fees|رسوم شهرية/i.test(raw))
+    {cat='Housing';sub:'2nd Home Monthly Fees';}
+
+  // People allowances
+  else if(/hala|هالة/i.test(raw))      {cat='Hala';sub='Allowance / Pocket Money';}
+  else if(/nour|نور/i.test(raw))       {cat='Nour';sub='Allowance / Pocket Money';}
+  else if(/wife|هدير|hadeer/i.test(raw)){cat='Wife';sub='Allowance / Pocket Money';}
+
+  // Health
+  else if(/pharmacy|صيدلية|دواء|medicine|علاج|دكتوره|دكتور/i.test(raw))
+    {cat='Health and Medical';sub='Pharmacy / Medications';}
+  else if(/doctor|specialist|عيادة|clinic|كلينك/i.test(raw))
+    {cat='Health and Medical';sub='Doctor / Specialist Visits';}
+  else if(/gym|fitness|رياضة|جيم/i.test(raw))
+    {cat='Health and Medical';sub='Gym / Fitness Membership';}
+  else if(/dental|أسنان|دكتور أسنان/i.test(raw))
+    {cat='Health and Medical';sub='Dental Care';}
+
+  // Personal Care
+  else if(/salon|barber|haircut|حلاقة|كوافير|coiffure/i.test(raw))
+    {cat='Personal Care';sub='Haircut / Salon / Barber';}
+  else if(/clothes|clothing|shoes|ملابس|هدوم|حذاء|جزمة/i.test(raw))
+    {cat='Personal Care';sub='Clothing & Shoes';}
+
+  // Technology
+  else if(/netflix|نتفلكس/i.test(raw))  {cat='Entertainment';sub='Netflix';}
+  else if(/spotify|سبوتيفاي/i.test(raw)) {cat='Entertainment';sub='YouTube Music';}
+  else if(/apple|ابل|icloud|ايكلاود/i.test(raw)) {cat='Technology';sub='iCloud';}
+  else if(/chatgpt|chat gpt/i.test(raw)) {cat='Technology';sub='ChatGPT';}
+  else if(/subscription|اشتراك/i.test(raw)) {cat='Technology';sub='Mobile Phone Bill';}
+  else if(/phone bill|فاتورة موبايل|etisalat|اتصالات|vodafone|فودافون|we|وي/i.test(raw))
+    {cat='Technology';sub='Mobile Phone Bill';}
+
+  // Transport
+  else if(/fuel|petrol|بنزين|وقود|gas station|محطة/i.test(raw))
+    {cat='Transportation';sub='Fuel / Gasoline';}
+  else if(/garage|parking|جراج|موقف/i.test(raw))
+    {cat='Transportation';sub='Car Garage / Parking Rental';}
+  else if(/car service|صيانة عربية|service center/i.test(raw))
+    {cat='Transportation';sub:'Car Maintenance & Service';}
+
+  // Debt
+  else if(/visa payment|سداد فيزا|سداد كارت/i.test(raw))
+    {cat='Debt Payments';sub='Visa Payment — CIB Visa';}
+  else if(/loan|قرض|instalment|قسط|أقساط/i.test(raw))
+    {cat='Debt Payments';sub='Other Debt Payments';}
+
+  // Gifts & Donations
+  else if(/donation|charity|تبرع|صدقة|زكاة/i.test(raw))
+    {cat='Gifts and Donations';sub='Charitable Donations';}
+  else if(/gift|هدية|hadiya/i.test(raw))
+    {cat='Gifts and Donations';sub='Birthday & Holiday Gifts';}
+
+  // Miscellaneous
+  else if(/cigarette|سيجارة|سجاير|دخان|سيجار/i.test(raw))
+    {cat='Miscellaneous';sub='Cigarettes / Tobacco';}
+  else if(/laundry|غسيل|مغسلة/i.test(raw))
+    {cat='Miscellaneous';sub='Unexpected Expenses';}
+
+  // ── CLEAN DESCRIPTION ──
+  // Remove: numbers, payment method words, noise words — keep only the meaningful label
+  const stopWords = /\b(\d[\d,\.]*|pound|pounds|egp|جنيه|visa|cib|nextbank|next bank|wafa|وفا|debit|دبت|cash|كاش|نقدي|فلوس|qnb|paid|دفعت|دفع|اشتريت|عملت|من|على|في|to|من حساب|بكارت|بكرت)\b/gi;
+  let desc = raw
+    .replace(stopWords, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  // If description is just numbers or empty, use category name
+  if (!desc || desc.length < 2 || /^\d+$/.test(desc)) desc = cat;
+  desc = desc.charAt(0).toUpperCase() + desc.slice(1);
+  desc = desc.substring(0, 40);
+
   parsedEntry={_type:'expense',date:d,cat,sub,desc,method,amount,notes:''};
   document.getElementById('ve-desc').value=desc;
   document.getElementById('ve-amount').value=amount;
@@ -2864,19 +2942,27 @@ function deleteFromDetail() {
 window.addEventListener('DOMContentLoaded', () => {
   const loaded = loadState();
   if (!loaded) {
-    state.expenses  = [...SEED_EXPENSES];
+    state.expenses  = SEED_EXPENSES.map(e=>({...e,isSeed:true}));
     state.incomes   = [...SEED_INCOMES];
-    state.transfers = [...SEED_TRANSFERS];
+    state.transfers = SEED_TRANSFERS.map(t=>({...t,isSeed:true}));
     state.nextExpId = 200;
     state.nextIncId = 20;
     state.nextTrId  = 30;
     saveState();
   } else {
     let needsSave=false;
-    if(!state.expenses||state.expenses.length===0){state.expenses=[...SEED_EXPENSES];needsSave=true;}
+    if(!state.expenses||state.expenses.length===0){state.expenses=SEED_EXPENSES.map(e=>({...e,isSeed:true}));needsSave=true;}
     if(!state.incomes||state.incomes.length===0){state.incomes=[...SEED_INCOMES];needsSave=true;}
-    if(!state.transfers||state.transfers.length===0){state.transfers=[...SEED_TRANSFERS];needsSave=true;}
-    if(needsSave)saveState();
+    if(!state.transfers||state.transfers.length===0){state.transfers=SEED_TRANSFERS.map(t=>({...t,isSeed:true}));needsSave=true;}
+    // Tag any existing untagged seed expenses by date range
+    let retagged=false;
+    state.expenses.forEach(e=>{
+      if(e.isSeed===undefined && e.date<='2026-08-02'){e.isSeed=true;retagged=true;}
+    });
+    state.transfers.forEach(t=>{
+      if(t.isSeed===undefined && t.date<='2026-08-02'){t.isSeed=true;retagged=true;}
+    });
+    if(needsSave||retagged)saveState();
   }
   const t = today();
   document.getElementById('f-date').value  = t;
