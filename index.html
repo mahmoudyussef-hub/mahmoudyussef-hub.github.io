@@ -1305,16 +1305,99 @@ function renderExpenses() {
   filtered.forEach(e=>{
     const icon=ICONS[e.cat]||'💸'; const color=COLORS[e.cat]||'#7a84a8';
     const qBold=(str)=>q?str.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:rgba(255,179,71,.35);border-radius:3px;padding:0 2px">$1</mark>'):str;
-    html+=`<div class="row" style="cursor:pointer;" onclick="openDetail(${e.id})">
-      <div class="icon" style="background:${color}22">${icon}</div>
-      <div class="rinfo"><div class="rname">${qBold(e.desc)}</div><div class="rmeta">${e.cat} · ${e.method} · ${e.date}</div></div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+    html+=`<div class="row exp-draggable" draggable="true" data-id="${e.id}" style="cursor:pointer;touch-action:none;">
+      <div style="display:flex;align-items:center;gap:0;">
+        <div class="drag-handle" title="Drag to reorder" onclick="event.stopPropagation()" style="cursor:grab;padding:0 8px 0 2px;color:var(--muted);font-size:18px;user-select:none;">⠿</div>
+        <div class="icon" style="background:${color}22">${icon}</div>
+      </div>
+      <div class="rinfo" onclick="openDetail(${e.id})" style="cursor:pointer;flex:1;"><div class="rname">${qBold(e.desc)}</div><div class="rmeta">${e.cat} · ${e.method} · ${e.date}</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;" onclick="openDetail(${e.id})" >
         <div class="ramount red">-${fmt(e.amount)}</div>
         <div style="font-size:10px;color:var(--muted);">tap ›</div>
       </div>
     </div>`;
   });
   document.getElementById('exp-list').innerHTML=html||`<div style="color:var(--muted);text-align:center;padding:24px">${q||expFilter!=='all'?'🔍 No matches — try different search':'No expenses yet'}</div>`;
+  initExpDrag();
+}
+
+function initExpDrag(){
+  const list=document.getElementById('exp-list');
+  let dragId=null, dragEl=null, placeholder=null;
+
+  function getRow(el){return el.closest('.exp-draggable');}
+
+  list.querySelectorAll('.exp-draggable').forEach(row=>{
+    // Desktop drag
+    row.addEventListener('dragstart',e=>{
+      dragId=parseInt(row.dataset.id);
+      dragEl=row;
+      setTimeout(()=>row.style.opacity='0.4',0);
+    });
+    row.addEventListener('dragend',()=>{
+      row.style.opacity='';
+      if(placeholder&&placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+      placeholder=null;
+    });
+    row.addEventListener('dragover',e=>{
+      e.preventDefault();
+      const over=getRow(e.target);
+      if(!over||over===dragEl) return;
+      const rect=over.getBoundingClientRect();
+      const after=e.clientY>rect.top+rect.height/2;
+      list.insertBefore(dragEl, after?over.nextSibling:over);
+    });
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      saveExpOrder();
+    });
+
+    // Touch drag
+    let touchStartY=0, touchClone=null;
+    row.addEventListener('touchstart',e=>{
+      if(e.target.classList.contains('drag-handle')){
+        dragId=parseInt(row.dataset.id);
+        dragEl=row;
+        touchStartY=e.touches[0].clientY;
+        touchClone=row.cloneNode(true);
+        touchClone.style.cssText='position:fixed;left:0;right:0;opacity:0.85;z-index:9999;pointer-events:none;background:var(--card);';
+        touchClone.style.top=row.getBoundingClientRect().top+'px';
+        document.body.appendChild(touchClone);
+        row.style.opacity='0.3';
+        e.preventDefault();
+      }
+    },{passive:false});
+    row.addEventListener('touchmove',e=>{
+      if(!touchClone) return;
+      e.preventDefault();
+      const dy=e.touches[0].clientY-touchStartY;
+      touchClone.style.top=(row.getBoundingClientRect().top+dy)+'px';
+      const el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+      const over=el&&getRow(el);
+      if(over&&over!==dragEl){
+        const rect=over.getBoundingClientRect();
+        const after=e.touches[0].clientY>rect.top+rect.height/2;
+        list.insertBefore(dragEl,after?over.nextSibling:over);
+      }
+    },{passive:false});
+    row.addEventListener('touchend',()=>{
+      if(!touchClone) return;
+      document.body.removeChild(touchClone);
+      touchClone=null;
+      row.style.opacity='';
+      saveExpOrder();
+    });
+  });
+}
+
+function saveExpOrder(){
+  const ids=[...document.querySelectorAll('.exp-draggable')].map(r=>parseInt(r.dataset.id));
+  // Reorder state.expenses to match visual order (only reorder the visible filtered ones, keep others)
+  const visibleSet=new Set(ids);
+  const others=state.expenses.filter(e=>!visibleSet.has(e.id));
+  const reordered=ids.map(id=>state.expenses.find(e=>e.id===id)).filter(Boolean);
+  state.expenses=[...reordered,...others];
+  saveState();
 }
 
 // ── RENDER INCOME ──
