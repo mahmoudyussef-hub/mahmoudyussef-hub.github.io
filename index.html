@@ -1695,9 +1695,29 @@ function parseTxt(text) {
 
   // People — standalone name = default to their allowance subcategory
   // Check BEFORE generic categories so "nour personal care" → Nour, not Personal Care
-  else if(/\bnour\b|\bnoor\b|\bنور\b/i.test(raw))   {cat='Nour';sub='Allowance / Pocket Money';}
-  else if(/\bhala\b|\bهالة\b/i.test(raw))             {cat='Hala';sub='Allowance / Pocket Money';}
-  else if(/\bwife\b|\bهدير\b|\bhadeer\b/i.test(raw)){cat='Wife';sub='Allowance / Pocket Money';}
+  else if(/\bnour\b|\bnoor\b|\bnor\b|\bنور\b/i.test(raw)){
+    cat='Nour';
+    if(/personal care|\bper\b|hygiene|cream|shampoo|skin|عناية|مكياج/i.test(raw))  sub='Personal Care';
+    else if(/uber|careem|taxi|transport|مواصلات|أوبر/i.test(raw))                   sub='Transport and Commute';
+    else if(/pharmacy|medicine|doctor|علاج|دواء|دكتور|dental|أسنان/i.test(raw))    sub='Medical and Dental';
+    else if(/restaurant|cafe|coffee|food|delivery|مطعم|قهوة|أكل|طلب/i.test(raw))  sub='Dining Out and Cafes';
+    else                                                                              sub='Allowance / Pocket Money';
+  }
+  else if(/\bhala\b|\bهالة\b/i.test(raw)){
+    cat='Hala';
+    if(/personal care|\bper\b|hygiene|cream|shampoo|skin|عناية|مكياج/i.test(raw))  sub='Personal Care';
+    else if(/uber|careem|taxi|transport|مواصلات|أوبر/i.test(raw))                   sub='Transport and Commute';
+    else if(/mobile|internet|phone|موبايل|نت/i.test(raw))                           sub='Mobile and Internet';
+    else if(/restaurant|cafe|coffee|food|delivery|مطعم|قهوة|أكل|طلب/i.test(raw))  sub='Dining Out and Cafes';
+    else                                                                              sub='Allowance / Pocket Money';
+  }
+  else if(/\bwife\b|\bهدير\b|\bhadeer\b/i.test(raw)){
+    cat='Wife';
+    if(/personal care|salon|hair|beauty|عناية|مكياج|كوافير/i.test(raw))            sub='Personal Care and Salon';
+    else if(/uber|careem|taxi|transport|مواصلات|أوبر/i.test(raw))                   sub='Transport and Commute';
+    else if(/mobile|internet|phone|موبايل|نت/i.test(raw))                           sub='Mobile and Internet';
+    else                                                                              sub='Allowance / Pocket Money';
+  }
 
   // Food & Dining
   else if(/starbucks|ستاربكس|coffee|قهوة|كافيه|cafe|كافية|breadfast|بريدفاست|cappuccino|latte/i.test(raw))
@@ -1786,7 +1806,7 @@ function parseTxt(text) {
 
   // ── CLEAN DESCRIPTION ──
   // Strip all noise: filler phrases, payment words, amounts, method names
-  const noiseEn = /\b(i have|i've|i|have|paid|pay|bought|purchased|spent|for|by|with|using|from|the|a|an|to|of|my|on|in|at|and|or|is|was|it|this|that|just|please|add|log|record|save|note|entry|expense|egp|pound|pounds|bound|sound|round|found|le|egyptian|ejection|injection|ejaculation|rejection|egyptian|hundred|thousand|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|visa|cib|nextbank|next bank|wafa|debit|cash|qnb|card|account|nour|noor|hala|wife|زوجة|نور|هالة)\b/gi;
+  const noiseEn = /\b(i have|i've|i|have|paid|pay|bought|purchased|spent|for|by|with|using|from|the|a|an|to|of|my|on|in|at|and|or|is|was|it|this|that|just|please|add|log|record|save|note|entry|expense|egp|pound|pounds|bound|sound|round|found|le|egyptian|ejection|injection|ejaculation|rejection|egyptian|hundred|thousand|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|visa|cib|nextbank|next bank|wafa|debit|cash|qnb|card|account|nour|noor|nor|nou|hala|wife|زوجة|نور|هالة)\b/gi;
   const noiseAr = /\b(دفعت|دفع|اشتريت|عملت|سجل|أضف|اضف|من|على|في|إلى|الى|عشان|بـ|بكارت|بكرت|جنيه|جنيهات|مئة|مية|ألف|فيزا|دبت|كاش|نقدي|فلوس)\b/gi;
   let desc = raw
     .replace(/\d[\d,\.]*/g, '')   // remove all digit sequences
@@ -1795,7 +1815,7 @@ function parseTxt(text) {
     .replace(/\s{2,}/g, ' ')
     .trim();
   // Use subcategory or category as fallback
-  if (!desc || desc.length < 2) desc = sub || cat;
+  if (!desc || desc.length < 4) desc = sub || cat;
   desc = desc.charAt(0).toUpperCase() + desc.slice(1).toLowerCase();
   desc = desc.substring(0, 40);
 
