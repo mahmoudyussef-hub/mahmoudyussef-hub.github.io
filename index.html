@@ -2122,7 +2122,7 @@ function exportExcel() {
       const hasSubs=Object.keys(subMap).length>0;
       if(hasSubs){
         (SUBS[cat]||[]).forEach(sub=>{
-          const sbud=subMap[sub]||0; if(!sbud)return;
+          const sbud=subMap[sub]||0;
           const sact=state.expenses.filter(e=>e.cat===cat&&e.sub===sub).reduce((a,e)=>a+e.amount,0);
           const svar=sbud-sact;
           const spct=sbud?((sact/sbud)*100).toFixed(1)+'%':'—';
@@ -2577,8 +2577,9 @@ function renderSettings() {
     const subMap=SUB_BUDGETS[cat]||{};
     const subSpentArr=state.expenses.filter(e=>e.cat===cat);
     let subHtml='';
-    (SUBS[cat]||[]).forEach(sub=>{
-      const sbud=subMap[sub]||0; if(!sbud)return;
+    const allSubs=[...(SUBS[cat]||[]),...((state.customSubs&&state.customSubs[cat])||[])].filter((s,i,a)=>a.indexOf(s)===i);
+    allSubs.forEach(sub=>{
+      const sbud=subMap[sub]||0;
       const sact=subSpentArr.filter(e=>e.sub===sub).reduce((a,e)=>a+e.amount,0);
       const spct=sbud?Math.min(sact/sbud,1):0; const sover=sact>sbud;
       const scol=sover?'var(--red)':spct>.85?'var(--warn)':'var(--green)';
