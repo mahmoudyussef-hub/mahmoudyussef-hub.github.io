@@ -1169,7 +1169,12 @@ function addExpense() {
   const amt=parseFloat(document.getElementById('f-amt').value);
   const method=document.getElementById('f-pay').value;
   const notes=document.getElementById('f-notes').value.trim();
-  if (!d||!cat||!desc||isNaN(amt)||amt<=0){toast('⚠️ Fill Date, Category, Description & Amount');return;}
+  const missing=[];
+  if(!d) missing.push('Date');
+  if(!cat) missing.push('Category');
+  if(!desc) missing.push('Description');
+  if(isNaN(amt)||amt<=0) missing.push('Amount');
+  if(missing.length){toast('⚠️ Missing: '+missing.join(', '));return;}
   state.expenses.push({id:state.nextExpId++,date:d,cat,sub,desc,method,amount:amt,notes});
   saveState(); renderAll(); toast('✅ Expense saved!');
   ['f-desc','f-amt','f-notes'].forEach(id=>document.getElementById(id).value='');
