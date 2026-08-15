@@ -966,7 +966,7 @@ const SUBS = {
   Technology:['Mobile Phone Bill','1Password','iCloud','New Devices & Equipment','Tracelight','ChatGPT'],
   Insurance:['Life Insurance','Additional Health Insurance','Disability Insurance','Travel Insurance'],
   'Savings and Investments':['Emergency Fund Contribution','Retirement Savings','Investment Account','Education Savings','Short-Term Savings Goal'],
-  'Debt Payments':['Visa Payment — CIB Visa','Visa Payment — NEXTBANK 18K','Visa Payment — NEXTBANK 50K','Visa Payment — Wafa Bank Visa','Student Loan Payment','Personal Loan Payment','Value Loan Instalment','Sohoula Loan Instalment','Other Debt Payments'],
+  'Debt Payments':['Visa Payment — CIB Visa','Visa Payment — NEXTBANK 18K','Visa Payment — NEXTBANK 50K','Visa Payment — Wafa Bank Visa','Student Loan Payment','Personal Loan Payment','Value Loan Instalment','Sohoula Loan Instalment','NEXTBANK 50K Loan Instalment','Other Debt Payments'],
   'Travel and Vacation':['Flights & Transportation','Hotels & Accommodation','Car Rental','Activities & Sightseeing','Travel Food & Entertainment'],
   'Gifts and Donations':['Birthday & Holiday Gifts','Wedding & Special Events','Charitable Donations','Family Support & Remittances'],
   'Childcare and Family':['Childcare / Daycare','School Fees','Children Activities & Sports'],
@@ -2208,7 +2208,7 @@ function renderCharts() {
   });
   const ieCtx=document.getElementById('chart-income-expense');
   if(ieCtx){
-    const incData=months.map(k=>state.incomes.filter(i=>i.date.startsWith(k)).reduce((a,i)=>a+i.actual,0));
+    const incData=months.map(k=>state.incomes.filter(i=>i.date.startsWith(k)).reduce((a,i)=>a+(i.actual||i.amount||0),0));
     const expData=months.map(k=>state.expenses.filter(e=>e.date.startsWith(k)).reduce((a,e)=>a+e.amount,0));
     const savData=months.map((k,i)=>Math.max(incData[i]-expData[i],0));
     chartInstances['income-expense']=new Chart(ieCtx,{type:'bar',
@@ -2292,7 +2292,7 @@ function renderCharts() {
   if(sCtx){
     const aMonths=getMonthKeys(Math.max(chartPeriodMonths||1,3));
     const rates=aMonths.map(k=>{
-      const inc=state.incomes.filter(i=>i.date.startsWith(k)).reduce((a,i)=>a+i.actual,0);
+      const inc=state.incomes.filter(i=>i.date.startsWith(k)).reduce((a,i)=>a+(i.actual||i.amount||0),0);
       const exp=state.expenses.filter(e=>e.date.startsWith(k)).reduce((a,e)=>a+e.amount,0);
       return inc>0?parseFloat(((inc-exp)/inc*100).toFixed(1)):0;
     });
@@ -2846,7 +2846,7 @@ function renderMonthly() {
   const mInc = state.incomes.filter(i=>i.date.startsWith(key));
 
   const totalExp = mExp.reduce((a,e)=>a+e.amount, 0);
-  const totalInc = mInc.reduce((a,i)=>a+i.actual, 0);
+  const totalInc = mInc.reduce((a,i)=>a+(i.actual||i.amount||0), 0);
   const savings = totalInc - totalExp;
 
   document.getElementById('m-income').textContent = fmt(Math.round(totalInc));
@@ -3079,13 +3079,13 @@ function openVisaDetail(name) {
 function openIncomeDetail(id) {
   const i = state.incomes.find(x=>x.id===id);
   if (!i) return;
-  const variance = i.actual - i.expected;
+  const variance = (i.actual||i.amount||0) - (i.expected||0);
 
   document.getElementById('idm-desc').textContent = i.desc;
   document.getElementById('idm-cat').textContent = i.cat;
-  document.getElementById('idm-actual').textContent = '+'+fmt(i.actual)+' EGP';
+  document.getElementById('idm-actual').textContent = '+'+ fmt(i.actual||i.amount||0)+' EGP';
   document.getElementById('idm-expected').textContent = fmt(i.expected)+' EGP';
-  document.getElementById('idm-act2').textContent = fmt(i.actual)+' EGP';
+  document.getElementById('idm-act2').textContent = fmt(i.actual||i.amount||0)+' EGP';
   document.getElementById('idm-variance').innerHTML = variance>=0
     ? `<span style="color:var(--green)">+${fmt(variance)} EGP</span>`
     : `<span style="color:var(--red)">${fmt(variance)} EGP</span>`;
