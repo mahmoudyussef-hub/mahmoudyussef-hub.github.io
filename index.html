@@ -3164,7 +3164,7 @@ window.addEventListener('DOMContentLoaded', () => {
     saveState();
   } else {
     // If loaded but suspiciously few expenses, restore from backup
-    if(state.expenses && state.expenses.length < 10) {
+    if(state.expenses && state.expenses.length < 150) {
       state.expenses  = RESTORE_EXPENSES;
       state.incomes   = RESTORE_INCOMES;
       state.transfers = RESTORE_TRANSFERS;
