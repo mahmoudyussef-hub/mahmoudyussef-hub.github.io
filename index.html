@@ -1005,7 +1005,7 @@ function getCatBudget(cat, ym) {
 // Current budget view month (YYYY-MM)
 let budgetViewMonth = today().slice(0,7);
 let BUDGETS={...DEFAULT_BUDGETS};
-let SUB_BUDGETS=JSON.parse(JSON.stringify(DEFAULT_SUB_BUDGETS));
+let SUB_BUDGETS={}; // per-month overrides; defaults come from MONTHLY_BUDGETS via getSubBudget()
 
 // ── DEFAULT SEED DATA (from Excel) ──
 const SEED_EXPENSES = [
@@ -1132,7 +1132,7 @@ function loadState() {
       // Restore budgets, colors, icons, subs from saved state
       if (state.budgets && Object.keys(state.budgets).length) {
         Object.assign(BUDGETS, state.budgets);
-        if(saved.subBudgets){Object.keys(saved.subBudgets).forEach(cat=>{if(!SUB_BUDGETS[cat])SUB_BUDGETS[cat]={};Object.assign(SUB_BUDGETS[cat],saved.subBudgets[cat]);});}
+        if(state.subBudgets){Object.keys(state.subBudgets).forEach(cat=>{if(!SUB_BUDGETS[cat])SUB_BUDGETS[cat]={};Object.assign(SUB_BUDGETS[cat],state.subBudgets[cat]);});}
       }
       if (state.customCats) {
         Object.entries(state.customCats).forEach(([cat, data]) => {
@@ -2028,7 +2028,7 @@ function exportJSON() {
     nextIncId: state.nextIncId,
     nextTrId:  state.nextTrId,
     budgets:   state.budgets,
-    subBudgets: SUB_BUDGETS,
+    subBudgets: state.subBudgets||{},
     customCats: state.customCats,
     customSubs: state.customSubs,
     theme:      state.theme,
@@ -2072,8 +2072,8 @@ function importJSON(input) {
       // Merge budgets
       if(data.budgets) Object.assign(state.budgets, data.budgets), Object.assign(BUDGETS, data.budgets);
       if(data.subBudgets) Object.keys(data.subBudgets).forEach(cat => {
-        if(!SUB_BUDGETS[cat]) SUB_BUDGETS[cat]={};
-        Object.assign(SUB_BUDGETS[cat], data.subBudgets[cat]);
+        if(!state.subBudgets[cat]) state.subBudgets[cat]={};
+        Object.assign(state.subBudgets[cat], data.subBudgets[cat]);
       });
       if(data.customCats) Object.assign(state.customCats, data.customCats);
       if(data.customSubs) Object.assign(state.customSubs, data.customSubs);
@@ -2159,7 +2159,7 @@ function exportExcel() {
     Object.keys(BUDGETS).forEach(cat=>{
       const catAct=totals[cat]||0;
       const catBud=BUDGETS[cat]||0;
-      const subMap=SUB_BUDGETS[cat]||{};
+      // subMap now via getSubBudget()
       const hasSubs=Object.keys(subMap).length>0;
       if(hasSubs){
         (SUBS[cat]||[]).forEach(sub=>{
