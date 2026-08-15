@@ -231,16 +231,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 
   <div class="card" style="margin-top:4px;">
-    <div class="ctitle">Export Data</div>
-    <button class="btn" onclick="exportExcel()" style="margin-bottom:10px">📥 Export to Excel (.xlsx)</button>
-    <button class="btn sec-btn" onclick="exportCSV()" style="margin-bottom:10px">📄 Export to CSV</button>
-    <button class="btn sec-btn" onclick="exportJSON()" style="margin-bottom:18px">🔄 Export Backup (.json)</button>
-    <div class="ctitle">Import / Sync</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.6;">Import a backup JSON file to restore or sync data from another device. <strong style="color:var(--warn);">This will merge with existing data.</strong></div>
-    <label style="display:block;width:100%;padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;color:var(--text);text-align:center;cursor:pointer;margin-bottom:18px;">
-      📂 Import Backup (.json)
-      <input type="file" accept=".json" onchange="importJSON(this)" style="display:none">
-    </label>
     <div class="ctitle">Danger Zone</div>
     <button class="btn danger" onclick="clearAll()">🗑 Clear All Data</button>
   </div>
@@ -430,10 +420,33 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- SETTINGS TAB -->
 <div class="sec" id="tab-settings">
 
+  <!-- EXPORT / IMPORT -->
+  <div class="card" style="margin-bottom:8px;">
+    <div class="ctitle">📤 Export Data</div>
+    <button class="btn" onclick="exportExcel()" style="margin-bottom:10px">📥 Export to Excel (.xlsx)</button>
+    <button class="btn sec-btn" onclick="exportCSV()" style="margin-bottom:10px">📄 Export to CSV</button>
+    <button class="btn sec-btn" onclick="exportJSON()" style="margin-bottom:4px">🔄 Export Backup (.json)</button>
+  </div>
+  <div class="card" style="margin-bottom:8px;">
+    <div class="ctitle">📂 Import / Sync</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.6;">Import a backup JSON to restore or sync from another device. <strong style="color:var(--warn);">Merges with existing data.</strong></div>
+    <label style="display:block;width:100%;padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;color:var(--text);text-align:center;cursor:pointer;">
+      📂 Import Backup (.json)
+      <input type="file" accept=".json" onchange="importJSON(this)" style="display:none">
+    </label>
+  </div>
+
   <!-- BUDGETS -->
   <div class="card">
-    <div class="ctitle">Monthly Budgets</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Tap any category to edit its monthly budget</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div class="ctitle" style="margin-bottom:0">Monthly Budgets</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button onclick="shiftBudgetMonth(-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--text);font-size:16px;cursor:pointer;">‹</button>
+        <span id="budget-month-label" style="font-size:13px;font-weight:700;color:var(--accent);min-width:80px;text-align:center;"></span>
+        <button onclick="shiftBudgetMonth(1)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--text);font-size:16px;cursor:pointer;">›</button>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Tap any subcategory to set its budget for this month</div>
     <div id="settings-budgets"></div>
   </div>
 
@@ -967,7 +980,30 @@ const DEFAULT_ICONS={Housing:'🏠','Food and Dining':'🍽️',Transportation:'
 const DEFAULT_BUDGETS={Housing:37200,'Food and Dining':19000,Transportation:3000,'Health and Medical':2000,'Personal Care':2500,Education:0,Entertainment:139.99,Technology:6440.18,Insurance:0,'Savings and Investments':0,'Debt Payments':9249.33,'Travel and Vacation':0,'Gifts and Donations':8500,'Childcare and Family':0,Miscellaneous:5500,Nour:9000,Hala:6539.99,Wife:9539.99};
 let COLORS={...DEFAULT_COLORS};
 let ICONS={...DEFAULT_ICONS};
-const DEFAULT_SUB_BUDGETS={'Housing':{'Rent / Mortgage':8800,'Electricity — Home 1':2000,'Electricity — 2nd Home':3600,'Water & Sewage — Home 1':300,'Water & Sewage — 2nd Home':900,'Natural Gas / Heating':400,'Internet':1500,'Mobile Phone':3000,'HOA / Condo Fees':500,'2nd Home Monthly Fees':15000,'Home Maintenance & Repairs':1000,'House Keeper':200,'House Cleaning':1000},'Food and Dining':{'Groceries / Supermarket':15000,'Restaurants & Dining Out':2000,'Coffee Shops & Snacks':2000},'Transportation':{'Fuel / Gasoline':1000,'Parking':200,'Tolls':200,'Car Maintenance & Service':1000,'Car Garage / Parking Rental':600},'Health and Medical':{'Pharmacy / Medications':2000},'Personal Care':{'Haircut / Salon / Barber':1000,'Dry Cleaning / Laundry':1500},'Entertainment':{'YouTube Music':139.99},'Technology':{'Mobile Phone Bill':3000,'1Password':249.99,'iCloud':149.99,'Tracelight':2026.8000000000002,'ChatGPT':1013.4000000000001},'Debt Payments':{'Value Loan Instalment':5616,'Sohoula Loan Instalment':3633.33},'Gifts and Donations':{'Charitable Donations':6500,'Family Support & Remittances':2000},'Miscellaneous':{'Cigarettes / Tobacco':5000,'Bank Charges & Fees':500},'Nour':{'Transport and Commute':2000,'Personal Care':1000,'Medical and Dental':2500,'Dining Out and Cafes':1000,'Allowance / Pocket Money':2500},'Hala':{'Transport and Commute':2000,'Mobile and Internet':39.99,'Personal Care':1000,'Dining Out and Cafes':1000,'Allowance / Pocket Money':2500},'Wife':{'Allowance / Pocket Money':3500,'Personal Care and Salon':2000,'Mobile and Internet':39.99,'Transport and Commute':4000}};
+const MONTHLY_BUDGETS={"Housing": {"Rent / Mortgage": {"2026-10": 9680.0, "2026-08": 8800.0, "2026-09": 9680.0, "2026-11": 9680.0, "2026-12": 9680.0, "2027-01": 9680.0, "2027-02": 9680.0, "2027-03": 9680.0, "2027-04": 9680.0, "2027-05": 9680.0, "2027-06": 9680.0, "2027-07": 9680.0}, "Electricity \u2014 Home 1": {"2026-10": 2000.0, "2026-08": 2000.0, "2026-09": 2000.0, "2026-11": 2000.0, "2026-12": 2000.0, "2027-01": 2000.0, "2027-02": 2000.0, "2027-03": 2000.0, "2027-04": 2000.0, "2027-05": 2000.0, "2027-06": 2000.0, "2027-07": 2000.0}, "Electricity \u2014 2nd Home": {"2026-10": 2000.0, "2026-08": 3600.0, "2026-09": 2000.0, "2026-11": 2000.0, "2026-12": 2000.0, "2027-01": 2000.0, "2027-02": 2000.0, "2027-03": 2000.0, "2027-04": 2000.0, "2027-05": 2000.0, "2027-06": 2000.0, "2027-07": 2000.0}, "Water & Sewage \u2014 Home 1": {"2026-10": 300.0, "2026-08": 300.0, "2026-09": 300.0, "2026-11": 300.0, "2026-12": 300.0, "2027-01": 300.0, "2027-02": 300.0, "2027-03": 300.0, "2027-04": 300.0, "2027-05": 300.0, "2027-06": 300.0, "2027-07": 300.0}, "Water & Sewage \u2014 2nd Home": {"2026-10": 500.0, "2026-08": 900.0, "2026-09": 500.0, "2026-11": 500.0, "2026-12": 500.0, "2027-01": 500.0, "2027-02": 500.0, "2027-03": 500.0, "2027-04": 500.0, "2027-05": 500.0, "2027-06": 500.0, "2027-07": 500.0}, "Natural Gas / Heating": {"2026-10": 400.0, "2026-08": 400.0, "2026-09": 400.0, "2026-11": 400.0, "2026-12": 400.0, "2027-01": 400.0, "2027-02": 400.0, "2027-03": 400.0, "2027-04": 400.0, "2027-05": 400.0, "2027-06": 400.0, "2027-07": 400.0}, "Internet": {"2026-10": 1500.0, "2026-08": 1500.0, "2026-09": 1500.0, "2026-11": 1500.0, "2026-12": 1500.0, "2027-01": 1500.0, "2027-02": 1500.0, "2027-03": 1500.0, "2027-04": 1500.0, "2027-05": 1500.0, "2027-06": 1500.0, "2027-07": 1500.0}, "Mobile Phone": {"2026-10": 200.0, "2026-08": 200.0, "2026-09": 200.0, "2026-11": 200.0, "2026-12": 200.0, "2027-01": 200.0, "2027-02": 200.0, "2027-03": 200.0, "2027-04": 200.0, "2027-05": 200.0, "2027-06": 200.0, "2027-07": 200.0}, "HOA / Condo Fees": {"2026-10": 500.0, "2026-08": 500.0, "2026-09": 500.0, "2026-11": 500.0, "2026-12": 500.0, "2027-01": 500.0, "2027-02": 500.0, "2027-03": 500.0, "2027-04": 500.0, "2027-05": 500.0, "2027-06": 500.0, "2027-07": 500.0}, "2nd Home Monthly Fees": {"2026-10": 15000.0, "2026-08": 15000.0, "2026-09": 15000.0, "2026-11": 15000.0, "2026-12": 15000.0, "2027-01": 15000.0, "2027-02": 15000.0, "2027-03": 15000.0, "2027-04": 15000.0, "2027-05": 15000.0, "2027-06": 15000.0, "2027-07": 15000.0}, "Home Maintenance & Repairs": {"2026-10": 1000.0, "2026-08": 1000.0, "2026-09": 1000.0, "2026-11": 1000.0, "2026-12": 1000.0, "2027-01": 1000.0, "2027-02": 1000.0, "2027-03": 1000.0, "2027-04": 1000.0, "2027-05": 1000.0, "2027-06": 1000.0, "2027-07": 1000.0}, "House Keeper": {"2026-10": 200.0, "2026-08": 200.0, "2026-09": 200.0, "2026-11": 200.0, "2026-12": 200.0, "2027-01": 200.0, "2027-02": 200.0, "2027-03": 200.0, "2027-04": 200.0, "2027-05": 200.0, "2027-06": 200.0, "2027-07": 200.0}, "House Cleaning": {"2026-10": 1000.0, "2026-08": 1000.0, "2026-09": 1000.0, "2026-11": 1000.0, "2026-12": 1000.0, "2027-01": 1000.0, "2027-02": 1000.0, "2027-03": 1000.0, "2027-04": 1000.0, "2027-05": 1000.0, "2027-06": 1000.0, "2027-07": 1000.0}}, "Food and Dining": {"Groceries / Supermarket": {"2026-10": 15000.0, "2026-08": 15000.0, "2026-09": 15000.0, "2026-11": 15000.0, "2026-12": 15000.0, "2027-01": 15000.0, "2027-02": 15000.0, "2027-03": 15000.0, "2027-04": 15000.0, "2027-05": 15000.0, "2027-06": 15000.0, "2027-07": 15000.0}, "Restaurants & Dining Out": {"2026-10": 2000.0, "2026-08": 2000.0, "2026-09": 2000.0, "2026-11": 2000.0, "2026-12": 2000.0, "2027-01": 2000.0, "2027-02": 2000.0, "2027-03": 2000.0, "2027-04": 2000.0, "2027-05": 2000.0, "2027-06": 2000.0, "2027-07": 2000.0}, "Coffee Shops & Snacks": {"2026-10": 2000.0, "2026-08": 2000.0, "2026-09": 2000.0, "2026-11": 2000.0, "2026-12": 2000.0, "2027-01": 2000.0, "2027-02": 2000.0, "2027-03": 2000.0, "2027-04": 2000.0, "2027-05": 2000.0, "2027-06": 2000.0, "2027-07": 2000.0}}, "Transportation": {"Car Insurance": {"2026-12": 50000.0}, "Fuel / Gasoline": {"2026-10": 1000.0, "2026-08": 1000.0, "2026-09": 1000.0, "2026-11": 1000.0, "2026-12": 1000.0, "2027-01": 1000.0, "2027-02": 1000.0, "2027-03": 1000.0, "2027-04": 1000.0, "2027-05": 1000.0, "2027-06": 1000.0, "2027-07": 1000.0}, "Parking": {"2026-10": 200.0, "2026-08": 200.0, "2026-09": 200.0, "2026-11": 200.0, "2026-12": 200.0, "2027-01": 200.0, "2027-02": 200.0, "2027-03": 200.0, "2027-04": 200.0, "2027-05": 200.0, "2027-06": 200.0, "2027-07": 200.0}, "Tolls": {"2026-10": 200.0, "2026-08": 200.0, "2026-09": 200.0, "2026-11": 200.0, "2026-12": 200.0, "2027-01": 200.0, "2027-02": 200.0, "2027-03": 200.0, "2027-04": 200.0, "2027-05": 200.0, "2027-06": 200.0, "2027-07": 200.0}, "Car Maintenance & Service": {"2026-10": 1000.0, "2026-08": 1000.0, "2026-09": 1000.0, "2026-11": 1000.0, "2026-12": 1000.0, "2027-01": 1000.0, "2027-02": 1000.0, "2027-03": 1000.0, "2027-04": 1000.0, "2027-05": 1000.0, "2027-06": 1000.0, "2027-07": 1000.0}, "Car Garage / Parking Rental": {"2026-10": 600.0, "2026-08": 600.0, "2026-09": 600.0, "2026-11": 600.0, "2026-12": 600.0, "2027-01": 600.0, "2027-02": 600.0, "2027-03": 600.0, "2027-04": 600.0, "2027-05": 600.0, "2027-06": 600.0, "2027-07": 600.0}}, "Health and Medical": {"Pharmacy / Medications": {"2026-10": 2000.0, "2026-08": 2000.0, "2026-09": 2000.0, "2026-11": 2000.0, "2026-12": 2000.0, "2027-01": 2000.0, "2027-02": 2000.0, "2027-03": 2000.0, "2027-04": 2000.0, "2027-05": 2000.0, "2027-06": 2000.0, "2027-07": 2000.0}}, "Personal Care": {"Haircut / Salon / Barber": {"2026-10": 1000.0, "2026-08": 1000.0, "2026-09": 1000.0, "2026-11": 1000.0, "2026-12": 1000.0, "2027-01": 1000.0, "2027-02": 1000.0, "2027-03": 1000.0, "2027-04": 1000.0, "2027-05": 1000.0, "2027-06": 1000.0, "2027-07": 1000.0}, "Dry Cleaning / Laundry": {"2026-10": 1500.0, "2026-08": 1500.0, "2026-09": 1500.0, "2026-11": 1500.0, "2026-12": 1500.0, "2027-01": 1500.0, "2027-02": 1500.0, "2027-03": 1500.0, "2027-04": 1500.0, "2027-05": 1500.0, "2027-06": 1500.0, "2027-07": 1500.0}}, "Entertainment": {"YouTube Music": {"2026-10": 139.99, "2026-08": 139.99, "2026-09": 139.99, "2026-11": 139.99, "2026-12": 139.99, "2027-01": 139.99, "2027-02": 139.99, "2027-03": 139.99, "2027-04": 139.99, "2027-05": 139.99, "2027-06": 139.99, "2027-07": 139.99}, "Movies / Concerts / Events": {"2026-08": 600.0}}, "Technology": {"Mobile Phone Bill": {"2026-10": 3000.0, "2026-08": 3000.0, "2026-09": 3000.0, "2026-11": 3000.0, "2026-12": 3000.0, "2027-01": 3000.0, "2027-02": 3000.0, "2027-03": 3000.0, "2027-04": 3000.0, "2027-05": 3000.0, "2027-06": 3000.0, "2027-07": 3000.0}, "1Password": {"2026-08": 249.99}, "iCloud": {"2026-10": 149.99, "2026-08": 149.99, "2026-09": 149.99, "2026-11": 149.99, "2026-12": 149.99, "2027-01": 149.99, "2027-02": 149.99, "2027-03": 149.99, "2027-04": 149.99, "2027-05": 149.99, "2027-06": 149.99, "2027-07": 149.99}, "Tracelight": {"2026-10": 2026.8, "2026-08": 2026.8, "2026-09": 2026.8, "2026-11": 2026.8, "2026-12": 2026.8, "2027-01": 2026.8, "2027-02": 2026.8, "2027-03": 2026.8, "2027-04": 2026.8, "2027-05": 2026.8, "2027-06": 2026.8, "2027-07": 2026.8}, "ChatGPT": {"2026-10": 1013.4, "2026-08": 1013.4, "2026-09": 1013.4, "2026-11": 1013.4, "2026-12": 1013.4, "2027-01": 1013.4, "2027-02": 1013.4, "2027-03": 1013.4, "2027-04": 1013.4, "2027-05": 1013.4, "2027-06": 1013.4, "2027-07": 1013.4}, "Claude": {"2026-10": 1013.4, "2026-08": 1013.4, "2026-09": 1013.4, "2026-11": 1013.4, "2026-12": 1013.4, "2027-01": 1013.4, "2027-02": 1013.4, "2027-03": 1013.4, "2027-04": 1013.4, "2027-05": 1013.4, "2027-06": 1013.4, "2027-07": 1013.4}, "Microsoft account": {"2026-10": 239.0, "2026-08": 239.0, "2026-09": 239.0, "2026-11": 239.0, "2026-12": 239.0, "2027-01": 239.0, "2027-02": 239.0, "2027-03": 239.0, "2027-04": 239.0, "2027-05": 239.0, "2027-06": 239.0, "2027-07": 239.0}}, "Debt Payments": {"Value Loan Instalment": {"2026-10": 2255.0, "2026-08": 5616.0, "2026-09": 2255.0, "2026-11": 383.0, "2026-12": 383.0, "2027-01": 383.0}, "Sohoula Loan Instalment": {"2026-10": 3633.33, "2026-08": 3633.33, "2026-09": 3633.33, "2026-11": 3633.33, "2026-12": 3633.33, "2027-01": 3633.33, "2027-02": 3633.33, "2027-03": 3633.33, "2027-04": 3633.33, "2027-05": 3633.33, "2027-06": 3633.33, "2027-07": 3633.33}, "NEXTBANK 50K Loan Instalment": {"2026-10": 4017.0, "2026-09": 4017.0, "2026-11": 4017.0, "2026-12": 4017.0}}, "Travel and Vacation": {"Travel Food & Entertainment": {"2026-10": 5000.0}}, "Gifts and Donations": {"Charitable Donations": {"2026-10": 6500.0, "2026-08": 6500.0, "2026-09": 6500.0, "2026-11": 6500.0, "2026-12": 6500.0, "2027-01": 6500.0, "2027-02": 6500.0, "2027-03": 6500.0, "2027-04": 6500.0, "2027-05": 6500.0, "2027-06": 6500.0, "2027-07": 6500.0}, "Family Support & Remittances": {"2026-10": 2000.0, "2026-08": 2000.0, "2026-09": 2000.0, "2026-11": 2000.0, "2026-12": 2000.0, "2027-01": 2000.0, "2027-02": 2000.0, "2027-03": 2000.0, "2027-04": 2000.0, "2027-05": 2000.0, "2027-06": 2000.0, "2027-07": 2000.0}}, "Miscellaneous": {"Cigarettes / Tobacco": {"2026-10": 5000.0, "2026-08": 5000.0, "2026-09": 5000.0, "2026-11": 5000.0, "2026-12": 5000.0, "2027-01": 5000.0, "2027-02": 5000.0, "2027-03": 5000.0, "2027-04": 5000.0, "2027-05": 5000.0, "2027-06": 5000.0, "2027-07": 5000.0}, "Bank Charges & Fees": {"2026-10": 500.0, "2026-08": 500.0, "2026-09": 500.0, "2026-11": 500.0, "2026-12": 500.0, "2027-01": 500.0, "2027-02": 500.0, "2027-03": 500.0, "2027-04": 500.0, "2027-05": 500.0, "2027-06": 500.0, "2027-07": 500.0}}, "Nour": {"University / Tuition Fees": {"2026-09": 25000.0, "2027-02": 25000.0}, "Transport and Commute": {"2026-10": 3000.0, "2026-08": 2000.0, "2026-09": 3000.0, "2026-11": 3000.0, "2026-12": 3000.0, "2027-01": 3000.0, "2027-02": 3000.0, "2027-03": 3000.0, "2027-04": 3000.0, "2027-05": 3000.0, "2027-06": 3000.0, "2027-07": 3000.0}, "Personal Care": {"2026-10": 1000.0, "2026-08": 1000.0, "2026-09": 1000.0, "2026-11": 1000.0, "2026-12": 1000.0, "2027-01": 1000.0, "2027-02": 1000.0, "2027-03": 1000.0, "2027-04": 1000.0, "2027-05": 1000.0, "2027-06": 1000.0, "2027-07": 1000.0}, "Medical and Dental": {"2026-10": 2500.0, "2026-08": 2500.0, "2026-09": 2500.0}, "Dining Out and Cafes": {"2026-10": 1000.0, "2026-08": 1000.0, "2026-09": 1000.0, "2026-11": 1000.0, "2026-12": 1000.0, "2027-01": 1000.0, "2027-02": 1000.0, "2027-03": 1000.0, "2027-04": 1000.0, "2027-05": 1000.0, "2027-06": 1000.0, "2027-07": 1000.0}, "Allowance / Pocket Money": {"2026-10": 2500.0, "2026-08": 2500.0, "2026-09": 2500.0, "2026-11": 2500.0, "2026-12": 2500.0, "2027-01": 2500.0, "2027-02": 2500.0, "2027-03": 2500.0, "2027-04": 2500.0, "2027-05": 2500.0, "2027-06": 2500.0, "2027-07": 2500.0}}, "Hala": {"University / Tuition Fees": {"2026-11": 25000.0, "2027-04": 25000.0}, "Transport and Commute": {"2026-10": 6000.0, "2026-08": 2000.0, "2026-09": 6000.0, "2026-11": 6000.0, "2026-12": 6000.0, "2027-01": 6000.0, "2027-02": 6000.0, "2027-03": 6000.0, "2027-04": 6000.0, "2027-05": 6000.0, "2027-06": 6000.0, "2027-07": 6000.0}, "Mobile and Internet": {"2026-10": 39.99, "2026-08": 39.99, "2026-09": 39.99, "2026-11": 39.99, "2026-12": 39.99, "2027-01": 39.99, "2027-02": 39.99, "2027-03": 39.99, "2027-04": 39.99, "2027-05": 39.99, "2027-06": 39.99, "2027-07": 39.99}, "Personal Care": {"2026-10": 1000.0, "2026-08": 1000.0, "2026-09": 1000.0, "2026-11": 1000.0, "2026-12": 1000.0, "2027-01": 1000.0, "2027-02": 1000.0, "2027-03": 1000.0, "2027-04": 1000.0, "2027-05": 1000.0, "2027-06": 1000.0, "2027-07": 1000.0}, "Dining Out and Cafes": {"2026-10": 1000.0, "2026-08": 1000.0, "2026-09": 1000.0, "2026-11": 1000.0, "2026-12": 1000.0, "2027-01": 1000.0, "2027-02": 1000.0, "2027-03": 1000.0, "2027-04": 1000.0, "2027-05": 1000.0, "2027-06": 1000.0, "2027-07": 1000.0}, "Allowance / Pocket Money": {"2026-10": 2500.0, "2026-08": 2500.0, "2026-09": 2500.0, "2026-11": 2500.0, "2026-12": 2500.0, "2027-01": 2500.0, "2027-02": 2500.0, "2027-03": 2500.0, "2027-04": 2500.0, "2027-05": 2500.0, "2027-06": 2500.0, "2027-07": 2500.0}}, "Wife": {"Allowance / Pocket Money": {"2026-10": 3500.0, "2026-08": 3500.0, "2026-09": 3500.0, "2026-11": 3500.0, "2026-12": 3500.0, "2027-01": 3500.0, "2027-02": 3500.0, "2027-03": 3500.0, "2027-04": 3500.0, "2027-05": 3500.0, "2027-06": 3500.0, "2027-07": 3500.0}, "Clothing and Shoes": {"2026-10": 10000.0}, "Personal Care and Salon": {"2026-10": 2000.0, "2026-08": 2000.0, "2026-09": 2000.0, "2026-11": 2000.0, "2026-12": 2000.0, "2027-01": 2000.0, "2027-02": 2000.0, "2027-03": 2000.0, "2027-04": 2000.0, "2027-05": 2000.0, "2027-06": 2000.0, "2027-07": 2000.0}, "Transport and Commute": {"2026-10": 4000.0, "2026-08": 4000.0, "2026-09": 4000.0, "2026-11": 4000.0, "2026-12": 4000.0, "2027-01": 4000.0, "2027-02": 4000.0, "2027-03": 4000.0, "2027-04": 4000.0, "2027-05": 4000.0, "2027-06": 4000.0, "2027-07": 4000.0}}};
+
+// Get subcategory budget for a specific month (fallback: most recent month defined)
+function getSubBudget(cat, sub, ym) {
+  // Check user overrides first
+  if(state.subBudgets&&state.subBudgets[cat]&&state.subBudgets[cat][sub]&&state.subBudgets[cat][sub][ym]!==undefined)
+    return state.subBudgets[cat][sub][ym];
+  const m = (MONTHLY_BUDGETS[cat]||{})[sub]||{};
+  if(m[ym]!==undefined) return m[ym];
+  // fallback: find closest earlier month
+  const keys=Object.keys(m).sort();
+  if(!keys.length) return 0;
+  const earlier=keys.filter(k=>k<=ym);
+  return earlier.length ? m[earlier[earlier.length-1]] : m[keys[0]];
+}
+
+// Get total category budget for a month
+function getCatBudget(cat, ym) {
+  const subs=[...(SUBS[cat]||[]),...((state.customSubs&&state.customSubs[cat])||[])];
+  return subs.reduce((t,s)=>t+getSubBudget(cat,s,ym),0);
+}
+
+// Current budget view month (YYYY-MM)
+let budgetViewMonth = today().slice(0,7);
 let BUDGETS={...DEFAULT_BUDGETS};
 let SUB_BUDGETS=JSON.parse(JSON.stringify(DEFAULT_SUB_BUDGETS));
 
@@ -1208,7 +1244,7 @@ function renderDashboard() {
   const grandTotal=Object.values(totals).reduce((a,b)=>a+b,0);
   const totalIncome=state.incomes.reduce((a,i)=>a+i.actual,0);
   const savings=totalIncome-grandTotal;
-  const budgetTotal=Object.values(BUDGETS).reduce((a,b)=>a+b,0);
+  const ym=today().slice(0,7); const budgetTotal=Object.keys(BUDGETS).reduce((t,cat)=>t+getCatBudget(cat,ym),0);
 
   document.getElementById('k-income').textContent=fmt(totalIncome);
   document.getElementById('k-expenses').textContent=fmt(Math.round(grandTotal));
@@ -2563,6 +2599,8 @@ function selectColor(el, color) {
 }
 
 function renderSettings() {
+  const _ml=document.getElementById('budget-month-label');
+  if(_ml){const [_y,_mo]=budgetViewMonth.split('-');_ml.textContent=new Date(+_y,+_mo-1,1).toLocaleDateString('en-EG',{month:'short',year:'numeric'});}
   // Populate category select for subcategories
   const sel = document.getElementById('sub-cat-select');
   if (sel) {
@@ -2579,13 +2617,12 @@ function renderSettings() {
     const color = COLORS[cat]||'#94a3b8';
     const icon = ICONS[cat]||'📂';
     const isCustom = state.customCats && state.customCats[cat];
-    const subMap=SUB_BUDGETS[cat]||{};
     const subSpentArr=state.expenses.filter(e=>e.cat===cat);
     let subHtml='';
     const allSubs=[...(SUBS[cat]||[]),...((state.customSubs&&state.customSubs[cat])||[])].filter((s,i,a)=>a.indexOf(s)===i);
     allSubs.forEach(sub=>{
-      const sbud=subMap[sub]||0;
-      const sact=subSpentArr.filter(e=>e.sub===sub).reduce((a,e)=>a+e.amount,0);
+      const sbud=getSubBudget(cat,sub,budgetViewMonth);
+      const sact=subSpentArr.filter(e=>e.sub===sub&&e.date.slice(0,7)===budgetViewMonth).reduce((a,e)=>a+e.amount,0);
       const spct=sbud?Math.min(sact/sbud,1):0; const sover=sact>sbud;
       const scol=sover?'var(--red)':spct>.85?'var(--warn)':'var(--green)';
       const catE=cat.replace(/'/g,"\'"); const subE=sub.replace(/'/g,"\'");
@@ -2704,6 +2741,13 @@ function deleteCategory(cat) {
   toast('🗑 Category deleted');
 }
 
+function shiftBudgetMonth(dir){
+  const [y,m]=budgetViewMonth.split('-').map(Number);
+  const d=new Date(y,m-1+dir,1);
+  budgetViewMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  renderSettings();
+}
+
 function refreshCatSelects() {
   const allCats = Object.keys(BUDGETS);
   ['f-cat','edit-cat'].forEach(id=>{
@@ -2728,10 +2772,9 @@ let editingBudgetCat = null;
 let editingSubBudgetCat='', editingSubBudgetSub='';
 function openSubBudgetEdit(cat,sub){
   editingSubBudgetCat=cat; editingSubBudgetSub=sub;
-  if(!SUB_BUDGETS[cat])SUB_BUDGETS[cat]={};
-  const sbud=SUB_BUDGETS[cat][sub]||0;
-  const sact=state.expenses.filter(e=>e.cat===cat&&e.sub===sub).reduce((a,e)=>a+e.amount,0);
-  document.getElementById('bm-catname').textContent=(ICONS[cat]||'📂')+' '+cat+' › '+sub;
+  const sbud=getSubBudget(cat,sub,budgetViewMonth);
+  const sact=state.expenses.filter(e=>e.cat===cat&&e.sub===sub&&e.date.slice(0,7)===budgetViewMonth).reduce((a,e)=>a+e.amount,0);
+  document.getElementById('bm-catname').textContent=(ICONS[cat]||'📂')+' '+cat+' › '+sub+' ('+budgetViewMonth+')';
   document.getElementById('bm-amount').value=sbud;
   document.getElementById('bm-spent').textContent=fmt(Math.round(sact))+' EGP spent';
   document.getElementById('bm-prev').textContent=fmt(sbud)+' EGP budgeted';
@@ -2754,11 +2797,13 @@ function saveBudget() {
   const amt=parseFloat(document.getElementById('bm-amount').value)||0;
   if(document.getElementById('budget-modal').getAttribute('data-submode')==='1'){
     if(!editingSubBudgetCat||!editingSubBudgetSub)return;
-    if(!SUB_BUDGETS[editingSubBudgetCat])SUB_BUDGETS[editingSubBudgetCat]={};
-    SUB_BUDGETS[editingSubBudgetCat][editingSubBudgetSub]=amt;
+    if(!state.subBudgets)state.subBudgets={};
+    if(!state.subBudgets[editingSubBudgetCat])state.subBudgets[editingSubBudgetCat]={};
+    if(!state.subBudgets[editingSubBudgetCat][editingSubBudgetSub])state.subBudgets[editingSubBudgetCat][editingSubBudgetSub]={};
+    state.subBudgets[editingSubBudgetCat][editingSubBudgetSub][budgetViewMonth]=amt;
     saveState(); renderSettings();
     document.getElementById('budget-modal').classList.remove('open');
-    toast('✅ Sub-budget updated for '+editingSubBudgetSub);
+    toast('✅ Budget updated for '+editingSubBudgetSub+' ('+budgetViewMonth+')');
   } else {
     if(!editingBudgetCat)return;
     BUDGETS[editingBudgetCat]=amt;
