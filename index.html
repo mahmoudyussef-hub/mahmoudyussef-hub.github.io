@@ -1470,7 +1470,8 @@ function computeBalance(name) {
   const expOut = state.expenses.filter(e=>!e.isSeed && e.method===name).reduce((s,e)=>s+e.amount, 0);
   const trIn   = state.transfers.filter(t=>!t.isSeed && t.to===name).reduce((s,t)=>s+t.amount, 0);
   const trOut  = state.transfers.filter(t=>!t.isSeed && t.from===name).reduce((s,t)=>s+t.amount, 0);
-  return opening - expOut + trIn - trOut;
+  const incIn  = state.incomes.filter(i=>i.account===name).reduce((s,i)=>s+(i.actual||i.amount||0), 0);
+  return opening - expOut + trIn - trOut + incIn;
 }
 
 // ── RENDER ACCOUNTS ──
